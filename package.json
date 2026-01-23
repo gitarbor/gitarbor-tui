@@ -1,12 +1,22 @@
 {
   "name": "gitarbor-tui",
-  "module": "index.ts",
+  "module": "index.tsx",
   "type": "module",
   "private": true,
+  "scripts": {
+    "start": "bun run index.tsx",
+    "dev": "bun run index.tsx"
+  },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/react": "^19.2.9"
   },
   "peerDependencies": {
     "typescript": "^5"
+  },
+  "dependencies": {
+    "@opentui/core": "^0.1.74",
+    "@opentui/react": "^0.1.74",
+    "react": "^19.2.3"
   }
 }
