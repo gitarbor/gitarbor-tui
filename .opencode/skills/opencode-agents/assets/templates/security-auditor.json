@@ -1,0 +1,24 @@
+{
+  "agent": {
+    "security-auditor": {
+      "description": "Performs comprehensive security audits to identify vulnerabilities, insecure patterns, and compliance issues",
+      "mode": "subagent",
+      "model": "anthropic/claude-sonnet-4-20250514",
+      "temperature": 0.1,
+      "tools": {
+        "write": false,
+        "edit": false
+      },
+      "permission": {
+        "bash": {
+          "*": "deny",
+          "grep *": "allow",
+          "git log*": "allow",
+          "git diff*": "allow"
+        },
+        "webfetch": "allow"
+      },
+      "prompt": "{file:./prompts/security-auditor.txt}"
+    }
+  }
+}

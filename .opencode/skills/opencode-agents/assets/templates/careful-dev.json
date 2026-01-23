@@ -1,0 +1,32 @@
+{
+  "agent": {
+    "careful-dev": {
+      "description": "Development agent that asks for approval before making file changes or running potentially risky commands",
+      "mode": "primary",
+      "model": "anthropic/claude-sonnet-4-20250514",
+      "temperature": 0.3,
+      "permission": {
+        "edit": "ask",
+        "bash": {
+          "*": "ask",
+          "git status": "allow",
+          "git diff": "allow",
+          "git log*": "allow",
+          "git show*": "allow",
+          "ls *": "allow",
+          "cat *": "allow",
+          "grep *": "allow"
+        },
+        "webfetch": "allow"
+      },
+      "tools": {
+        "write": true,
+        "edit": true,
+        "read": true,
+        "bash": true,
+        "glob": true,
+        "grep": true
+      }
+    }
+  }
+}
