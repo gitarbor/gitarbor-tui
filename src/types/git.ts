@@ -27,4 +27,4 @@ export interface GitBranch {
   remote: boolean
 }
 
-export type View = 'status' | 'log' | 'branches' | 'diff'
+export type View = 'main' | 'log' | 'diff'
