@@ -1,3 +1,5 @@
+import { theme } from '../theme'
+
 export interface FieldsetProps {
   title: string;
   children: React.ReactNode;
@@ -15,18 +17,18 @@ export interface FieldsetProps {
 export function Fieldset({
   title,
   children,
-  borderColor = '#888888',
+  borderColor = theme.colors.border,
   titleColor: _titleColor,
   focused = false,
   editMode = false,
   flexGrow,
   height,
   width,
-  paddingX = 1,
-  paddingY = 0,
+  paddingX = theme.spacing.xs,
+  paddingY = theme.spacing.none,
 }: FieldsetProps) {
   // Determine colors based on state
-  const actualBorderColor = focused ? '#CC8844' : editMode ? '#00FF00' : borderColor;
+  const actualBorderColor = focused ? theme.colors.borderFocused : editMode ? theme.colors.git.staged : borderColor;
 
   return (
     <box

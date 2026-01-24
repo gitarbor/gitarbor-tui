@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react'
+import { theme } from '../theme'
 
 interface CommitModalProps {
   onCommit: (message: string) => void
@@ -25,14 +26,14 @@ export function CommitModal({ onCommit, onCancel }: CommitModalProps) {
       }}
       width={60}
       height={8}
-      backgroundColor="#1a1a1a"
+      backgroundColor={theme.colors.background.modal}
       borderStyle="double"
-      borderColor="#CC8844"
-      padding={1}
+      borderColor={theme.colors.primary}
+      padding={theme.spacing.xs}
     >
-      <text fg="#FFFFFF">Create Commit</text>
+      <text fg={theme.colors.text.primary}>Create Commit</text>
       <text> </text>
-      <text fg="#999999">Enter commit message:</text>
+      <text fg={theme.colors.text.muted}>Enter commit message:</text>
       <input
         width={56}
         placeholder="Commit message..."
@@ -41,7 +42,7 @@ export function CommitModal({ onCommit, onCancel }: CommitModalProps) {
         focused={true}
       />
       <text> </text>
-      <text fg="#999999">[Enter] Commit | [Esc] Cancel</text>
+      <text fg={theme.colors.text.muted}>[Enter] Commit | [Esc] Cancel</text>
     </box>
   )
 }

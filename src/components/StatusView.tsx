@@ -1,3 +1,4 @@
+import { theme } from '../theme'
 import type { GitFile } from '../types/git'
 
 interface StatusViewProps {
@@ -35,24 +36,24 @@ export function StatusView({
   }
 
   const getSectionColor = (section: string) => {
-    if (section === 'staged') return '#00FF00'
-    if (section === 'untracked') return '#999999'
-    return '#FFFF00'
+    if (section === 'staged') return theme.colors.git.staged
+    if (section === 'untracked') return theme.colors.text.muted
+    return theme.colors.git.modified
   }
 
   return (
     <box
       width="100%"
       flexGrow={1}
-      borderStyle="single"
-      borderColor={focused ? '#CC8844' : '#555555'}
-      padding={0}
+      borderStyle={theme.borders.style}
+      borderColor={focused ? theme.colors.borderFocused : theme.colors.border}
+      padding={theme.spacing.none}
     >
-      <box paddingLeft={1} paddingTop={0}>
-        <text fg="#FFFFFF">Working Directory Status</text>
+      <box paddingLeft={theme.spacing.xs} paddingTop={theme.spacing.none}>
+        <text fg={theme.colors.text.primary}>Working Directory Status</text>
         <text> </text>
         {allFiles.length === 0 ? (
-          <text fg="#999999">No changes</text>
+          <text fg={theme.colors.text.muted}>No changes</text>
         ) : (
           allFiles.map((file, idx) => {
             const isSelected = idx === selectedIndex
@@ -61,14 +62,14 @@ export function StatusView({
             
             return (
               <box key={file.path} flexDirection="row">
-                <text fg={isSelected ? '#CC8844' : '#555555'}>
+                <text fg={isSelected ? theme.colors.primary : theme.colors.border}>
                   {isSelected ? '>' : ' '}
                 </text>
                 <text fg={color}> {symbol} </text>
-                <text fg={isSelected ? '#FFFFFF' : '#CCCCCC'}>
+                <text fg={isSelected ? theme.colors.text.primary : theme.colors.text.secondary}>
                   {file.path}
                 </text>
-                <text fg="#666666"> ({file.section})</text>
+                <text fg={theme.colors.text.muted}> ({file.section})</text>
               </box>
             )
           })

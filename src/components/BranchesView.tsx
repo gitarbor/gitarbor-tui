@@ -1,3 +1,4 @@
+import { theme } from '../theme'
 import type { GitBranch } from '../types/git'
 
 interface BranchesViewProps {
@@ -14,23 +15,23 @@ export function BranchesView({ branches, selectedIndex, focused }: BranchesViewP
     <box
       width="100%"
       flexGrow={1}
-      borderStyle="single"
-      borderColor={focused ? '#CC8844' : '#555555'}
-      padding={0}
+      borderStyle={theme.borders.style}
+      borderColor={focused ? theme.colors.borderFocused : theme.colors.border}
+      padding={theme.spacing.none}
     >
-      <box paddingLeft={1} paddingTop={0}>
-        <text fg="#FFFFFF">Branches</text>
+      <box paddingLeft={theme.spacing.xs} paddingTop={theme.spacing.none}>
+        <text fg={theme.colors.text.primary}>Branches</text>
         <text> </text>
-        <text fg="#00FF00">Local:</text>
+        <text fg={theme.colors.git.staged}>Local:</text>
         {localBranches.map((branch, idx) => {
           const isSelected = idx === selectedIndex
           
           return (
             <box key={branch.name} flexDirection="row">
-              <text fg={isSelected ? '#CC8844' : '#555555'}>
+              <text fg={isSelected ? theme.colors.primary : theme.colors.border}>
                 {isSelected ? '>' : ' '}
               </text>
-              <text fg={branch.current ? '#00FF00' : '#CCCCCC'}>
+              <text fg={branch.current ? theme.colors.git.staged : theme.colors.text.secondary}>
                 {branch.current ? '* ' : '  '}
                 {branch.name}
               </text>
@@ -38,11 +39,11 @@ export function BranchesView({ branches, selectedIndex, focused }: BranchesViewP
           )
         })}
         <text> </text>
-        <text fg="#00FFFF">Remote:</text>
+        <text fg={theme.colors.status.info}>Remote:</text>
         {remoteBranches.slice(0, 10).map((branch) => {
           return (
             <box key={branch.name} flexDirection="row">
-              <text fg="#999999">  {branch.name}</text>
+              <text fg={theme.colors.text.muted}>  {branch.name}</text>
             </box>
           )
         })}

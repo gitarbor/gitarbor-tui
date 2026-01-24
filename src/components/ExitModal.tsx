@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useKeyboard } from '@opentui/react'
+import { theme } from '../theme'
 
 interface ExitModalProps {
   onConfirm: () => void
@@ -63,32 +64,32 @@ export function ExitModal({ onConfirm, onCancel }: ExitModalProps) {
         style={{
           border: true,
           borderStyle: 'double',
-          borderColor: '#4a9eff',
-          paddingLeft: 3,
-          paddingRight: 3,
-          paddingTop: 1,
-          paddingBottom: 1,
+          borderColor: theme.colors.status.info,
+          paddingLeft: theme.spacing.md,
+          paddingRight: theme.spacing.md,
+          paddingTop: theme.spacing.xs,
+          paddingBottom: theme.spacing.xs,
           flexDirection: 'column',
           width: 55,
-          backgroundColor: '#1a1a1a',
+          backgroundColor: theme.colors.background.modal,
         }}
       >
         <box style={{ justifyContent: 'center' }}>
-          <text fg="#4a9eff">Exit GitArbor?</text>
+          <text fg={theme.colors.status.info}>Exit GitArbor?</text>
         </box>
         <box style={{ marginTop: 1, justifyContent: 'center' }}>
-          <text fg="#999999">Are you sure you want to quit?</text>
+          <text fg={theme.colors.text.muted}>Are you sure you want to quit?</text>
         </box>
         <box style={{ marginTop: 1, justifyContent: 'center', flexDirection: 'row', gap: 3 }}>
           <text
-            bg={selectedOption === 'yes' ? '#4a9eff' : '#2a2520'}
-            fg={selectedOption === 'yes' ? '#000000' : '#888888'}
+            bg={selectedOption === 'yes' ? theme.colors.status.info : theme.colors.background.button}
+            fg={selectedOption === 'yes' ? theme.colors.text.inverted : theme.colors.text.disabled}
           >
             {selectedOption === 'yes' ? '[✓ Yes]' : '  Yes  '}
           </text>
           <text
-            bg={selectedOption === 'no' ? '#4a9eff' : '#2a2520'}
-            fg={selectedOption === 'no' ? '#ffffff' : '#888888'}
+            bg={selectedOption === 'no' ? theme.colors.status.info : theme.colors.background.button}
+            fg={selectedOption === 'no' ? theme.colors.text.primary : theme.colors.text.disabled}
           >
             {selectedOption === 'no' ? '[✓ No]' : '  No  '}
           </text>
@@ -98,14 +99,14 @@ export function ExitModal({ onConfirm, onCancel }: ExitModalProps) {
             marginTop: 1,
             justifyContent: 'center',
             border: true,
-            borderColor: '#333333',
-            paddingLeft: 1,
-            paddingRight: 1,
+            borderColor: theme.colors.background.buttonHover,
+            paddingLeft: theme.spacing.xs,
+            paddingRight: theme.spacing.xs,
             flexDirection: 'row',
             gap: 1,
           }}
         >
-          <text fg="#666666">←→ select │ Enter confirm │ Y/N quick select</text>
+          <text fg={theme.colors.text.disabled}>←→ select │ Enter confirm │ Y/N quick select</text>
         </box>
       </box>
     </box>

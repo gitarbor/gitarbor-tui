@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { theme } from '../theme'
 
 interface HeaderProps {
   branch: string
@@ -16,17 +16,17 @@ export function Header({ branch, ahead, behind, view }: HeaderProps) {
     <box
       width="100%"
       height={3}
-      borderStyle="single"
-      borderColor="#555555"
-      padding={0}
+      borderStyle={theme.borders.style}
+      borderColor={theme.colors.border}
+      padding={theme.spacing.none}
     >
-      <box flexDirection="row" paddingLeft={1} paddingTop={0}>
-        <text fg="#CC8844">GitArbor</text>
-        <text fg="#999999"> - </text>
-        <text fg="#FFFF00">{branch}</text>
-        <text fg="#999999">{aheadBehind}</text>
-        <text fg="#999999"> | View: </text>
-        <text fg="#CC8844">{view}</text>
+      <box flexDirection="row" paddingLeft={theme.spacing.xs} paddingTop={theme.spacing.none}>
+        <text fg={theme.colors.primary}>GitArbor</text>
+        <text fg={theme.colors.text.muted}> - </text>
+        <text fg={theme.colors.git.modified}>{branch}</text>
+        <text fg={theme.colors.text.muted}>{aheadBehind}</text>
+        <text fg={theme.colors.text.muted}> | View: </text>
+        <text fg={theme.colors.primary}>{view}</text>
       </box>
     </box>
   )

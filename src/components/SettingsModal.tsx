@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useKeyboard } from '@opentui/react'
 import { exec } from 'child_process'
 import { promisify } from 'util'
+import { theme } from '../theme'
 
 const execAsync = promisify(exec)
 
@@ -95,12 +96,12 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
       >
         <box
           borderStyle="double"
-          borderColor="#CC8844"
-          padding={1}
+          borderColor={theme.colors.primary}
+          padding={theme.spacing.xs}
           width={60}
-          backgroundColor="#1a1a1a"
+          backgroundColor={theme.colors.background.modal}
         >
-          <text fg="#999999">Loading git configuration...</text>
+          <text fg={theme.colors.text.muted}>Loading git configuration...</text>
         </box>
       </box>
     )
@@ -116,27 +117,27 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
     >
       <box
         borderStyle="double"
-        borderColor="#CC8844"
-        padding={1}
+        borderColor={theme.colors.primary}
+        padding={theme.spacing.xs}
         width={70}
         height={14}
         flexDirection="column"
-        backgroundColor="#1a1a1a"
+        backgroundColor={theme.colors.background.modal}
       >
-        <text fg="#CC8844">
+        <text fg={theme.colors.primary}>
           Settings
         </text>
         <text> </text>
         
-        <text fg="#999999">Git Global Configuration</text>
+        <text fg={theme.colors.text.muted}>Git Global Configuration</text>
         <text> </text>
         
         {/* Name field */}
         <box flexDirection="row" marginBottom={1}>
-          <text fg={selectedField === 'name' && !editMode ? '#FFFF00' : '#999999'}>
+          <text fg={selectedField === 'name' && !editMode ? theme.colors.git.modified : theme.colors.text.muted}>
             {selectedField === 'name' && !editMode ? '> ' : '  '}
           </text>
-          <text fg="#999999" width={10}>
+          <text fg={theme.colors.text.muted} width={10}>
             Name:
           </text>
           {editMode && selectedField === 'name' ? (
@@ -148,16 +149,16 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
               width={50}
             />
           ) : (
-            <text fg="#ffffff">{gitConfig.name || '(not set)'}</text>
+            <text fg={theme.colors.text.primary}>{gitConfig.name || '(not set)'}</text>
           )}
         </box>
         
         {/* Email field */}
         <box flexDirection="row">
-          <text fg={selectedField === 'email' && !editMode ? '#FFFF00' : '#999999'}>
+          <text fg={selectedField === 'email' && !editMode ? theme.colors.git.modified : theme.colors.text.muted}>
             {selectedField === 'email' && !editMode ? '> ' : '  '}
           </text>
-          <text fg="#999999" width={10}>
+          <text fg={theme.colors.text.muted} width={10}>
             Email:
           </text>
           {editMode && selectedField === 'email' ? (
@@ -169,20 +170,20 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
               width={50}
             />
           ) : (
-            <text fg="#ffffff">{gitConfig.email || '(not set)'}</text>
+            <text fg={theme.colors.text.primary}>{gitConfig.email || '(not set)'}</text>
           )}
         </box>
         
         {error && (
           <>
             <text> </text>
-            <text fg="#ff0000">{error}</text>
+            <text fg={theme.colors.status.error}>{error}</text>
           </>
         )}
         
         <text> </text>
-        <box borderStyle="single" borderColor="#555555" padding={0}>
-          <text fg="#999999">
+        <box borderStyle={theme.borders.style} borderColor={theme.colors.border} padding={theme.spacing.none}>
+          <text fg={theme.colors.text.muted}>
             {editMode
               ? saving
                 ? 'Saving...'

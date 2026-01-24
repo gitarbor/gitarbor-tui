@@ -1,3 +1,5 @@
+import { theme } from '../theme'
+
 interface FooterProps {
   message: string
 }
@@ -7,14 +9,14 @@ export function Footer({ message }: FooterProps) {
     <box
       width="100%"
       height={5}
-      borderStyle="single"
-      borderColor="#555555"
-      padding={0}
+      borderStyle={theme.borders.style}
+      borderColor={theme.colors.border}
+      padding={theme.spacing.none}
     >
-      <box paddingLeft={1} paddingTop={0}>
-        <text fg="#999999">Commands: [/] Palette | [,] Settings | [1-4] View | [s] Stage | [u] Unstage | [c] Commit | [ESC/q] Exit</text>
+      <box paddingLeft={theme.spacing.xs} paddingTop={theme.spacing.none}>
+        <text fg={theme.colors.text.muted}>Commands: [/] Palette | [,] Settings | [1-4] View | [s] Stage | [u] Unstage | [c] Commit | [ESC/q] Exit</text>
         {message && (
-          <text fg="#CC8844">{message}</text>
+          <text fg={theme.colors.primary}>{message}</text>
         )}
       </box>
     </box>

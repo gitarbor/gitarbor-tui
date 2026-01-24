@@ -1,3 +1,4 @@
+import { theme } from '../theme'
 import type { GitFile, GitBranch, GitCommit } from '../types/git'
 import { Fieldset } from './Fieldset'
 
@@ -40,9 +41,9 @@ export function MainView({
   }
 
   const getSectionColor = (section: string) => {
-    if (section === 'staged') return '#00FF00'
-    if (section === 'untracked') return '#999999'
-    return '#FFFF00'
+    if (section === 'staged') return theme.colors.git.staged
+    if (section === 'untracked') return theme.colors.text.muted
+    return theme.colors.git.modified
   }
 
   const localBranches = branches.filter((b) => !b.remote)
@@ -55,12 +56,12 @@ export function MainView({
           title="Working Directory Status"
           focused={focusedPanel === 'status'}
           flexGrow={1}
-          paddingX={1}
-          paddingY={0}
+          paddingX={theme.spacing.xs}
+          paddingY={theme.spacing.none}
         >
           <box flexDirection="column">
             {allFiles.length === 0 ? (
-              <text fg="#999999">No changes</text>
+              <text fg={theme.colors.text.muted}>No changes</text>
             ) : (
               allFiles.map((file, idx) => {
                 const isSelected = idx === selectedIndex && focusedPanel === 'status'
@@ -69,14 +70,14 @@ export function MainView({
                 
                 return (
                   <box key={file.path} flexDirection="row">
-                    <text fg={isSelected ? '#CC8844' : '#555555'}>
+                    <text fg={isSelected ? theme.colors.primary : theme.colors.border}>
                       {isSelected ? '>' : ' '}
                     </text>
                     <text fg={color}> {symbol} </text>
-                    <text fg={isSelected ? '#FFFFFF' : '#CCCCCC'}>
+                    <text fg={isSelected ? theme.colors.text.primary : theme.colors.text.secondary}>
                       {file.path}
                     </text>
-                    <text fg="#666666"> ({file.section})</text>
+                    <text fg={theme.colors.text.muted}> ({file.section})</text>
                   </box>
                 )
               })
@@ -88,20 +89,20 @@ export function MainView({
           title="Branches"
           focused={focusedPanel === 'branches'}
           flexGrow={1}
-          paddingX={1}
-          paddingY={0}
+          paddingX={theme.spacing.xs}
+          paddingY={theme.spacing.none}
         >
           <box flexDirection="column">
-            <text fg="#00FF00">Local:</text>
+            <text fg={theme.colors.git.staged}>Local:</text>
             {localBranches.map((branch, idx) => {
               const isSelected = idx === selectedIndex && focusedPanel === 'branches'
               
               return (
                 <box key={branch.name} flexDirection="row">
-                  <text fg={isSelected ? '#CC8844' : '#555555'}>
+                  <text fg={isSelected ? theme.colors.primary : theme.colors.border}>
                     {isSelected ? '>' : ' '}
                   </text>
-                  <text fg={branch.current ? '#00FF00' : '#CCCCCC'}>
+                  <text fg={branch.current ? theme.colors.git.staged : theme.colors.text.secondary}>
                     {branch.current ? '* ' : '  '}
                     {branch.name}
                   </text>
@@ -109,11 +110,11 @@ export function MainView({
               )
             })}
             <text> </text>
-            <text fg="#00FFFF">Remote:</text>
+            <text fg={theme.colors.status.info}>Remote:</text>
             {remoteBranches.slice(0, 10).map((branch) => {
               return (
                 <box key={branch.name} flexDirection="row">
-                  <text fg="#999999">  {branch.name}</text>
+                  <text fg={theme.colors.text.muted}>  {branch.name}</text>
                 </box>
               )
             })}
@@ -125,27 +126,27 @@ export function MainView({
         title="Commit History"
         focused={focusedPanel === 'log'}
         height="40%"
-        paddingX={1}
-        paddingY={0}
+        paddingX={theme.spacing.xs}
+        paddingY={theme.spacing.none}
       >
         <box flexDirection="column">
           {commits.length === 0 ? (
-            <text fg="#999999">No commits</text>
+            <text fg={theme.colors.text.muted}>No commits</text>
           ) : (
             commits.slice(0, 10).map((commit, idx) => {
               const isSelected = idx === selectedIndex && focusedPanel === 'log'
               
               return (
                 <box key={commit.hash} flexDirection="row">
-                  <text fg={isSelected ? '#CC8844' : '#555555'}>
+                  <text fg={isSelected ? theme.colors.primary : theme.colors.border}>
                     {isSelected ? '>' : ' '}
                   </text>
-                  <text fg="#FFFF00"> {commit.shortHash} </text>
-                  <text fg="#999999">{commit.date}</text>
-                  <text fg="#999999"> - </text>
-                  <text fg="#00FFFF">{commit.author}</text>
-                  <text fg="#999999"> - </text>
-                  <text fg={isSelected ? '#FFFFFF' : '#CCCCCC'}>
+                  <text fg={theme.colors.git.modified}> {commit.shortHash} </text>
+                  <text fg={theme.colors.text.muted}>{commit.date}</text>
+                  <text fg={theme.colors.text.muted}> - </text>
+                  <text fg={theme.colors.status.info}>{commit.author}</text>
+                  <text fg={theme.colors.text.muted}> - </text>
+                  <text fg={isSelected ? theme.colors.text.primary : theme.colors.text.secondary}>
                     {commit.message}
                   </text>
                 </box>

@@ -11,10 +11,18 @@ export interface Theme {
     primaryDark: string
     border: string
     borderFocused: string
+    background: {
+      primary: string
+      modal: string
+      button: string
+      buttonHover: string
+    }
     text: {
       primary: string
       secondary: string
       muted: string
+      disabled: string
+      inverted: string
     }
     git: {
       staged: string
@@ -39,7 +47,7 @@ export interface Theme {
     xl: number
   }
   borders: {
-    style: 'single' | 'double' | 'round' | 'bold' | 'singleDouble' | 'doubleSingle' | 'classic'
+    style: 'single'
   }
 }
 
@@ -52,10 +60,18 @@ export const defaultTheme: Theme = {
     primaryDark: '#BB7733',    // Darker orange - secondary highlights
     border: '#555555',         // Gray - unfocused borders
     borderFocused: '#CC8844',  // Orange - focused borders
+    background: {
+      primary: '#000000',      // Black - main background
+      modal: '#1a1a1a',        // Dark gray - modal background
+      button: '#2a2520',       // Dark brown - button background
+      buttonHover: '#333333',  // Lighter gray - button hover
+    },
     text: {
       primary: '#FFFFFF',      // White - main text
       secondary: '#CCCCCC',    // Light gray - secondary text
       muted: '#999999',        // Gray - muted/disabled text
+      disabled: '#666666',     // Darker gray - disabled text
+      inverted: '#000000',     // Black - inverted text (on bright bg)
     },
     git: {
       staged: '#00FF00',       // Green - staged files

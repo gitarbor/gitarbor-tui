@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useKeyboard } from '@opentui/react'
+import { theme } from '../theme'
 import type { Command } from '../types/commands'
 
 interface CommandPaletteProps {
@@ -45,14 +46,14 @@ export function CommandPalette({ commands, onClose }: CommandPaletteProps) {
     >
       <box
         borderStyle="double"
-        borderColor="#CC8844"
-        padding={1}
+        borderColor={theme.colors.primary}
+        padding={theme.spacing.xs}
         width={80}
         height={20}
         flexDirection="column"
-        backgroundColor="#1a1a1a"
+        backgroundColor={theme.colors.background.modal}
       >
-        <text fg="#CC8844">Command Palette</text>
+        <text fg={theme.colors.primary}>Command Palette</text>
         <text> </text>
         
         <box marginBottom={1}>
@@ -71,21 +72,21 @@ export function CommandPalette({ commands, onClose }: CommandPaletteProps) {
           style={{ overflow: 'hidden' }}
         >
           {search.trim().length === 0 ? null : filteredCommands.length === 0 ? (
-            <text fg="#999999">No commands found</text>
+            <text fg={theme.colors.text.muted}>No commands found</text>
           ) : (
             filteredCommands.slice(0, 10).map((cmd, index) => (
               <box key={cmd.id} flexDirection="row" marginBottom={0}>
-                <text fg={index === selectedIndex ? '#FFFF00' : '#999999'} width={2}>
+                <text fg={index === selectedIndex ? theme.colors.git.modified : theme.colors.text.muted} width={2}>
                   {index === selectedIndex ? '>' : ' '}
                 </text>
-                <text fg={index === selectedIndex ? '#FFFFFF' : '#999999'} width={30}>
+                <text fg={index === selectedIndex ? theme.colors.text.primary : theme.colors.text.muted} width={30}>
                   {cmd.label}
                 </text>
-                <text fg="#666666" width={30}>
+                <text fg={theme.colors.text.disabled} width={30}>
                   {cmd.description}
                 </text>
                 {cmd.shortcut && (
-                  <text fg="#CC8844" width={14}>
+                  <text fg={theme.colors.primary} width={14}>
                     {cmd.shortcut}
                   </text>
                 )}
@@ -95,8 +96,8 @@ export function CommandPalette({ commands, onClose }: CommandPaletteProps) {
         </box>
         
         <text> </text>
-        <box borderStyle="single" borderColor="#555555" padding={0}>
-          <text fg="#999999">
+        <box borderStyle={theme.borders.style} borderColor={theme.colors.border} padding={theme.spacing.none}>
+          <text fg={theme.colors.text.muted}>
             Up/Down: Navigate | Enter: Execute | ESC: Close
           </text>
         </box>
