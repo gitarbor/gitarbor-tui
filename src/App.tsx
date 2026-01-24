@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useKeyboard, useRenderer } from '@opentui/react'
 import { GitClient } from './utils/git'
+import { FileSystemWatcher } from './utils/watcher'
 import { Header } from './components/Header'
 import { Footer } from './components/Footer'
 import { MainView } from './components/MainView'
@@ -16,6 +17,7 @@ import type { Command } from './types/commands'
 export function App({ cwd }: { cwd: string }) {
   const renderer = useRenderer()
   const [git] = useState(() => new GitClient(cwd))
+  const [watcher] = useState(() => new FileSystemWatcher(cwd, () => {}))
   const [view, setView] = useState<View>('main')
   const [focusedPanel, setFocusedPanel] = useState<'status' | 'branches' | 'log'>('status')
   const [status, setStatus] = useState<GitStatus>({
@@ -90,6 +92,17 @@ export function App({ cwd }: { cwd: string }) {
   useEffect(() => {
     void loadData()
   }, [loadData])
+
+  // Update watcher callback when loadData changes
+  useEffect(() => {
+    watcher.setCallback(() => void loadData())
+  }, [watcher, loadData])
+
+  // Start file system watcher
+  useEffect(() => {
+    watcher.start()
+    return () => watcher.stop()
+  }, [watcher])
 
   useEffect(() => {
     if (view === 'diff') {

@@ -2,8 +2,6 @@
 
 A functional Git client built as a Terminal User Interface (TUI) using OpenTUI and React.
 
-test
-
 ## Features
 
 - **Status View**: View and manage staged, unstaged, and untracked files
