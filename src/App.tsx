@@ -3,9 +3,8 @@ import { useKeyboard, useRenderer } from '@opentui/react'
 import { GitClient } from './utils/git'
 import { Header } from './components/Header'
 import { Footer } from './components/Footer'
-import { StatusView } from './components/StatusView'
+import { MainView } from './components/MainView'
 import { LogView } from './components/LogView'
-import { BranchesView } from './components/BranchesView'
 import { DiffView } from './components/DiffView'
 import { CommitModal } from './components/CommitModal'
 import { ExitModal } from './components/ExitModal'
@@ -17,7 +16,8 @@ import type { Command } from './types/commands'
 export function App({ cwd }: { cwd: string }) {
   const renderer = useRenderer()
   const [git] = useState(() => new GitClient(cwd))
-  const [view, setView] = useState<View>('status')
+  const [view, setView] = useState<View>('main')
+  const [focusedPanel, setFocusedPanel] = useState<'status' | 'branches'>('status')
   const [status, setStatus] = useState<GitStatus>({
     branch: '',
     ahead: 0,
@@ -141,16 +141,18 @@ export function App({ cwd }: { cwd: string }) {
 
   const getMaxIndex = useCallback(() => {
     switch (view) {
-      case 'status':
-        return status.staged.length + status.unstaged.length + status.untracked.length - 1
+      case 'main':
+        if (focusedPanel === 'status') {
+          return status.staged.length + status.unstaged.length + status.untracked.length - 1
+        } else {
+          return branches.filter((b) => !b.remote).length - 1
+        }
       case 'log':
         return commits.length - 1
-      case 'branches':
-        return branches.filter((b) => !b.remote).length - 1
       default:
         return 0
     }
-  }, [view, status, commits, branches])
+  }, [view, focusedPanel, status, commits, branches])
 
   // Define available commands
   const commands: Command[] = [
@@ -162,12 +164,12 @@ export function App({ cwd }: { cwd: string }) {
       execute: () => setShowSettingsModal(true),
     },
     {
-      id: 'view-status',
-      label: 'View: Status',
-      description: 'Show git status with staged/unstaged files',
+      id: 'view-main',
+      label: 'View: Main',
+      description: 'Show status and branches side by side',
       shortcut: '1',
       execute: () => {
-        setView('status')
+        setView('main')
         setSelectedIndex(0)
       },
     },
@@ -182,21 +184,33 @@ export function App({ cwd }: { cwd: string }) {
       },
     },
     {
-      id: 'view-branches',
-      label: 'View: Branches',
-      description: 'Show local and remote branches',
+      id: 'view-diff',
+      label: 'View: Diff',
+      description: 'Show file differences',
       shortcut: '3',
+      execute: () => setView('diff'),
+    },
+    {
+      id: 'panel-status',
+      label: 'Panel: Status',
+      description: 'Focus status panel',
+      shortcut: '[',
       execute: () => {
-        setView('branches')
+        setView('main')
+        setFocusedPanel('status')
         setSelectedIndex(0)
       },
     },
     {
-      id: 'view-diff',
-      label: 'View: Diff',
-      description: 'Show file differences',
-      shortcut: '4',
-      execute: () => setView('diff'),
+      id: 'panel-branches',
+      label: 'Panel: Branches',
+      description: 'Focus branches panel',
+      shortcut: ']',
+      execute: () => {
+        setView('main')
+        setFocusedPanel('branches')
+        setSelectedIndex(0)
+      },
     },
     {
       id: 'commit',
@@ -259,16 +273,24 @@ export function App({ cwd }: { cwd: string }) {
 
     // View switching
     if (key.sequence === '1') {
-      setView('status')
+      setView('main')
       setSelectedIndex(0)
     } else if (key.sequence === '2') {
       setView('log')
       setSelectedIndex(0)
     } else if (key.sequence === '3') {
-      setView('branches')
-      setSelectedIndex(0)
-    } else if (key.sequence === '4') {
       setView('diff')
+    }
+
+    // Panel switching (when in main view)
+    if (view === 'main') {
+      if (key.sequence === '[') {
+        setFocusedPanel('status')
+        setSelectedIndex(0)
+      } else if (key.sequence === ']') {
+        setFocusedPanel('branches')
+        setSelectedIndex(0)
+      }
     }
 
     // Navigation
@@ -281,7 +303,7 @@ export function App({ cwd }: { cwd: string }) {
 
     // Actions
     if (key.name === 'return') {
-      if (view === 'branches') {
+      if (view === 'main' && focusedPanel === 'branches') {
         const localBranches = branches.filter((b) => !b.remote)
         const branch = localBranches[selectedIndex]
         if (branch && !branch.current) {
@@ -291,7 +313,7 @@ export function App({ cwd }: { cwd: string }) {
     }
 
     if (key.sequence === 's') {
-      if (view === 'status') {
+      if (view === 'main' && focusedPanel === 'status') {
         const allFiles = [...status.staged, ...status.unstaged, ...status.untracked]
         const file = allFiles[selectedIndex]
         if (file && !file.staged) {
@@ -301,7 +323,7 @@ export function App({ cwd }: { cwd: string }) {
     }
 
     if (key.sequence === 'u') {
-      if (view === 'status') {
+      if (view === 'main' && focusedPanel === 'status') {
         const allFiles = [...status.staged, ...status.unstaged, ...status.untracked]
         const file = allFiles[selectedIndex]
         if (file && file.staged) {
@@ -321,9 +343,8 @@ export function App({ cwd }: { cwd: string }) {
 
   const getViewName = (): string => {
     switch (view) {
-      case 'status': return 'Status'
+      case 'main': return focusedPanel === 'status' ? 'Main (Status)' : 'Main (Branches)'
       case 'log': return 'Log'
-      case 'branches': return 'Branches'
       case 'diff': return 'Diff'
     }
   }
@@ -337,13 +358,14 @@ export function App({ cwd }: { cwd: string }) {
         view={getViewName()}
       />
       
-      {view === 'status' && (
-        <StatusView
+      {view === 'main' && (
+        <MainView
           staged={status.staged}
           unstaged={status.unstaged}
           untracked={status.untracked}
+          branches={branches}
           selectedIndex={selectedIndex}
-          focused={!showCommitModal}
+          focusedPanel={focusedPanel}
           onStage={handleStage}
           onUnstage={handleUnstage}
         />
@@ -352,14 +374,6 @@ export function App({ cwd }: { cwd: string }) {
       {view === 'log' && (
         <LogView
           commits={commits}
-          selectedIndex={selectedIndex}
-          focused={!showCommitModal}
-        />
-      )}
-
-      {view === 'branches' && (
-        <BranchesView
-          branches={branches}
           selectedIndex={selectedIndex}
           focused={!showCommitModal}
         />
