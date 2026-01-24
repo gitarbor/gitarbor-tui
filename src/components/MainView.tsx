@@ -1,4 +1,4 @@
-import type { GitFile, GitBranch } from '../types/git'
+import type { GitFile, GitBranch, GitCommit } from '../types/git'
 import { Fieldset } from './Fieldset'
 
 interface MainViewProps {
@@ -6,8 +6,9 @@ interface MainViewProps {
   unstaged: GitFile[]
   untracked: GitFile[]
   branches: GitBranch[]
+  commits: GitCommit[]
   selectedIndex: number
-  focusedPanel: 'status' | 'branches'
+  focusedPanel: 'status' | 'branches' | 'log'
   onStage: (path: string) => void
   onUnstage: (path: string) => void
 }
@@ -17,6 +18,7 @@ export function MainView({
   unstaged,
   untracked,
   branches,
+  commits,
   selectedIndex,
   focusedPanel,
 }: MainViewProps) {
@@ -47,73 +49,109 @@ export function MainView({
   const remoteBranches = branches.filter((b) => b.remote)
 
   return (
-    <box width="100%" flexGrow={1} flexDirection="row">
+    <box width="100%" flexGrow={1} flexDirection="column">
+      <box width="100%" flexGrow={1} flexDirection="row">
+        <Fieldset
+          title="Working Directory Status"
+          focused={focusedPanel === 'status'}
+          flexGrow={1}
+          paddingX={1}
+          paddingY={0}
+        >
+          <box flexDirection="column">
+            {allFiles.length === 0 ? (
+              <text fg="#999999">No changes</text>
+            ) : (
+              allFiles.map((file, idx) => {
+                const isSelected = idx === selectedIndex && focusedPanel === 'status'
+                const symbol = getStatusSymbol(file.status, file.section)
+                const color = getSectionColor(file.section)
+                
+                return (
+                  <box key={file.path} flexDirection="row">
+                    <text fg={isSelected ? '#CC8844' : '#555555'}>
+                      {isSelected ? '>' : ' '}
+                    </text>
+                    <text fg={color}> {symbol} </text>
+                    <text fg={isSelected ? '#FFFFFF' : '#CCCCCC'}>
+                      {file.path}
+                    </text>
+                    <text fg="#666666"> ({file.section})</text>
+                  </box>
+                )
+              })
+            )}
+          </box>
+        </Fieldset>
+
+        <Fieldset
+          title="Branches"
+          focused={focusedPanel === 'branches'}
+          flexGrow={1}
+          paddingX={1}
+          paddingY={0}
+        >
+          <box flexDirection="column">
+            <text fg="#00FF00">Local:</text>
+            {localBranches.map((branch, idx) => {
+              const isSelected = idx === selectedIndex && focusedPanel === 'branches'
+              
+              return (
+                <box key={branch.name} flexDirection="row">
+                  <text fg={isSelected ? '#CC8844' : '#555555'}>
+                    {isSelected ? '>' : ' '}
+                  </text>
+                  <text fg={branch.current ? '#00FF00' : '#CCCCCC'}>
+                    {branch.current ? '* ' : '  '}
+                    {branch.name}
+                  </text>
+                </box>
+              )
+            })}
+            <text> </text>
+            <text fg="#00FFFF">Remote:</text>
+            {remoteBranches.slice(0, 10).map((branch) => {
+              return (
+                <box key={branch.name} flexDirection="row">
+                  <text fg="#999999">  {branch.name}</text>
+                </box>
+              )
+            })}
+          </box>
+        </Fieldset>
+      </box>
+
       <Fieldset
-        title="Working Directory Status"
-        focused={focusedPanel === 'status'}
-        flexGrow={1}
+        title="Commit History"
+        focused={focusedPanel === 'log'}
+        height="40%"
         paddingX={1}
         paddingY={0}
       >
         <box flexDirection="column">
-          {allFiles.length === 0 ? (
-            <text fg="#999999">No changes</text>
+          {commits.length === 0 ? (
+            <text fg="#999999">No commits</text>
           ) : (
-            allFiles.map((file, idx) => {
-              const isSelected = idx === selectedIndex && focusedPanel === 'status'
-              const symbol = getStatusSymbol(file.status, file.section)
-              const color = getSectionColor(file.section)
+            commits.slice(0, 10).map((commit, idx) => {
+              const isSelected = idx === selectedIndex && focusedPanel === 'log'
               
               return (
-                <box key={file.path} flexDirection="row">
+                <box key={commit.hash} flexDirection="row">
                   <text fg={isSelected ? '#CC8844' : '#555555'}>
                     {isSelected ? '>' : ' '}
                   </text>
-                  <text fg={color}> {symbol} </text>
+                  <text fg="#FFFF00"> {commit.shortHash} </text>
+                  <text fg="#999999">{commit.date}</text>
+                  <text fg="#999999"> - </text>
+                  <text fg="#00FFFF">{commit.author}</text>
+                  <text fg="#999999"> - </text>
                   <text fg={isSelected ? '#FFFFFF' : '#CCCCCC'}>
-                    {file.path}
+                    {commit.message}
                   </text>
-                  <text fg="#666666"> ({file.section})</text>
                 </box>
               )
             })
           )}
-        </box>
-      </Fieldset>
-
-      <Fieldset
-        title="Branches"
-        focused={focusedPanel === 'branches'}
-        flexGrow={1}
-        paddingX={1}
-        paddingY={0}
-      >
-        <box flexDirection="column">
-          <text fg="#00FF00">Local:</text>
-          {localBranches.map((branch, idx) => {
-            const isSelected = idx === selectedIndex && focusedPanel === 'branches'
-            
-            return (
-              <box key={branch.name} flexDirection="row">
-                <text fg={isSelected ? '#CC8844' : '#555555'}>
-                  {isSelected ? '>' : ' '}
-                </text>
-                <text fg={branch.current ? '#00FF00' : '#CCCCCC'}>
-                  {branch.current ? '* ' : '  '}
-                  {branch.name}
-                </text>
-              </box>
-            )
-          })}
-          <text> </text>
-          <text fg="#00FFFF">Remote:</text>
-          {remoteBranches.slice(0, 10).map((branch) => {
-            return (
-              <box key={branch.name} flexDirection="row">
-                <text fg="#999999">  {branch.name}</text>
-              </box>
-            )
-          })}
         </box>
       </Fieldset>
     </box>

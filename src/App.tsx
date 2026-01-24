@@ -17,7 +17,7 @@ export function App({ cwd }: { cwd: string }) {
   const renderer = useRenderer()
   const [git] = useState(() => new GitClient(cwd))
   const [view, setView] = useState<View>('main')
-  const [focusedPanel, setFocusedPanel] = useState<'status' | 'branches'>('status')
+  const [focusedPanel, setFocusedPanel] = useState<'status' | 'branches' | 'log'>('status')
   const [status, setStatus] = useState<GitStatus>({
     branch: '',
     ahead: 0,
@@ -144,8 +144,10 @@ export function App({ cwd }: { cwd: string }) {
       case 'main':
         if (focusedPanel === 'status') {
           return status.staged.length + status.unstaged.length + status.untracked.length - 1
-        } else {
+        } else if (focusedPanel === 'branches') {
           return branches.filter((b) => !b.remote).length - 1
+        } else {
+          return Math.min(commits.length - 1, 9) // log panel shows max 10 commits
         }
       case 'log':
         return commits.length - 1
@@ -176,7 +178,7 @@ export function App({ cwd }: { cwd: string }) {
     {
       id: 'view-log',
       label: 'View: Log',
-      description: 'Show commit history',
+      description: 'Show commit history (full screen)',
       shortcut: '2',
       execute: () => {
         setView('log')
@@ -209,6 +211,17 @@ export function App({ cwd }: { cwd: string }) {
       execute: () => {
         setView('main')
         setFocusedPanel('branches')
+        setSelectedIndex(0)
+      },
+    },
+    {
+      id: 'panel-log',
+      label: 'Panel: Log',
+      description: 'Focus log panel',
+      shortcut: '\\',
+      execute: () => {
+        setView('main')
+        setFocusedPanel('log')
         setSelectedIndex(0)
       },
     },
@@ -290,6 +303,9 @@ export function App({ cwd }: { cwd: string }) {
       } else if (key.sequence === ']') {
         setFocusedPanel('branches')
         setSelectedIndex(0)
+      } else if (key.sequence === '\\') {
+        setFocusedPanel('log')
+        setSelectedIndex(0)
       }
     }
 
@@ -343,7 +359,11 @@ export function App({ cwd }: { cwd: string }) {
 
   const getViewName = (): string => {
     switch (view) {
-      case 'main': return focusedPanel === 'status' ? 'Main (Status)' : 'Main (Branches)'
+      case 'main': {
+        if (focusedPanel === 'status') return 'Main (Status)'
+        if (focusedPanel === 'branches') return 'Main (Branches)'
+        return 'Main (Log)'
+      }
       case 'log': return 'Log'
       case 'diff': return 'Diff'
     }
@@ -364,6 +384,7 @@ export function App({ cwd }: { cwd: string }) {
           unstaged={status.unstaged}
           untracked={status.untracked}
           branches={branches}
+          commits={commits}
           selectedIndex={selectedIndex}
           focusedPanel={focusedPanel}
           onStage={handleStage}
