@@ -70,9 +70,7 @@ export function CommandPalette({ commands, onClose }: CommandPaletteProps) {
           flexGrow={1}
           style={{ overflow: 'hidden' }}
         >
-          {search.trim().length === 0 ? (
-            <text fg="#999999">Type to search for commands...</text>
-          ) : filteredCommands.length === 0 ? (
+          {search.trim().length === 0 ? null : filteredCommands.length === 0 ? (
             <text fg="#999999">No commands found</text>
           ) : (
             filteredCommands.slice(0, 10).map((cmd, index) => (
