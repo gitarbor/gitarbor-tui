@@ -51,9 +51,11 @@ export function App({ cwd }: { cwd: string }) {
     }
   }, [renderer])
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (silent: boolean = false) => {
     try {
-      setLoading(true)
+      if (!silent) {
+        setLoading(true)
+      }
       const [statusData, commitsData, branchesData] = await Promise.all([
         git.getStatus(),
         git.getLog(50),
@@ -62,11 +64,15 @@ export function App({ cwd }: { cwd: string }) {
       setStatus(statusData)
       setCommits(commitsData)
       setBranches(branchesData)
-      setMessage('Data loaded')
+      if (!silent) {
+        setMessage('Data loaded')
+      }
     } catch (error) {
       setMessage(`Error: ${error}`)
     } finally {
-      setLoading(false)
+      if (!silent) {
+        setLoading(false)
+      }
     }
   }, [git])
 
@@ -90,12 +96,12 @@ export function App({ cwd }: { cwd: string }) {
   }, [git, status, selectedIndex])
 
   useEffect(() => {
-    void loadData()
+    void loadData(true)
   }, [loadData])
 
   // Update watcher callback when loadData changes
   useEffect(() => {
-    watcher.setCallback(() => void loadData())
+    watcher.setCallback(() => void loadData(true))
   }, [watcher, loadData])
 
   // Start file system watcher
@@ -113,7 +119,7 @@ export function App({ cwd }: { cwd: string }) {
   const handleStage = useCallback(async (path: string) => {
     try {
       await git.stageFile(path)
-      await loadData()
+      await loadData(true)
       setMessage(`Staged: ${path}`)
     } catch (error) {
       setMessage(`Error staging: ${error}`)
@@ -123,7 +129,7 @@ export function App({ cwd }: { cwd: string }) {
   const handleUnstage = useCallback(async (path: string) => {
     try {
       await git.unstageFile(path)
-      await loadData()
+      await loadData(true)
       setMessage(`Unstaged: ${path}`)
     } catch (error) {
       setMessage(`Error unstaging: ${error}`)
@@ -133,7 +139,7 @@ export function App({ cwd }: { cwd: string }) {
   const handleCommit = useCallback(async (commitMessage: string) => {
     try {
       await git.commit(commitMessage)
-      await loadData()
+      await loadData(true)
       setMessage(`Committed: ${commitMessage}`)
       setShowCommitModal(false)
     } catch (error) {
@@ -145,7 +151,7 @@ export function App({ cwd }: { cwd: string }) {
   const handleCheckout = useCallback(async (branch: string) => {
     try {
       await git.checkout(branch)
-      await loadData()
+      await loadData(true)
       setMessage(`Switched to branch: ${branch}`)
     } catch (error) {
       setMessage(`Error checking out: ${error}`)
