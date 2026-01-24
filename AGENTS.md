@@ -58,6 +58,7 @@ import { GitClient } from './utils/git'  // Runtime import
 ```
 src/
 ├── App.tsx              # Main app component with state & keyboard handlers
+├── theme.ts             # Theme configuration and design tokens
 ├── types/               # TypeScript type definitions
 │   ├── git.ts          # Git-related interfaces
 │   └── commands.ts     # Command palette types
@@ -79,14 +80,16 @@ src/
 
 ### Import Order
 1. External dependencies (React, OpenTUI)
-2. Internal utils/classes
-3. Components
-4. Type imports (always with `type` keyword)
+2. Theme (if needed)
+3. Internal utils/classes
+4. Components
+5. Type imports (always with `type` keyword)
 
 Example:
 ```typescript
 import { useState, useEffect, useCallback } from 'react'
 import { useKeyboard, useRenderer } from '@opentui/react'
+import { theme } from './theme'
 import { GitClient } from './utils/git'
 import { Header } from './components/Header'
 import type { GitStatus, GitCommit, View } from './types/git'
@@ -160,19 +163,65 @@ Common props:
 </box>
 ```
 
-### Color Scheme (Consistent Usage)
+### Theme System
+
+**IMPORTANT**: Always use design tokens from `src/theme.ts` for colors, spacing, and borders. Never hardcode style values.
+
+#### Using the Theme
+Import and use theme tokens in all components:
 ```typescript
-'#CC8844'  // Primary (focus/selected) - orange
-'#BB7733'  // Secondary - darker orange
-'#555555'  // Borders (unfocused)
-'#999999'  // Muted text
-'#00FF00'  // Success/Staged - green
-'#FFFF00'  // Modified/Unstaged - yellow
-'#00FFFF'  // Info - cyan
-'#FF0000'  // Deletions - red
-'#FFFFFF'  // Primary text
-'#CCCCCC'  // Secondary text
+import { theme } from '../theme'
+
+// Colors
+<text fg={theme.colors.primary}>Highlighted</text>
+<text fg={theme.colors.text.muted}>Muted text</text>
+<text fg={theme.colors.git.staged}>Staged file</text>
+<box borderColor={theme.colors.border}>...</box>
+
+// Spacing
+<box padding={theme.spacing.none}>...</box>
+<box paddingLeft={theme.spacing.xs}>...</box>
+
+// Borders
+<box borderStyle={theme.borders.style}>...</box>
 ```
+
+#### Available Theme Tokens
+
+**Colors:**
+- `theme.colors.primary` - Primary accent (#CC8844 orange)
+- `theme.colors.primaryDark` - Darker accent (#BB7733)
+- `theme.colors.border` - Unfocused borders (#555555)
+- `theme.colors.borderFocused` - Focused borders (#CC8844)
+- `theme.colors.text.primary` - Main text (#FFFFFF)
+- `theme.colors.text.secondary` - Secondary text (#CCCCCC)
+- `theme.colors.text.muted` - Muted/disabled text (#999999)
+- `theme.colors.git.staged` - Staged files (#00FF00 green)
+- `theme.colors.git.modified` - Modified files (#FFFF00 yellow)
+- `theme.colors.git.untracked` - Untracked files (#CCCCCC)
+- `theme.colors.git.deleted` - Deleted files/lines (#FF0000 red)
+- `theme.colors.git.added` - Added lines (#00FF00 green)
+- `theme.colors.status.success` - Success messages (#00FF00)
+- `theme.colors.status.error` - Error messages (#FF0000)
+- `theme.colors.status.warning` - Warnings (#FFFF00)
+- `theme.colors.status.info` - Info messages (#00FFFF)
+
+**Spacing:**
+- `theme.spacing.none` - 0
+- `theme.spacing.xs` - 1
+- `theme.spacing.sm` - 2
+- `theme.spacing.md` - 3
+- `theme.spacing.lg` - 4
+- `theme.spacing.xl` - 5
+
+**Borders:**
+- `theme.borders.style` - 'single'
+
+#### Why Use Theme Tokens?
+- Enables future theme switching (light/dark modes, custom themes)
+- Maintains consistency across the application
+- Easier to update colors/spacing globally
+- Self-documenting code (semantic names vs hex codes)
 
 ### Async/Await & Promises
 
