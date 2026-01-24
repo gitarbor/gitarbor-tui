@@ -8,6 +8,7 @@ import { LogView } from './components/LogView'
 import { BranchesView } from './components/BranchesView'
 import { DiffView } from './components/DiffView'
 import { CommitModal } from './components/CommitModal'
+import { ExitModal } from './components/ExitModal'
 import type { GitStatus, GitCommit, GitBranch, View } from './types/git'
 
 export function App({ cwd }: { cwd: string }) {
@@ -27,6 +28,7 @@ export function App({ cwd }: { cwd: string }) {
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [message, setMessage] = useState('')
   const [showCommitModal, setShowCommitModal] = useState(false)
+  const [showExitModal, setShowExitModal] = useState(false)
   const [loading, setLoading] = useState(false)
 
   const loadData = useCallback(async () => {
@@ -133,10 +135,21 @@ export function App({ cwd }: { cwd: string }) {
   }, [view, status, commits, branches])
 
   useKeyboard((key) => {
+    if (showExitModal) {
+      // Exit modal handles its own keyboard input
+      return
+    }
+
     if (showCommitModal) {
       if (key.name === 'escape') {
         setShowCommitModal(false)
       }
+      return
+    }
+
+    // ESC or 'q' key should show exit modal
+    if (key.name === 'escape' || key.sequence === 'q') {
+      setShowExitModal(true)
       return
     }
 
@@ -200,10 +213,6 @@ export function App({ cwd }: { cwd: string }) {
         setMessage('No staged files to commit')
       }
     }
-
-    if (key.sequence === 'q') {
-      process.exit(0)
-    }
   })
 
   const getViewName = (): string => {
@@ -265,6 +274,13 @@ export function App({ cwd }: { cwd: string }) {
         <CommitModal
           onCommit={handleCommit}
           onCancel={() => setShowCommitModal(false)}
+        />
+      )}
+
+      {showExitModal && (
+        <ExitModal
+          onConfirm={() => process.exit(0)}
+          onCancel={() => setShowExitModal(false)}
         />
       )}
     </box>

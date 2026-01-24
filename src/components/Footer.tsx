@@ -12,7 +12,7 @@ export function Footer({ message }: FooterProps) {
       padding={0}
     >
       <box paddingLeft={1} paddingTop={0}>
-        <text fg="#999999">Commands: [1-4] Switch View | [Enter] Select/Action | [s] Stage | [u] Unstage | [c] Commit | [q] Quit</text>
+        <text fg="#999999">Commands: [1-4] Switch View | [Enter] Select/Action | [s] Stage | [u] Unstage | [c] Commit | [ESC/q] Exit</text>
         {message && (
           <text fg="#CC8844">{message}</text>
         )}
