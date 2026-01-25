@@ -17,6 +17,9 @@ import { StashView } from './components/StashView'
 import { StashModal } from './components/StashModal'
 import { ConfirmModal } from './components/ConfirmModal'
 import { RenameModal } from './components/RenameModal'
+import { BranchModal } from './components/BranchModal'
+import { BranchRenameModal } from './components/BranchRenameModal'
+import { SetUpstreamModal } from './components/SetUpstreamModal'
 import type { GitStatus, GitCommit, GitBranch, GitStash, View } from './types/git'
 import type { Command } from './types/commands'
 
@@ -60,6 +63,11 @@ export function App({ cwd }: { cwd: string }) {
   }>({ title: '', message: '', onConfirm: () => {} })
   const [showRenameModal, setShowRenameModal] = useState(false)
   const [renameFilePath, setRenameFilePath] = useState('')
+  const [showBranchModal, setShowBranchModal] = useState(false)
+  const [showBranchRenameModal, setShowBranchRenameModal] = useState(false)
+  const [branchToRename, setBranchToRename] = useState('')
+  const [showSetUpstreamModal, setShowSetUpstreamModal] = useState(false)
+  const [branchForUpstream, setBranchForUpstream] = useState('')
 
   // Clean exit handler
   const handleExit = useCallback(() => {
@@ -392,6 +400,121 @@ export function App({ cwd }: { cwd: string }) {
     setShowRenameModal(true)
   }, [])
 
+  const handleCreateBranch = useCallback(async (name: string, startPoint?: string) => {
+    try {
+      await git.createBranch(name, startPoint)
+      await loadData(true)
+      setMessage(`Created branch: ${name}`)
+      setShowBranchModal(false)
+    } catch (error) {
+      setMessage(`Error creating branch: ${error}`)
+      setShowBranchModal(false)
+    }
+  }, [git, loadData])
+
+  const handleDeleteBranch = useCallback((branch: string) => {
+    setConfirmModalProps({
+      title: 'Delete Branch?',
+      message: `Are you sure you want to delete branch "${branch}"? This cannot be undone if the branch is not merged.`,
+      onConfirm: async () => {
+        setShowConfirmModal(false)
+        try {
+          await git.deleteBranch(branch, false)
+          await loadData(true)
+          setMessage(`Deleted branch: ${branch}`)
+        } catch (error) {
+          // Try to get merge status to provide better error message
+          const errorMsg = String(error)
+          if (errorMsg.includes('not fully merged')) {
+            setConfirmModalProps({
+              title: 'Force Delete Branch?',
+              message: `Branch "${branch}" is not fully merged. Force delete anyway? This will permanently lose commits.`,
+              onConfirm: async () => {
+                setShowConfirmModal(false)
+                try {
+                  await git.deleteBranch(branch, true)
+                  await loadData(true)
+                  setMessage(`Force deleted branch: ${branch}`)
+                } catch (err) {
+                  setMessage(`Error force deleting branch: ${err}`)
+                }
+              },
+              danger: true,
+            })
+            setShowConfirmModal(true)
+          } else {
+            setMessage(`Error deleting branch: ${error}`)
+          }
+        }
+      },
+      danger: true,
+    })
+    setShowConfirmModal(true)
+  }, [git, loadData])
+
+  const handleDeleteRemoteBranch = useCallback((remoteBranch: string) => {
+    // Parse remote and branch name from "remotes/origin/branch-name"
+    const parts = remoteBranch.replace('remotes/', '').split('/')
+    const remote = parts[0]
+    const branch = parts.slice(1).join('/')
+    
+    if (!remote || !branch) {
+      setMessage('Invalid remote branch format')
+      return
+    }
+
+    setConfirmModalProps({
+      title: 'Delete Remote Branch?',
+      message: `Are you sure you want to delete remote branch "${branch}" on "${remote}"? This will affect all users.`,
+      onConfirm: async () => {
+        setShowConfirmModal(false)
+        try {
+          await git.deleteRemoteBranch(remote, branch)
+          await loadData(true)
+          setMessage(`Deleted remote branch: ${remote}/${branch}`)
+        } catch (error) {
+          setMessage(`Error deleting remote branch: ${error}`)
+        }
+      },
+      danger: true,
+    })
+    setShowConfirmModal(true)
+  }, [git, loadData])
+
+  const handleRenameBranch = useCallback(async (oldName: string, newName: string) => {
+    try {
+      await git.renameBranch(oldName, newName)
+      await loadData(true)
+      setMessage(`Renamed branch: ${oldName} → ${newName}`)
+      setShowBranchRenameModal(false)
+    } catch (error) {
+      setMessage(`Error renaming branch: ${error}`)
+      setShowBranchRenameModal(false)
+    }
+  }, [git, loadData])
+
+  const handleSetUpstream = useCallback(async (branch: string, upstream: string) => {
+    try {
+      await git.setUpstream(branch, upstream)
+      await loadData(true)
+      setMessage(`Set upstream for ${branch}: ${upstream}`)
+      setShowSetUpstreamModal(false)
+    } catch (error) {
+      setMessage(`Error setting upstream: ${error}`)
+      setShowSetUpstreamModal(false)
+    }
+  }, [git, loadData])
+
+  const handleUnsetUpstream = useCallback(async (branch: string) => {
+    try {
+      await git.unsetUpstream(branch)
+      await loadData(true)
+      setMessage(`Unset upstream for ${branch}`)
+    } catch (error) {
+      setMessage(`Error unsetting upstream: ${error}`)
+    }
+  }, [git, loadData])
+
   const getMaxIndex = useCallback(() => {
     switch (view) {
       case 'main':
@@ -602,6 +725,87 @@ export function App({ cwd }: { cwd: string }) {
       },
     },
     {
+      id: 'create-branch',
+      label: 'Create Branch',
+      description: 'Create a new branch from current HEAD or commit',
+      shortcut: 'n (in branches panel)',
+      execute: () => setShowBranchModal(true),
+    },
+    {
+      id: 'delete-branch',
+      label: 'Delete Branch',
+      description: 'Delete selected local branch with safety checks',
+      shortcut: 'D (in branches panel)',
+      execute: () => {
+        if (view === 'main' && focusedPanel === 'branches') {
+          const localBranches = branches.filter((b) => !b.remote)
+          const branch = localBranches[selectedIndex]
+          if (branch && !branch.current) {
+            handleDeleteBranch(branch.name)
+          } else if (branch?.current) {
+            setMessage('Cannot delete current branch')
+          } else {
+            setMessage('No branch selected')
+          }
+        }
+      },
+    },
+    {
+      id: 'rename-branch',
+      label: 'Rename Branch',
+      description: 'Rename selected branch',
+      shortcut: 'R (in branches panel)',
+      execute: () => {
+        if (view === 'main' && focusedPanel === 'branches') {
+          const localBranches = branches.filter((b) => !b.remote)
+          const branch = localBranches[selectedIndex]
+          if (branch) {
+            setBranchToRename(branch.name)
+            setShowBranchRenameModal(true)
+          } else {
+            setMessage('No branch selected')
+          }
+        }
+      },
+    },
+    {
+      id: 'set-upstream',
+      label: 'Set Upstream Branch',
+      description: 'Set tracking upstream for selected branch',
+      shortcut: 'u (in branches panel)',
+      execute: () => {
+        if (view === 'main' && focusedPanel === 'branches') {
+          const localBranches = branches.filter((b) => !b.remote)
+          const branch = localBranches[selectedIndex]
+          if (branch) {
+            setBranchForUpstream(branch.name)
+            setShowSetUpstreamModal(true)
+          } else {
+            setMessage('No branch selected')
+          }
+        }
+      },
+    },
+    {
+      id: 'unset-upstream',
+      label: 'Unset Upstream Branch',
+      description: 'Remove tracking upstream from selected branch',
+      shortcut: 'U (in branches panel)',
+      execute: () => {
+        if (view === 'main' && focusedPanel === 'branches') {
+          const localBranches = branches.filter((b) => !b.remote)
+          const branch = localBranches[selectedIndex]
+          if (branch && branch.upstream) {
+            void handleUnsetUpstream(branch.name)
+          } else if (branch && !branch.upstream) {
+            setMessage('Branch has no upstream set')
+          } else {
+            setMessage('No branch selected')
+          }
+        }
+      },
+    },
+    {
       id: 'exit',
       label: 'Exit',
       description: 'Exit the application',
@@ -611,7 +815,7 @@ export function App({ cwd }: { cwd: string }) {
   ]
 
   useKeyboard((key) => {
-    if (showExitModal || showCommandPalette || showSettingsModal || showProgressModal || showConfirmModal || showRenameModal) {
+    if (showExitModal || showCommandPalette || showSettingsModal || showProgressModal || showConfirmModal || showRenameModal || showBranchModal || showBranchRenameModal || showSetUpstreamModal) {
       // Modals handle their own keyboard input
       return
     }
@@ -688,6 +892,39 @@ export function App({ cwd }: { cwd: string }) {
         if (branch && !branch.current) {
           void handleCheckout(branch.name)
         }
+      }
+    }
+
+    // Branch operations (when in branches panel)
+    if (view === 'main' && focusedPanel === 'branches') {
+      const localBranches = branches.filter((b) => !b.remote)
+      const branch = localBranches[selectedIndex]
+
+      // 'n' key to create new branch
+      if (key.sequence === 'n') {
+        setShowBranchModal(true)
+      }
+
+      // 'D' key to delete branch
+      if (key.sequence === 'D' && branch && !branch.current) {
+        handleDeleteBranch(branch.name)
+      }
+
+      // 'R' key to rename branch
+      if (key.sequence === 'R' && branch) {
+        setBranchToRename(branch.name)
+        setShowBranchRenameModal(true)
+      }
+
+      // 'u' key to set upstream
+      if (key.sequence === 'u' && branch) {
+        setBranchForUpstream(branch.name)
+        setShowSetUpstreamModal(true)
+      }
+
+      // 'U' key to unset upstream
+      if (key.sequence === 'U' && branch && branch.upstream) {
+        void handleUnsetUpstream(branch.name)
       }
     }
 
@@ -915,6 +1152,31 @@ export function App({ cwd }: { cwd: string }) {
           currentPath={renameFilePath}
           onRename={(newPath) => void handleRenameFile(renameFilePath, newPath)}
           onCancel={() => setShowRenameModal(false)}
+        />
+      )}
+
+      {showBranchModal && (
+        <BranchModal
+          onCreateBranch={handleCreateBranch}
+          onCancel={() => setShowBranchModal(false)}
+          currentCommit={commits[0]?.shortHash}
+        />
+      )}
+
+      {showBranchRenameModal && (
+        <BranchRenameModal
+          currentName={branchToRename}
+          onRenameBranch={handleRenameBranch}
+          onCancel={() => setShowBranchRenameModal(false)}
+        />
+      )}
+
+      {showSetUpstreamModal && (
+        <SetUpstreamModal
+          branch={branchForUpstream}
+          remoteBranches={branches.filter((b) => b.remote)}
+          onSetUpstream={handleSetUpstream}
+          onCancel={() => setShowSetUpstreamModal(false)}
         />
       )}
     </box>

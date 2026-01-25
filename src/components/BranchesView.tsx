@@ -27,14 +27,32 @@ export function BranchesView({ branches, selectedIndex, focused }: BranchesViewP
           const isSelected = idx === selectedIndex
           
           return (
-            <box key={branch.name} flexDirection="row">
-              <text fg={isSelected ? theme.colors.primary : theme.colors.border}>
-                {isSelected ? '>' : ' '}
-              </text>
-              <text fg={branch.current ? theme.colors.git.staged : theme.colors.text.secondary}>
-                {branch.current ? '* ' : '  '}
-                {branch.name}
-              </text>
+            <box key={branch.name} flexDirection="column">
+              <box flexDirection="row">
+                <text fg={isSelected ? theme.colors.primary : theme.colors.border}>
+                  {isSelected ? '>' : ' '}
+                </text>
+                <text fg={branch.current ? theme.colors.git.staged : theme.colors.text.secondary}>
+                  {branch.current ? '* ' : '  '}
+                  {branch.name}
+                </text>
+                {branch.lastCommitDate && (
+                  <>
+                    <text> </text>
+                    <text fg={theme.colors.text.muted}>({branch.lastCommitDate})</text>
+                  </>
+                )}
+              </box>
+              {branch.upstream && (
+                <box flexDirection="row" paddingLeft={theme.spacing.md}>
+                  <text fg={theme.colors.text.muted}>↑ {branch.upstream}</text>
+                </box>
+              )}
+              {branch.description && (
+                <box flexDirection="row" paddingLeft={theme.spacing.md}>
+                  <text fg={theme.colors.status.info}>ℹ {branch.description}</text>
+                </box>
+              )}
             </box>
           )
         })}

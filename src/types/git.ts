@@ -25,6 +25,11 @@ export interface GitBranch {
   name: string
   current: boolean
   remote: boolean
+  upstream?: string
+  lastCommitDate?: string
+  description?: string
+  ahead?: number
+  behind?: number
 }
 
 export interface GitStash {

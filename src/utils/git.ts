@@ -79,19 +79,147 @@ export class GitClient {
 
   async getBranches(): Promise<GitBranch[]> {
     try {
-      const { stdout } = await execAsync('git branch -a', { cwd: this.cwd })
+      // Get branch list with verbose info
+      const { stdout } = await execAsync(
+        'git branch -a -vv --format="%(refname:short)|%(upstream:short)|%(authordate:relative)|%(HEAD)"',
+        { cwd: this.cwd }
+      )
       
-      return stdout
+      const branches = stdout
         .split('\n')
         .filter((line) => line)
         .map((line) => {
-          const current = line.startsWith('*')
-          const name = line.replace(/^\*?\s+/, '').trim()
-          const remote = name.startsWith('remotes/')
-          return { name, current, remote }
+          const [name, upstream, date, head] = line.split('|')
+          const remote = name!.startsWith('remotes/')
+          const current = head === '*'
+          
+          const branch: GitBranch = {
+            name: name!,
+            current,
+            remote,
+          }
+          
+          if (upstream) {
+            branch.upstream = upstream
+          }
+          if (date) {
+            branch.lastCommitDate = date
+          }
+          
+          return branch
         })
+
+      // Try to get branch descriptions
+      for (const branch of branches) {
+        if (!branch.remote) {
+          try {
+            const { stdout: desc } = await execAsync(
+              `git config branch.${branch.name}.description`,
+              { cwd: this.cwd }
+            )
+            const trimmed = desc.trim()
+            if (trimmed.length > 0) {
+              branch.description = trimmed
+            }
+          } catch {
+            // No description set
+          }
+        }
+      }
+
+      return branches
     } catch (error) {
       throw new Error(`Failed to get branches: ${error}`)
+    }
+  }
+
+  async createBranch(name: string, startPoint?: string): Promise<void> {
+    try {
+      const startArg = startPoint ? ` "${startPoint}"` : ''
+      await execAsync(`git branch "${name}"${startArg}`, { cwd: this.cwd })
+    } catch (error) {
+      throw new Error(`Failed to create branch: ${error}`)
+    }
+  }
+
+  async deleteBranch(name: string, force: boolean = false): Promise<void> {
+    try {
+      const flag = force ? '-D' : '-d'
+      await execAsync(`git branch ${flag} "${name}"`, { cwd: this.cwd })
+    } catch (error) {
+      throw new Error(`Failed to delete branch: ${error}`)
+    }
+  }
+
+  async deleteRemoteBranch(remote: string, branch: string): Promise<void> {
+    try {
+      await execAsync(`git push "${remote}" --delete "${branch}"`, { cwd: this.cwd })
+    } catch (error) {
+      throw new Error(`Failed to delete remote branch: ${error}`)
+    }
+  }
+
+  async renameBranch(oldName: string, newName: string): Promise<void> {
+    try {
+      await execAsync(`git branch -m "${oldName}" "${newName}"`, { cwd: this.cwd })
+    } catch (error) {
+      throw new Error(`Failed to rename branch: ${error}`)
+    }
+  }
+
+  async setUpstream(branch: string, upstream: string): Promise<void> {
+    try {
+      await execAsync(`git branch --set-upstream-to="${upstream}" "${branch}"`, { cwd: this.cwd })
+    } catch (error) {
+      throw new Error(`Failed to set upstream: ${error}`)
+    }
+  }
+
+  async unsetUpstream(branch: string): Promise<void> {
+    try {
+      await execAsync(`git branch --unset-upstream "${branch}"`, { cwd: this.cwd })
+    } catch (error) {
+      throw new Error(`Failed to unset upstream: ${error}`)
+    }
+  }
+
+  async setBranchDescription(branch: string, description: string): Promise<void> {
+    try {
+      await execAsync(
+        `git config branch.${branch}.description "${description.replace(/"/g, '\\"')}"`,
+        { cwd: this.cwd }
+      )
+    } catch (error) {
+      throw new Error(`Failed to set branch description: ${error}`)
+    }
+  }
+
+  async checkBranchMergeStatus(branch: string): Promise<{ merged: boolean; hasUnpushed: boolean }> {
+    try {
+      // Check if branch is merged into current branch
+      let merged = false
+      try {
+        const { stdout } = await execAsync(`git branch --merged`, { cwd: this.cwd })
+        merged = stdout.split('\n').some((line) => line.trim() === branch)
+      } catch {
+        // Error checking merge status
+      }
+
+      // Check if branch has unpushed commits
+      let hasUnpushed = false
+      try {
+        const { stdout } = await execAsync(
+          `git log @{upstream}..HEAD --oneline`,
+          { cwd: this.cwd }
+        )
+        hasUnpushed = stdout.trim().length > 0
+      } catch {
+        // No upstream or error checking
+      }
+
+      return { merged, hasUnpushed }
+    } catch (error) {
+      throw new Error(`Failed to check branch status: ${error}`)
     }
   }
 
