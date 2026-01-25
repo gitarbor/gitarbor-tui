@@ -30,9 +30,6 @@ export function RenameModal({ currentPath, onRename, onCancel }: RenameModalProp
       width={80}
       height={12}
       title="Rename/Move File"
-      centered={false}
-      left={10}
-      top={5}
     >
       {/* Current path */}
       <text fg={theme.colors.text.muted}>Current path:</text>

@@ -33,9 +33,10 @@ export function Modal({
           position: 'absolute',
           width: '100%',
           height: '100%',
-          justifyContent: 'center',
+          justifyContent: 'flex-start',
           alignItems: 'center',
           zIndex: 1000,
+          paddingTop: 3,
         }}
         flexDirection="column"
       >

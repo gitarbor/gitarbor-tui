@@ -31,9 +31,6 @@ export function BranchRenameModal({ currentName, onRenameBranch, onCancel }: Bra
       width={80}
       height={12}
       title="Rename Branch"
-      centered={false}
-      left={10}
-      top={3}
     >
       <text fg={theme.colors.text.muted}>
         Current: <text fg={theme.colors.text.primary}>{currentName}</text>

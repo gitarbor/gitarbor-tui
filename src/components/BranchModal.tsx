@@ -42,9 +42,6 @@ export function BranchModal({ onCreateBranch, onCancel, currentCommit }: BranchM
       width={80}
       height={16}
       title="Create New Branch"
-      centered={false}
-      left={10}
-      top={3}
     >
       {/* Branch name */}
       <text fg={theme.colors.text.muted}>Branch name:</text>

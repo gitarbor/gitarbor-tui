@@ -43,9 +43,6 @@ export function ProgressModal({ title, messages, isComplete, error, onClose }: P
       height={15}
       title={title}
       borderColor={error ? theme.colors.status.error : theme.colors.primary}
-      centered={false}
-      left={10}
-      top={5}
     >
       <box flexDirection="column" flexGrow={1}>
         {visibleMessages.map((msg, idx) => (

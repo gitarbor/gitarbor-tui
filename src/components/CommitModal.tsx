@@ -66,9 +66,6 @@ export function CommitModal({ onCommit, onCancel }: CommitModalProps) {
         width={80}
         height={20}
         title="Commit Message Preview"
-        centered={false}
-        left={10}
-        top={3}
       >
         <box
           borderStyle={theme.borders.style}
@@ -104,9 +101,6 @@ export function CommitModal({ onCommit, onCancel }: CommitModalProps) {
       width={80}
       height={20}
       title="Create Commit"
-      centered={false}
-      left={10}
-      top={3}
     >
       {/* Subject line */}
       <box flexDirection="row">

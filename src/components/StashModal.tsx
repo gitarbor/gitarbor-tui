@@ -29,9 +29,6 @@ export function StashModal({ onStash, onCancel }: StashModalProps) {
       width={80}
       height={12}
       title="Create Stash"
-      centered={false}
-      left={10}
-      top={5}
     >
       <text fg={theme.colors.text.muted}>
         Stash your working directory changes to save them for later.
