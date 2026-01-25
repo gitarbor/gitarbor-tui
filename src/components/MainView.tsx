@@ -1,8 +1,9 @@
 import { useMemo } from 'react'
 import { SyntaxStyle, parseColor } from '@opentui/core'
 import { theme } from '../theme'
-import type { GitFile, GitBranch, GitCommit, GitMergeState, GitStash, GitRemote } from '../types/git'
+import type { GitFile, GitBranch, GitCommit, GitMergeState, GitStash, GitRemote, CommandLogEntry } from '../types/git'
 import { Fieldset } from './Fieldset'
+import { CommandLogView } from './CommandLogView'
 
 interface MainViewProps {
   staged: GitFile[]
@@ -23,6 +24,8 @@ interface MainViewProps {
   behind: number
   diff: string
   selectedFilePath?: string
+  commandLog: CommandLogEntry[]
+  showCommandLog: boolean
 }
 
 export function MainView({
@@ -42,6 +45,8 @@ export function MainView({
   behind,
   diff,
   selectedFilePath,
+  commandLog,
+  showCommandLog,
 }: MainViewProps) {
   // Create syntax style for diff component
   const syntaxStyle = useMemo(() => SyntaxStyle.fromStyles({
@@ -126,9 +131,10 @@ export function MainView({
   const untrackedFiles = untracked.map((f) => ({ ...f, section: 'untracked' }))
 
   return (
-    <box width="100%" flexGrow={1} flexDirection="row">
-      {/* Left column: Working Directory and Branches/Remotes */}
-      <box width="40%" flexDirection="column">
+    <box width="100%" flexGrow={1} flexDirection="column">
+      <box width="100%" flexGrow={1} flexDirection="row">
+        {/* Left column: Working Directory and Branches/Remotes */}
+        <box width="40%" flexDirection="column">
         <Fieldset
           title="Working Directory"
           focused={focusedPanel === 'status'}
@@ -443,5 +449,11 @@ export function MainView({
         </Fieldset>
       </box>
     </box>
+
+    {/* Command Log at bottom */}
+    {showCommandLog && (
+      <CommandLogView commandLog={commandLog} maxHeight={10} />
+    )}
+  </box>
   )
 }

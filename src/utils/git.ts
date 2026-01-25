@@ -3,12 +3,53 @@ import { promisify } from 'util'
 import { readFile } from 'fs/promises'
 import { existsSync } from 'fs'
 import { join } from 'path'
-import type { GitStatus, GitFile, GitCommit, GitBranch, GitStash, GitRemote, GitMergeState, GitConflict, MergeStrategy, ConflictMarker } from '../types/git'
+import type { GitStatus, GitFile, GitCommit, GitBranch, GitStash, GitRemote, GitMergeState, GitConflict, MergeStrategy, ConflictMarker, CommandLogEntry } from '../types/git'
 
 const execAsync = promisify(exec)
 
 export class GitClient {
+  private commandLog: CommandLogEntry[] = []
+  private readonly maxLogEntries = 100
+
   constructor(private cwd: string) {}
+
+  private async logCommand(command: string, execute: () => Promise<void>): Promise<void> {
+    const startTime = Date.now()
+    const timestamp = new Date()
+    let success = true
+    let error: string | undefined
+
+    try {
+      await execute()
+    } catch (err) {
+      success = false
+      error = String(err)
+      throw err
+    } finally {
+      const duration = Date.now() - startTime
+      
+      this.commandLog.unshift({
+        timestamp,
+        command,
+        duration,
+        success,
+        error,
+      })
+
+      // Keep only the most recent entries
+      if (this.commandLog.length > this.maxLogEntries) {
+        this.commandLog = this.commandLog.slice(0, this.maxLogEntries)
+      }
+    }
+  }
+
+  getCommandLog(): CommandLogEntry[] {
+    return [...this.commandLog]
+  }
+
+  clearCommandLog(): void {
+    this.commandLog = []
+  }
 
   async getStatus(): Promise<GitStatus> {
     try {
@@ -137,21 +178,25 @@ export class GitClient {
   }
 
   async createBranch(name: string, startPoint?: string): Promise<void> {
-    try {
-      const startArg = startPoint ? ` "${startPoint}"` : ''
-      await execAsync(`git branch "${name}"${startArg}`, { cwd: this.cwd })
-    } catch (error) {
-      throw new Error(`Failed to create branch: ${error}`)
-    }
+    const startArg = startPoint ? ` "${startPoint}"` : ''
+    await this.logCommand(`git branch "${name}"${startArg}`, async () => {
+      try {
+        await execAsync(`git branch "${name}"${startArg}`, { cwd: this.cwd })
+      } catch (error) {
+        throw new Error(`Failed to create branch: ${error}`)
+      }
+    })
   }
 
   async deleteBranch(name: string, force: boolean = false): Promise<void> {
-    try {
-      const flag = force ? '-D' : '-d'
-      await execAsync(`git branch ${flag} "${name}"`, { cwd: this.cwd })
-    } catch (error) {
-      throw new Error(`Failed to delete branch: ${error}`)
-    }
+    const flag = force ? '-D' : '-d'
+    await this.logCommand(`git branch ${flag} "${name}"`, async () => {
+      try {
+        await execAsync(`git branch ${flag} "${name}"`, { cwd: this.cwd })
+      } catch (error) {
+        throw new Error(`Failed to delete branch: ${error}`)
+      }
+    })
   }
 
   async deleteRemoteBranch(remote: string, branch: string): Promise<void> {
@@ -163,11 +208,13 @@ export class GitClient {
   }
 
   async renameBranch(oldName: string, newName: string): Promise<void> {
-    try {
-      await execAsync(`git branch -m "${oldName}" "${newName}"`, { cwd: this.cwd })
-    } catch (error) {
-      throw new Error(`Failed to rename branch: ${error}`)
-    }
+    await this.logCommand(`git branch -m "${oldName}" "${newName}"`, async () => {
+      try {
+        await execAsync(`git branch -m "${oldName}" "${newName}"`, { cwd: this.cwd })
+      } catch (error) {
+        throw new Error(`Failed to rename branch: ${error}`)
+      }
+    })
   }
 
   async setUpstream(branch: string, upstream: string): Promise<void> {
@@ -227,45 +274,54 @@ export class GitClient {
   }
 
   async stageFile(path: string): Promise<void> {
-    try {
-      await execAsync(`git add "${path}"`, { cwd: this.cwd })
-    } catch (error) {
-      throw new Error(`Failed to stage file: ${error}`)
-    }
+    await this.logCommand(`git add "${path}"`, async () => {
+      try {
+        await execAsync(`git add "${path}"`, { cwd: this.cwd })
+      } catch (error) {
+        throw new Error(`Failed to stage file: ${error}`)
+      }
+    })
   }
 
   async stageAll(): Promise<void> {
-    try {
-      await execAsync('git add -A', { cwd: this.cwd })
-    } catch (error) {
-      throw new Error(`Failed to stage all files: ${error}`)
-    }
+    await this.logCommand('git add -A', async () => {
+      try {
+        await execAsync('git add -A', { cwd: this.cwd })
+      } catch (error) {
+        throw new Error(`Failed to stage all files: ${error}`)
+      }
+    })
   }
 
   async unstageFile(path: string): Promise<void> {
-    try {
-      await execAsync(`git reset HEAD "${path}"`, { cwd: this.cwd })
-    } catch (error) {
-      throw new Error(`Failed to unstage file: ${error}`)
-    }
+    await this.logCommand(`git reset HEAD "${path}"`, async () => {
+      try {
+        await execAsync(`git reset HEAD "${path}"`, { cwd: this.cwd })
+      } catch (error) {
+        throw new Error(`Failed to unstage file: ${error}`)
+      }
+    })
   }
 
   async commit(message: string): Promise<void> {
-    try {
-      await execAsync(`git commit -m "${message.replace(/"/g, '\\"')}"`, { cwd: this.cwd })
-    } catch (error) {
-      throw new Error(`Failed to commit: ${error}`)
-    }
+    await this.logCommand(`git commit -m "${message.replace(/"/g, '\\"')}"`, async () => {
+      try {
+        await execAsync(`git commit -m "${message.replace(/"/g, '\\"')}"`, { cwd: this.cwd })
+      } catch (error) {
+        throw new Error(`Failed to commit: ${error}`)
+      }
+    })
   }
 
   async checkout(branch: string): Promise<void> {
-    try {
-      // Remove remotes/ prefix if present
-      const branchName = branch.replace(/^remotes\/[^/]+\//, '')
-      await execAsync(`git checkout "${branchName}"`, { cwd: this.cwd })
-    } catch (error) {
-      throw new Error(`Failed to checkout branch: ${error}`)
-    }
+    const branchName = branch.replace(/^remotes\/[^/]+\//, '')
+    await this.logCommand(`git checkout "${branchName}"`, async () => {
+      try {
+        await execAsync(`git checkout "${branchName}"`, { cwd: this.cwd })
+      } catch (error) {
+        throw new Error(`Failed to checkout branch: ${error}`)
+      }
+    })
   }
 
   async getDiff(path?: string): Promise<string> {
@@ -289,147 +345,153 @@ export class GitClient {
   }
 
   async push(onProgress?: (line: string) => void): Promise<void> {
-    try {
-      const { spawn } = await import('child_process')
-      
-      return new Promise((resolve, reject) => {
-        const gitProcess = spawn('git', ['push', '--progress'], {
-          cwd: this.cwd,
-          env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
-        })
+    await this.logCommand('git push --progress', async () => {
+      try {
+        const { spawn } = await import('child_process')
+        
+        return new Promise((resolve, reject) => {
+          const gitProcess = spawn('git', ['push', '--progress'], {
+            cwd: this.cwd,
+            env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
+          })
 
-        let errorOutput = ''
+          let errorOutput = ''
 
-        gitProcess.stderr.on('data', (data: Buffer) => {
-          const lines = data.toString().split('\n')
-          lines.forEach((line: string) => {
-            if (line.trim()) {
-              onProgress?.(line.trim())
-              errorOutput += line + '\n'
+          gitProcess.stderr.on('data', (data: Buffer) => {
+            const lines = data.toString().split('\n')
+            lines.forEach((line: string) => {
+              if (line.trim()) {
+                onProgress?.(line.trim())
+                errorOutput += line + '\n'
+              }
+            })
+          })
+
+          gitProcess.stdout.on('data', (data: Buffer) => {
+            const lines = data.toString().split('\n')
+            lines.forEach((line: string) => {
+              if (line.trim()) {
+                onProgress?.(line.trim())
+              }
+            })
+          })
+
+          gitProcess.on('close', (code: number | null) => {
+            if (code === 0) {
+              resolve()
+            } else {
+              reject(new Error(errorOutput || `Push failed with code ${code}`))
             }
           })
-        })
 
-        gitProcess.stdout.on('data', (data: Buffer) => {
-          const lines = data.toString().split('\n')
-          lines.forEach((line: string) => {
-            if (line.trim()) {
-              onProgress?.(line.trim())
-            }
+          gitProcess.on('error', (error: Error) => {
+            reject(new Error(`Failed to push: ${error.message}`))
           })
         })
-
-        gitProcess.on('close', (code: number | null) => {
-          if (code === 0) {
-            resolve()
-          } else {
-            reject(new Error(errorOutput || `Push failed with code ${code}`))
-          }
-        })
-
-        gitProcess.on('error', (error: Error) => {
-          reject(new Error(`Failed to push: ${error.message}`))
-        })
-      })
-    } catch (error) {
-      throw new Error(`Failed to push: ${error}`)
-    }
+      } catch (error) {
+        throw new Error(`Failed to push: ${error}`)
+      }
+    })
   }
 
   async pull(onProgress?: (line: string) => void): Promise<void> {
-    try {
-      const { spawn } = await import('child_process')
-      
-      return new Promise((resolve, reject) => {
-        const gitProcess = spawn('git', ['pull', '--progress'], {
-          cwd: this.cwd,
-          env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
-        })
+    await this.logCommand('git pull --progress', async () => {
+      try {
+        const { spawn } = await import('child_process')
+        
+        return new Promise((resolve, reject) => {
+          const gitProcess = spawn('git', ['pull', '--progress'], {
+            cwd: this.cwd,
+            env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
+          })
 
-        let errorOutput = ''
+          let errorOutput = ''
 
-        gitProcess.stderr.on('data', (data: Buffer) => {
-          const lines = data.toString().split('\n')
-          lines.forEach((line: string) => {
-            if (line.trim()) {
-              onProgress?.(line.trim())
-              errorOutput += line + '\n'
+          gitProcess.stderr.on('data', (data: Buffer) => {
+            const lines = data.toString().split('\n')
+            lines.forEach((line: string) => {
+              if (line.trim()) {
+                onProgress?.(line.trim())
+                errorOutput += line + '\n'
+              }
+            })
+          })
+
+          gitProcess.stdout.on('data', (data: Buffer) => {
+            const lines = data.toString().split('\n')
+            lines.forEach((line: string) => {
+              if (line.trim()) {
+                onProgress?.(line.trim())
+              }
+            })
+          })
+
+          gitProcess.on('close', (code: number | null) => {
+            if (code === 0) {
+              resolve()
+            } else {
+              reject(new Error(errorOutput || `Pull failed with code ${code}`))
             }
           })
-        })
 
-        gitProcess.stdout.on('data', (data: Buffer) => {
-          const lines = data.toString().split('\n')
-          lines.forEach((line: string) => {
-            if (line.trim()) {
-              onProgress?.(line.trim())
-            }
+          gitProcess.on('error', (error: Error) => {
+            reject(new Error(`Failed to pull: ${error.message}`))
           })
         })
-
-        gitProcess.on('close', (code: number | null) => {
-          if (code === 0) {
-            resolve()
-          } else {
-            reject(new Error(errorOutput || `Pull failed with code ${code}`))
-          }
-        })
-
-        gitProcess.on('error', (error: Error) => {
-          reject(new Error(`Failed to pull: ${error.message}`))
-        })
-      })
-    } catch (error) {
-      throw new Error(`Failed to pull: ${error}`)
-    }
+      } catch (error) {
+        throw new Error(`Failed to pull: ${error}`)
+      }
+    })
   }
 
   async fetch(onProgress?: (line: string) => void): Promise<void> {
-    try {
-      const { spawn } = await import('child_process')
-      
-      return new Promise((resolve, reject) => {
-        const gitProcess = spawn('git', ['fetch', '--progress', '--all'], {
-          cwd: this.cwd,
-          env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
-        })
+    await this.logCommand('git fetch --progress --all', async () => {
+      try {
+        const { spawn } = await import('child_process')
+        
+        return new Promise((resolve, reject) => {
+          const gitProcess = spawn('git', ['fetch', '--progress', '--all'], {
+            cwd: this.cwd,
+            env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
+          })
 
-        let errorOutput = ''
+          let errorOutput = ''
 
-        gitProcess.stderr.on('data', (data: Buffer) => {
-          const lines = data.toString().split('\n')
-          lines.forEach((line: string) => {
-            if (line.trim()) {
-              onProgress?.(line.trim())
-              errorOutput += line + '\n'
+          gitProcess.stderr.on('data', (data: Buffer) => {
+            const lines = data.toString().split('\n')
+            lines.forEach((line: string) => {
+              if (line.trim()) {
+                onProgress?.(line.trim())
+                errorOutput += line + '\n'
+              }
+            })
+          })
+
+          gitProcess.stdout.on('data', (data: Buffer) => {
+            const lines = data.toString().split('\n')
+            lines.forEach((line: string) => {
+              if (line.trim()) {
+                onProgress?.(line.trim())
+              }
+            })
+          })
+
+          gitProcess.on('close', (code: number | null) => {
+            if (code === 0) {
+              resolve()
+            } else {
+              reject(new Error(errorOutput || `Fetch failed with code ${code}`))
             }
           })
-        })
 
-        gitProcess.stdout.on('data', (data: Buffer) => {
-          const lines = data.toString().split('\n')
-          lines.forEach((line: string) => {
-            if (line.trim()) {
-              onProgress?.(line.trim())
-            }
+          gitProcess.on('error', (error: Error) => {
+            reject(new Error(`Failed to fetch: ${error.message}`))
           })
         })
-
-        gitProcess.on('close', (code: number | null) => {
-          if (code === 0) {
-            resolve()
-          } else {
-            reject(new Error(errorOutput || `Fetch failed with code ${code}`))
-          }
-        })
-
-        gitProcess.on('error', (error: Error) => {
-          reject(new Error(`Failed to fetch: ${error.message}`))
-        })
-      })
-    } catch (error) {
-      throw new Error(`Failed to fetch: ${error}`)
-    }
+      } catch (error) {
+        throw new Error(`Failed to fetch: ${error}`)
+      }
+    })
   }
 
   async getStashes(): Promise<GitStash[]> {
@@ -474,39 +536,48 @@ export class GitClient {
   }
 
   async createStash(message?: string): Promise<void> {
-    try {
-      if (message) {
-        await execAsync(`git stash push -m "${message.replace(/"/g, '\\"')}"`, { cwd: this.cwd })
-      } else {
-        await execAsync('git stash push', { cwd: this.cwd })
+    const cmd = message ? `git stash push -m "${message.replace(/"/g, '\\"')}"` : 'git stash push'
+    await this.logCommand(cmd, async () => {
+      try {
+        if (message) {
+          await execAsync(`git stash push -m "${message.replace(/"/g, '\\"')}"`, { cwd: this.cwd })
+        } else {
+          await execAsync('git stash push', { cwd: this.cwd })
+        }
+      } catch (error) {
+        throw new Error(`Failed to create stash: ${error}`)
       }
-    } catch (error) {
-      throw new Error(`Failed to create stash: ${error}`)
-    }
+    })
   }
 
   async applyStash(index: number): Promise<void> {
-    try {
-      await execAsync(`git stash apply stash@{${index}}`, { cwd: this.cwd })
-    } catch (error) {
-      throw new Error(`Failed to apply stash: ${error}`)
-    }
+    await this.logCommand(`git stash apply stash@{${index}}`, async () => {
+      try {
+        await execAsync(`git stash apply stash@{${index}}`, { cwd: this.cwd })
+      } catch (error) {
+        throw new Error(`Failed to apply stash: ${error}`)
+      }
+    })
   }
 
   async popStash(index: number): Promise<void> {
-    try {
-      await execAsync(`git stash pop stash@{${index}}`, { cwd: this.cwd })
-    } catch (error) {
-      throw new Error(`Failed to pop stash: ${error}`)
-    }
+    await this.logCommand(`git stash pop stash@{${index}}`, async () => {
+      try {
+        await execAsync(`git stash pop stash@{${index}}`, { cwd: this.cwd })
+      } catch (error) {
+        throw new Error(`Failed to pop stash: ${error}`)
+      }
+    })
   }
 
   async dropStash(index: number): Promise<void> {
-    try {
-      await execAsync(`git stash drop stash@{${index}}`, { cwd: this.cwd })
-    } catch (error) {
-      throw new Error(`Failed to drop stash: ${error}`)
-    }
+    await this.logCommand(`git stash drop stash@{${index}}`, async () => {
+      try {
+        await execAsync(`git stash drop stash@{${index}}`, { cwd: this.cwd })
+      } catch (error) {
+        throw new Error(`Failed to drop stash: ${error}`)
+      }
+    })
   }
 
   async getStashDiff(index: number): Promise<string> {
@@ -519,11 +590,13 @@ export class GitClient {
   }
 
   async unstageAll(): Promise<void> {
-    try {
-      await execAsync('git reset HEAD', { cwd: this.cwd })
-    } catch (error) {
-      throw new Error(`Failed to unstage all files: ${error}`)
-    }
+    await this.logCommand('git reset HEAD', async () => {
+      try {
+        await execAsync('git reset HEAD', { cwd: this.cwd })
+      } catch (error) {
+        throw new Error(`Failed to unstage all files: ${error}`)
+      }
+    })
   }
 
   async discardChanges(path: string): Promise<void> {
@@ -698,35 +771,39 @@ export class GitClient {
   }
 
   async merge(branch: string, strategy: MergeStrategy = 'default'): Promise<void> {
-    try {
-      const args: string[] = ['merge']
-      
-      if (strategy === 'no-ff') {
-        args.push('--no-ff')
-      } else if (strategy === 'ff-only') {
-        args.push('--ff-only')
-      }
-      
-      args.push(`"${branch}"`)
-      
-      await execAsync(`git ${args.join(' ')}`, { cwd: this.cwd })
-    } catch (error) {
-      // Check if it's a merge conflict
-      const errorMsg = String(error)
-      if (errorMsg.includes('CONFLICT') || errorMsg.includes('Automatic merge failed')) {
-        // This is expected for conflicts, don't throw
-        return
-      }
-      throw new Error(`Failed to merge: ${error}`)
+    const args: string[] = ['merge']
+    
+    if (strategy === 'no-ff') {
+      args.push('--no-ff')
+    } else if (strategy === 'ff-only') {
+      args.push('--ff-only')
     }
+    
+    args.push(`"${branch}"`)
+    
+    await this.logCommand(`git ${args.join(' ')}`, async () => {
+      try {
+        await execAsync(`git ${args.join(' ')}`, { cwd: this.cwd })
+      } catch (error) {
+        // Check if it's a merge conflict
+        const errorMsg = String(error)
+        if (errorMsg.includes('CONFLICT') || errorMsg.includes('Automatic merge failed')) {
+          // This is expected for conflicts, don't throw
+          return
+        }
+        throw new Error(`Failed to merge: ${error}`)
+      }
+    })
   }
 
   async abortMerge(): Promise<void> {
-    try {
-      await execAsync('git merge --abort', { cwd: this.cwd })
-    } catch (error) {
-      throw new Error(`Failed to abort merge: ${error}`)
-    }
+    await this.logCommand('git merge --abort', async () => {
+      try {
+        await execAsync('git merge --abort', { cwd: this.cwd })
+      } catch (error) {
+        throw new Error(`Failed to abort merge: ${error}`)
+      }
+    })
   }
 
   async resolveConflict(path: string, resolution: 'ours' | 'theirs' | 'manual'): Promise<void> {
@@ -766,50 +843,60 @@ export class GitClient {
   }
 
   async continueMerge(message: string): Promise<void> {
-    try {
-      // Check if all conflicts are resolved
-      const mergeState = await this.getMergeState()
-      if (mergeState.conflicts.length > 0) {
-        throw new Error('Not all conflicts are resolved')
-      }
+    await this.logCommand(`git commit -m "${message.replace(/"/g, '\\"')}"`, async () => {
+      try {
+        // Check if all conflicts are resolved
+        const mergeState = await this.getMergeState()
+        if (mergeState.conflicts.length > 0) {
+          throw new Error('Not all conflicts are resolved')
+        }
 
-      // Commit the merge
-      await execAsync(`git commit -m "${message.replace(/"/g, '\\"')}"`, { cwd: this.cwd })
-    } catch (error) {
-      throw new Error(`Failed to continue merge: ${error}`)
-    }
+        // Commit the merge
+        await execAsync(`git commit -m "${message.replace(/"/g, '\\"')}"`, { cwd: this.cwd })
+      } catch (error) {
+        throw new Error(`Failed to continue merge: ${error}`)
+      }
+    })
   }
 
   async cherryPick(commitHash: string): Promise<void> {
-    try {
-      await execAsync(`git cherry-pick "${commitHash}"`, { cwd: this.cwd })
-    } catch (error) {
-      throw new Error(`Failed to cherry-pick commit: ${error}`)
-    }
+    await this.logCommand(`git cherry-pick "${commitHash}"`, async () => {
+      try {
+        await execAsync(`git cherry-pick "${commitHash}"`, { cwd: this.cwd })
+      } catch (error) {
+        throw new Error(`Failed to cherry-pick commit: ${error}`)
+      }
+    })
   }
 
   async revertCommit(commitHash: string): Promise<void> {
-    try {
-      await execAsync(`git revert --no-edit "${commitHash}"`, { cwd: this.cwd })
-    } catch (error) {
-      throw new Error(`Failed to revert commit: ${error}`)
-    }
+    await this.logCommand(`git revert --no-edit "${commitHash}"`, async () => {
+      try {
+        await execAsync(`git revert --no-edit "${commitHash}"`, { cwd: this.cwd })
+      } catch (error) {
+        throw new Error(`Failed to revert commit: ${error}`)
+      }
+    })
   }
 
   async amendCommit(message: string): Promise<void> {
-    try {
-      await execAsync(`git commit --amend -m "${message.replace(/"/g, '\\"')}"`, { cwd: this.cwd })
-    } catch (error) {
-      throw new Error(`Failed to amend commit: ${error}`)
-    }
+    await this.logCommand(`git commit --amend -m "${message.replace(/"/g, '\\"')}"`, async () => {
+      try {
+        await execAsync(`git commit --amend -m "${message.replace(/"/g, '\\"')}"`, { cwd: this.cwd })
+      } catch (error) {
+        throw new Error(`Failed to amend commit: ${error}`)
+      }
+    })
   }
 
   async resetToCommit(commitHash: string, mode: 'soft' | 'mixed' | 'hard'): Promise<void> {
-    try {
-      await execAsync(`git reset --${mode} "${commitHash}"`, { cwd: this.cwd })
-    } catch (error) {
-      throw new Error(`Failed to reset to commit: ${error}`)
-    }
+    await this.logCommand(`git reset --${mode} "${commitHash}"`, async () => {
+      try {
+        await execAsync(`git reset --${mode} "${commitHash}"`, { cwd: this.cwd })
+      } catch (error) {
+        throw new Error(`Failed to reset to commit: ${error}`)
+      }
+    })
   }
 
   async getCommitDiff(commitHash: string): Promise<string> {
@@ -822,15 +909,20 @@ export class GitClient {
   }
 
   async createTag(tagName: string, commitHash: string, message?: string): Promise<void> {
-    try {
-      if (message) {
-        await execAsync(`git tag -a "${tagName}" "${commitHash}" -m "${message.replace(/"/g, '\\"')}"`, { cwd: this.cwd })
-      } else {
-        await execAsync(`git tag "${tagName}" "${commitHash}"`, { cwd: this.cwd })
+    const cmd = message 
+      ? `git tag -a "${tagName}" "${commitHash}" -m "${message.replace(/"/g, '\\"')}"` 
+      : `git tag "${tagName}" "${commitHash}"`
+    await this.logCommand(cmd, async () => {
+      try {
+        if (message) {
+          await execAsync(`git tag -a "${tagName}" "${commitHash}" -m "${message.replace(/"/g, '\\"')}"`, { cwd: this.cwd })
+        } else {
+          await execAsync(`git tag "${tagName}" "${commitHash}"`, { cwd: this.cwd })
+        }
+      } catch (error) {
+        throw new Error(`Failed to create tag: ${error}`)
       }
-    } catch (error) {
-      throw new Error(`Failed to create tag: ${error}`)
-    }
+    })
   }
 
   async copyToClipboard(text: string): Promise<void> {

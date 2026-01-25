@@ -26,7 +26,8 @@ import { ResetModal } from './components/ResetModal'
 import { TagModal } from './components/TagModal'
 import { RemoteModal } from './components/RemoteModal'
 import { RemotesView } from './components/RemotesView'
-import type { GitStatus, GitCommit, GitBranch, GitStash, GitRemote, GitMergeState, MergeStrategy, View } from './types/git'
+import { CommandLogView } from './components/CommandLogView'
+import type { GitStatus, GitCommit, GitBranch, GitStash, GitRemote, GitMergeState, MergeStrategy, View, CommandLogEntry } from './types/git'
 import type { Command } from './types/commands'
 
 export function App({ cwd }: { cwd: string }) {
@@ -90,6 +91,8 @@ export function App({ cwd }: { cwd: string }) {
   const [remoteModalMode, setRemoteModalMode] = useState<'add' | 'edit'>('add')
   const [remoteToEdit, setRemoteToEdit] = useState<GitRemote | undefined>(undefined)
   const [selectedCommitForAction, setSelectedCommitForAction] = useState<GitCommit | null>(null)
+  const [commandLog, setCommandLog] = useState<CommandLogEntry[]>([])
+  const [showCommandLog, setShowCommandLog] = useState(true)
 
   // Clean exit handler
   const handleExit = useCallback(() => {
@@ -184,6 +187,21 @@ export function App({ cwd }: { cwd: string }) {
     watcher.start()
     return () => watcher.stop()
   }, [watcher])
+
+  // Update command log periodically
+  useEffect(() => {
+    const updateCommandLog = () => {
+      setCommandLog(git.getCommandLog())
+    }
+    
+    // Update immediately
+    updateCommandLog()
+    
+    // Update every 500ms to catch new commands
+    const interval = setInterval(updateCommandLog, 500)
+    
+    return () => clearInterval(interval)
+  }, [git])
 
   useEffect(() => {
     if (view === 'diff' || (view === 'main' && focusedPanel === 'status')) {
@@ -815,6 +833,13 @@ export function App({ cwd }: { cwd: string }) {
       execute: () => setShowSettingsModal(true),
     },
     {
+      id: 'toggle-command-log',
+      label: 'Toggle Command Log',
+      description: 'Show/hide git command history panel',
+      shortcut: '`',
+      execute: () => setShowCommandLog((prev) => !prev),
+    },
+    {
       id: 'stage-all',
       label: 'Stage All Changes',
       description: 'Stage all modified and untracked files',
@@ -1391,6 +1416,12 @@ export function App({ cwd }: { cwd: string }) {
       return
     }
 
+    // Toggle command log with '`' key (backtick)
+    if (key.sequence === '`') {
+      setShowCommandLog((prev) => !prev)
+      return
+    }
+
     // ESC or 'q' key should show exit modal
     if (key.name === 'escape' || key.sequence === 'q') {
       setShowExitModal(true)
@@ -1770,6 +1801,8 @@ export function App({ cwd }: { cwd: string }) {
           behind={status.behind}
           diff={diff}
           selectedFilePath={selectedFilePath}
+          commandLog={commandLog}
+          showCommandLog={showCommandLog}
         />
       )}
 
@@ -1782,18 +1815,28 @@ export function App({ cwd }: { cwd: string }) {
       )}
 
       {view === 'diff' && (
-        <DiffView
-          diff={diff}
-          focused={!showCommitModal && !showStashModal}
-        />
+        <box flexDirection="column" flexGrow={1} width="100%">
+          <DiffView
+            diff={diff}
+            focused={!showCommitModal && !showStashModal}
+          />
+          {showCommandLog && (
+            <CommandLogView commandLog={commandLog} maxHeight={10} />
+          )}
+        </box>
       )}
 
       {view === 'stash' && (
-        <StashView
-          stashes={stashes}
-          selectedIndex={selectedIndex}
-          focused={!showCommitModal && !showStashModal}
-        />
+        <box flexDirection="column" flexGrow={1} width="100%">
+          <StashView
+            stashes={stashes}
+            selectedIndex={selectedIndex}
+            focused={!showCommitModal && !showStashModal}
+          />
+          {showCommandLog && (
+            <CommandLogView commandLog={commandLog} maxHeight={10} />
+          )}
+        </box>
       )}
 
       {view === 'remotes' && (

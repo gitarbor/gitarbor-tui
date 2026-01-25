@@ -72,3 +72,11 @@ export interface ConflictMarker {
 export type MergeStrategy = 'default' | 'no-ff' | 'ff-only'
 
 export type View = 'main' | 'log' | 'diff' | 'stash' | 'remotes'
+
+export interface CommandLogEntry {
+  timestamp: Date
+  command: string
+  duration: number
+  success: boolean
+  error?: string
+}
