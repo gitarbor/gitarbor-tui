@@ -1,5 +1,5 @@
 import { theme } from '../theme'
-import type { GitFile, GitBranch, GitCommit } from '../types/git'
+import type { GitFile, GitBranch, GitCommit, GitMergeState } from '../types/git'
 import { Fieldset } from './Fieldset'
 
 interface MainViewProps {
@@ -12,6 +12,7 @@ interface MainViewProps {
   focusedPanel: 'status' | 'branches' | 'log'
   onStage: (path: string) => void
   onUnstage: (path: string) => void
+  mergeState?: GitMergeState
 }
 
 export function MainView({
@@ -22,6 +23,7 @@ export function MainView({
   commits,
   selectedIndex,
   focusedPanel,
+  mergeState,
 }: MainViewProps) {
   const allFiles = [
     ...staged.map((f) => ({ ...f, section: 'staged' })),
@@ -60,6 +62,34 @@ export function MainView({
           paddingY={theme.spacing.none}
         >
           <box flexDirection="column">
+            {mergeState?.inProgress && (
+              <>
+                <box
+                  borderStyle={theme.borders.style}
+                  borderColor={theme.colors.status.warning}
+                  padding={theme.spacing.xs}
+                  marginBottom={theme.spacing.xs}
+                >
+                  <text fg={theme.colors.status.warning}>⚠ MERGE IN PROGRESS</text>
+                  <text> </text>
+                  {mergeState.mergingBranch && (
+                    <text fg={theme.colors.text.secondary}>
+                      Merging '{mergeState.mergingBranch}' into '{mergeState.currentBranch}'
+                    </text>
+                  )}
+                  <text> </text>
+                  {mergeState.conflicts.length > 0 && (
+                    <text fg={theme.colors.status.error}>
+                      {mergeState.conflicts.length} conflict{mergeState.conflicts.length !== 1 ? 's' : ''} - Press 'C' to resolve
+                    </text>
+                  )}
+                  {mergeState.conflicts.length === 0 && (
+                    <text fg={theme.colors.git.staged}>All conflicts resolved - ready to commit</text>
+                  )}
+                </box>
+              </>
+            )}
+            
             {allFiles.length === 0 ? (
               <text fg={theme.colors.text.muted}>No changes</text>
             ) : (

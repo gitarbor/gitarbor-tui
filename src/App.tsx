@@ -20,7 +20,9 @@ import { RenameModal } from './components/RenameModal'
 import { BranchModal } from './components/BranchModal'
 import { BranchRenameModal } from './components/BranchRenameModal'
 import { SetUpstreamModal } from './components/SetUpstreamModal'
-import type { GitStatus, GitCommit, GitBranch, GitStash, View } from './types/git'
+import { MergeModal } from './components/MergeModal'
+import { ConflictResolutionModal } from './components/ConflictResolutionModal'
+import type { GitStatus, GitCommit, GitBranch, GitStash, GitMergeState, MergeStrategy, View } from './types/git'
 import type { Command } from './types/commands'
 
 export function App({ cwd }: { cwd: string }) {
@@ -68,6 +70,13 @@ export function App({ cwd }: { cwd: string }) {
   const [branchToRename, setBranchToRename] = useState('')
   const [showSetUpstreamModal, setShowSetUpstreamModal] = useState(false)
   const [branchForUpstream, setBranchForUpstream] = useState('')
+  const [showMergeModal, setShowMergeModal] = useState(false)
+  const [showConflictModal, setShowConflictModal] = useState(false)
+  const [mergeState, setMergeState] = useState<GitMergeState>({
+    inProgress: false,
+    currentBranch: '',
+    conflicts: [],
+  })
 
   // Clean exit handler
   const handleExit = useCallback(() => {
@@ -86,16 +95,24 @@ export function App({ cwd }: { cwd: string }) {
       if (!silent) {
         setLoading(true)
       }
-      const [statusData, commitsData, branchesData, stashesData] = await Promise.all([
+      const [statusData, commitsData, branchesData, stashesData, mergeStateData] = await Promise.all([
         git.getStatus(),
         git.getLog(50),
         git.getBranches(),
         git.getStashes(),
+        git.getMergeState(),
       ])
       setStatus(statusData)
       setCommits(commitsData)
       setBranches(branchesData)
       setStashes(stashesData)
+      setMergeState(mergeStateData)
+      
+      // Auto-show conflict modal if merge is in progress with conflicts
+      if (mergeStateData.inProgress && mergeStateData.conflicts.length > 0 && !showConflictModal) {
+        setShowConflictModal(true)
+      }
+      
       if (!silent) {
         setMessage('Data loaded')
       }
@@ -106,7 +123,7 @@ export function App({ cwd }: { cwd: string }) {
         setLoading(false)
       }
     }
-  }, [git])
+  }, [git, showConflictModal])
 
   const loadDiff = useCallback(async () => {
     try {
@@ -515,6 +532,78 @@ export function App({ cwd }: { cwd: string }) {
     }
   }, [git, loadData])
 
+  const handleMerge = useCallback(async (branch: string, strategy: MergeStrategy) => {
+    try {
+      setShowMergeModal(false)
+      setMessage(`Merging ${branch}...`)
+      await git.merge(branch, strategy)
+      await loadData(true)
+      
+      // Check if there are conflicts
+      const newMergeState = await git.getMergeState()
+      if (newMergeState.inProgress && newMergeState.conflicts.length > 0) {
+        setMergeState(newMergeState)
+        setShowConflictModal(true)
+        setMessage(`Merge conflicts detected (${newMergeState.conflicts.length} files)`)
+      } else {
+        setMessage(`Successfully merged ${branch}`)
+      }
+    } catch (error) {
+      setMessage(`Merge failed: ${error}`)
+    }
+  }, [git, loadData])
+
+  const handleAbortMerge = useCallback(async () => {
+    try {
+      await git.abortMerge()
+      await loadData(true)
+      setShowConflictModal(false)
+      setMessage('Merge aborted')
+    } catch (error) {
+      setMessage(`Error aborting merge: ${error}`)
+    }
+  }, [git, loadData])
+
+  const handleResolveConflict = useCallback(async (path: string, resolution: 'ours' | 'theirs' | 'manual') => {
+    try {
+      await git.resolveConflict(path, resolution)
+      await loadData(true)
+      setMessage(`Resolved ${path} using ${resolution}`)
+    } catch (error) {
+      setMessage(`Error resolving conflict: ${error}`)
+    }
+  }, [git, loadData])
+
+  const handleEditConflict = useCallback(async (path: string, content: string) => {
+    try {
+      await git.writeConflictedFileContent(path, content)
+      setMessage(`Edited ${path}`)
+    } catch (error) {
+      setMessage(`Error editing conflict: ${error}`)
+    }
+  }, [git])
+
+  const handleStageResolved = useCallback(async (path: string) => {
+    try {
+      await git.stageFile(path)
+      await loadData(true)
+      setMessage(`Staged resolved file: ${path}`)
+    } catch (error) {
+      setMessage(`Error staging file: ${error}`)
+    }
+  }, [git, loadData])
+
+  const handleContinueMerge = useCallback(async (commitMessage: string) => {
+    try {
+      await git.continueMerge(commitMessage)
+      await loadData(true)
+      setShowConflictModal(false)
+      setMessage('Merge completed successfully')
+    } catch (error) {
+      setMessage(`Error completing merge: ${error}`)
+    }
+  }, [git, loadData])
+
   const getMaxIndex = useCallback(() => {
     switch (view) {
       case 'main':
@@ -806,6 +895,53 @@ export function App({ cwd }: { cwd: string }) {
       },
     },
     {
+      id: 'merge-branch',
+      label: 'Merge Branch',
+      description: 'Merge another branch into current branch',
+      shortcut: 'm',
+      execute: () => {
+        if (mergeState.inProgress) {
+          setMessage('Merge already in progress - resolve conflicts first')
+        } else {
+          setShowMergeModal(true)
+        }
+      },
+    },
+    {
+      id: 'resolve-conflicts',
+      label: 'Resolve Merge Conflicts',
+      description: 'Open conflict resolution interface',
+      shortcut: 'C',
+      execute: () => {
+        if (mergeState.inProgress) {
+          setShowConflictModal(true)
+        } else {
+          setMessage('No merge in progress')
+        }
+      },
+    },
+    {
+      id: 'abort-merge',
+      label: 'Abort Merge',
+      description: 'Abort current merge operation',
+      execute: () => {
+        if (mergeState.inProgress) {
+          setConfirmModalProps({
+            title: 'Abort Merge?',
+            message: 'Are you sure you want to abort the current merge? All conflict resolutions will be lost.',
+            onConfirm: () => {
+              setShowConfirmModal(false)
+              void handleAbortMerge()
+            },
+            danger: true,
+          })
+          setShowConfirmModal(true)
+        } else {
+          setMessage('No merge in progress')
+        }
+      },
+    },
+    {
       id: 'exit',
       label: 'Exit',
       description: 'Exit the application',
@@ -815,7 +951,7 @@ export function App({ cwd }: { cwd: string }) {
   ]
 
   useKeyboard((key) => {
-    if (showExitModal || showCommandPalette || showSettingsModal || showProgressModal || showConfirmModal || showRenameModal || showBranchModal || showBranchRenameModal || showSetUpstreamModal) {
+    if (showExitModal || showCommandPalette || showSettingsModal || showProgressModal || showConfirmModal || showRenameModal || showBranchModal || showBranchRenameModal || showSetUpstreamModal || showMergeModal || showConflictModal) {
       // Modals handle their own keyboard input
       return
     }
@@ -1009,6 +1145,23 @@ export function App({ cwd }: { cwd: string }) {
       void handleFetch()
     }
 
+    // Merge operations
+    if (key.sequence === 'm') {
+      if (mergeState.inProgress) {
+        setMessage('Merge already in progress - resolve conflicts first')
+      } else {
+        setShowMergeModal(true)
+      }
+    }
+
+    if (key.sequence === 'C') {
+      if (mergeState.inProgress) {
+        setShowConflictModal(true)
+      } else {
+        setMessage('No merge in progress')
+      }
+    }
+
     // Stash operations
     if (key.sequence === 'S') {
       setShowStashModal(true)
@@ -1067,6 +1220,7 @@ export function App({ cwd }: { cwd: string }) {
           focusedPanel={focusedPanel}
           onStage={handleStage}
           onUnstage={handleUnstage}
+          mergeState={mergeState}
         />
       )}
 
@@ -1177,6 +1331,29 @@ export function App({ cwd }: { cwd: string }) {
           remoteBranches={branches.filter((b) => b.remote)}
           onSetUpstream={handleSetUpstream}
           onCancel={() => setShowSetUpstreamModal(false)}
+        />
+      )}
+
+      {showMergeModal && (
+        <MergeModal
+          branches={branches}
+          currentBranch={status.branch}
+          onMerge={handleMerge}
+          onCancel={() => setShowMergeModal(false)}
+        />
+      )}
+
+      {showConflictModal && mergeState.inProgress && (
+        <ConflictResolutionModal
+          conflicts={mergeState.conflicts}
+          currentBranch={mergeState.currentBranch}
+          mergingBranch={mergeState.mergingBranch || 'unknown'}
+          onResolve={handleResolveConflict}
+          onEditConflict={handleEditConflict}
+          onStageResolved={handleStageResolved}
+          onAbort={handleAbortMerge}
+          onContinue={handleContinueMerge}
+          onClose={() => setShowConflictModal(false)}
         />
       )}
     </box>

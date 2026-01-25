@@ -1,6 +1,9 @@
 import { exec } from 'child_process'
 import { promisify } from 'util'
-import type { GitStatus, GitFile, GitCommit, GitBranch, GitStash } from '../types/git'
+import { readFile } from 'fs/promises'
+import { existsSync } from 'fs'
+import { join } from 'path'
+import type { GitStatus, GitFile, GitCommit, GitBranch, GitStash, GitMergeState, GitConflict, MergeStrategy, ConflictMarker } from '../types/git'
 
 const execAsync = promisify(exec)
 
@@ -544,6 +547,236 @@ export class GitClient {
       await execAsync(`git mv "${oldPath}" "${newPath}"`, { cwd: this.cwd })
     } catch (error) {
       throw new Error(`Failed to rename file: ${error}`)
+    }
+  }
+
+  async getMergeState(): Promise<GitMergeState> {
+    try {
+      const mergeHeadPath = join(this.cwd, '.git', 'MERGE_HEAD')
+      const inProgress = existsSync(mergeHeadPath)
+
+      if (!inProgress) {
+        return {
+          inProgress: false,
+          currentBranch: '',
+          conflicts: [],
+        }
+      }
+
+      // Get current branch
+      const { stdout: branchOut } = await execAsync('git branch --show-current', { cwd: this.cwd })
+      const currentBranch = branchOut.trim()
+
+      // Get merging branch from MERGE_MSG
+      let mergingBranch: string | undefined
+      try {
+        const mergeMsgPath = join(this.cwd, '.git', 'MERGE_MSG')
+        if (existsSync(mergeMsgPath)) {
+          const mergeMsg = await readFile(mergeMsgPath, 'utf-8')
+          const match = mergeMsg.match(/Merge branch '([^']+)'/)
+          if (match) {
+            mergingBranch = match[1]
+          }
+        }
+      } catch {
+        // Couldn't read merge message
+      }
+
+      // Get conflicted files
+      const { stdout: statusOut } = await execAsync('git status --porcelain', { cwd: this.cwd })
+      const conflicts: GitConflict[] = []
+
+      for (const line of statusOut.split('\n')) {
+        if (!line) continue
+        const status = line.substring(0, 2)
+        
+        // Check for unmerged files (both modified, both added, etc.)
+        if (status === 'UU' || status === 'AA' || status === 'DD' || 
+            status === 'AU' || status === 'UA' || status === 'DU' || status === 'UD') {
+          const path = line.substring(3)
+          
+          try {
+            // Read the conflicted file content
+            const filePath = join(this.cwd, path)
+            const content = await readFile(filePath, 'utf-8')
+            
+            // Parse conflict markers
+            const conflictMarkers = this.parseConflictMarkers(content)
+            
+            // Get ours and theirs versions
+            let ours = ''
+            let theirs = ''
+            let base: string | undefined
+            
+            try {
+              const { stdout: oursOut } = await execAsync(`git show :2:"${path}"`, { cwd: this.cwd })
+              ours = oursOut
+            } catch {
+              // File doesn't exist in ours
+            }
+            
+            try {
+              const { stdout: theirsOut } = await execAsync(`git show :3:"${path}"`, { cwd: this.cwd })
+              theirs = theirsOut
+            } catch {
+              // File doesn't exist in theirs
+            }
+            
+            try {
+              const { stdout: baseOut } = await execAsync(`git show :1:"${path}"`, { cwd: this.cwd })
+              base = baseOut
+            } catch {
+              // File doesn't exist in base
+            }
+            
+            conflicts.push({
+              path,
+              ours,
+              theirs,
+              base,
+              conflictMarkers,
+            })
+          } catch (error) {
+            // Couldn't read conflict file, skip it
+          }
+        }
+      }
+
+      return {
+        inProgress,
+        currentBranch,
+        mergingBranch,
+        conflicts,
+      }
+    } catch (error) {
+      throw new Error(`Failed to get merge state: ${error}`)
+    }
+  }
+
+  private parseConflictMarkers(content: string): ConflictMarker[] {
+    const lines = content.split('\n')
+    const markers: ConflictMarker[] = []
+    let i = 0
+
+    while (i < lines.length) {
+      const line = lines[i]
+      if (line && line.startsWith('<<<<<<<')) {
+        const startLine = i
+        let oursStart = i + 1
+        let oursEnd = i + 1
+        let theirsStart = i + 1
+        let theirsEnd = i + 1
+        let endLine = i
+
+        // Find separator
+        while (i < lines.length && !lines[i]?.startsWith('=======')) {
+          i++
+        }
+        oursEnd = i - 1
+        theirsStart = i + 1
+
+        // Find end marker
+        while (i < lines.length && !lines[i]?.startsWith('>>>>>>>')) {
+          i++
+        }
+        theirsEnd = i - 1
+        endLine = i
+
+        markers.push({
+          startLine,
+          endLine,
+          oursStart,
+          oursEnd,
+          theirsStart,
+          theirsEnd,
+        })
+      }
+      i++
+    }
+
+    return markers
+  }
+
+  async merge(branch: string, strategy: MergeStrategy = 'default'): Promise<void> {
+    try {
+      const args: string[] = ['merge']
+      
+      if (strategy === 'no-ff') {
+        args.push('--no-ff')
+      } else if (strategy === 'ff-only') {
+        args.push('--ff-only')
+      }
+      
+      args.push(`"${branch}"`)
+      
+      await execAsync(`git ${args.join(' ')}`, { cwd: this.cwd })
+    } catch (error) {
+      // Check if it's a merge conflict
+      const errorMsg = String(error)
+      if (errorMsg.includes('CONFLICT') || errorMsg.includes('Automatic merge failed')) {
+        // This is expected for conflicts, don't throw
+        return
+      }
+      throw new Error(`Failed to merge: ${error}`)
+    }
+  }
+
+  async abortMerge(): Promise<void> {
+    try {
+      await execAsync('git merge --abort', { cwd: this.cwd })
+    } catch (error) {
+      throw new Error(`Failed to abort merge: ${error}`)
+    }
+  }
+
+  async resolveConflict(path: string, resolution: 'ours' | 'theirs' | 'manual'): Promise<void> {
+    try {
+      if (resolution === 'ours') {
+        await execAsync(`git checkout --ours "${path}"`, { cwd: this.cwd })
+        await execAsync(`git add "${path}"`, { cwd: this.cwd })
+      } else if (resolution === 'theirs') {
+        await execAsync(`git checkout --theirs "${path}"`, { cwd: this.cwd })
+        await execAsync(`git add "${path}"`, { cwd: this.cwd })
+      } else {
+        // Manual resolution - just stage the file
+        await execAsync(`git add "${path}"`, { cwd: this.cwd })
+      }
+    } catch (error) {
+      throw new Error(`Failed to resolve conflict: ${error}`)
+    }
+  }
+
+  async getConflictedFileContent(path: string): Promise<string> {
+    try {
+      const filePath = join(this.cwd, path)
+      return await readFile(filePath, 'utf-8')
+    } catch (error) {
+      throw new Error(`Failed to read conflicted file: ${error}`)
+    }
+  }
+
+  async writeConflictedFileContent(path: string, content: string): Promise<void> {
+    try {
+      const { writeFile } = await import('fs/promises')
+      const filePath = join(this.cwd, path)
+      await writeFile(filePath, content, 'utf-8')
+    } catch (error) {
+      throw new Error(`Failed to write conflicted file: ${error}`)
+    }
+  }
+
+  async continueMerge(message: string): Promise<void> {
+    try {
+      // Check if all conflicts are resolved
+      const mergeState = await this.getMergeState()
+      if (mergeState.conflicts.length > 0) {
+        throw new Error('Not all conflicts are resolved')
+      }
+
+      // Commit the merge
+      await execAsync(`git commit -m "${message.replace(/"/g, '\\"')}"`, { cwd: this.cwd })
+    } catch (error) {
+      throw new Error(`Failed to continue merge: ${error}`)
     }
   }
 }

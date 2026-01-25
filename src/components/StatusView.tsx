@@ -1,5 +1,5 @@
 import { theme } from '../theme'
-import type { GitFile } from '../types/git'
+import type { GitFile, GitMergeState } from '../types/git'
 
 interface StatusViewProps {
   staged: GitFile[]
@@ -9,6 +9,7 @@ interface StatusViewProps {
   focused: boolean
   onStage: (path: string) => void
   onUnstage: (path: string) => void
+  mergeState?: GitMergeState
 }
 
 export function StatusView({
@@ -17,6 +18,7 @@ export function StatusView({
   untracked,
   selectedIndex,
   focused,
+  mergeState,
 }: StatusViewProps) {
   const allFiles = [
     ...staged.map((f) => ({ ...f, section: 'staged' })),
@@ -52,6 +54,35 @@ export function StatusView({
       <box paddingLeft={theme.spacing.xs} paddingTop={theme.spacing.none}>
         <text fg={theme.colors.text.primary}>Working Directory Status</text>
         <text> </text>
+        
+        {mergeState?.inProgress && (
+          <>
+            <box
+              borderStyle={theme.borders.style}
+              borderColor={theme.colors.status.warning}
+              padding={theme.spacing.xs}
+              marginBottom={theme.spacing.xs}
+            >
+              <text fg={theme.colors.status.warning}>⚠ MERGE IN PROGRESS</text>
+              <text> </text>
+              {mergeState.mergingBranch && (
+                <text fg={theme.colors.text.secondary}>
+                  Merging '{mergeState.mergingBranch}' into '{mergeState.currentBranch}'
+                </text>
+              )}
+              <text> </text>
+              {mergeState.conflicts.length > 0 && (
+                <text fg={theme.colors.status.error}>
+                  {mergeState.conflicts.length} conflict{mergeState.conflicts.length !== 1 ? 's' : ''} to resolve
+                </text>
+              )}
+              {mergeState.conflicts.length === 0 && (
+                <text fg={theme.colors.git.staged}>All conflicts resolved - ready to commit</text>
+              )}
+            </box>
+          </>
+        )}
+        
         {allFiles.length === 0 ? (
           <text fg={theme.colors.text.muted}>No changes</text>
         ) : (
