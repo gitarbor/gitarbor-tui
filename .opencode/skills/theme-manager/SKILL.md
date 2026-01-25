@@ -12,6 +12,14 @@ metadata:
 
 Specialized skill for updating and maintaining the GitArbor TUI theme system.
 
+## Reference Documentation
+
+This skill includes comprehensive reference documentation:
+
+- **[THEMES.md](references/THEMES.md)** - User-facing documentation for all themes, usage guide, and theme switching instructions
+- **[THEME_REFERENCE.md](references/THEME_REFERENCE.md)** - Quick reference chart with theme comparisons and color palettes
+- **[THEME_IMPLEMENTATION.md](references/THEME_IMPLEMENTATION.md)** - Implementation history, technical details, and development summary
+
 ## When to use this skill
 
 Use this skill when:
