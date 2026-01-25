@@ -132,6 +132,21 @@ export function App({ cwd }: { cwd: string }) {
     }
   }, [git, loadData])
 
+  const handleStageAll = useCallback(async () => {
+    try {
+      const totalFiles = status.unstaged.length + status.untracked.length
+      if (totalFiles === 0) {
+        setMessage('No files to stage')
+        return
+      }
+      await git.stageAll()
+      await loadData(true)
+      setMessage(`Staged all files (${totalFiles})`)
+    } catch (error) {
+      setMessage(`Error staging all: ${error}`)
+    }
+  }, [git, loadData, status])
+
   const handleUnstage = useCallback(async (path: string) => {
     try {
       await git.unstageFile(path)
@@ -237,6 +252,13 @@ export function App({ cwd }: { cwd: string }) {
       description: 'Configure git global user name and email',
       shortcut: ',',
       execute: () => setShowSettingsModal(true),
+    },
+    {
+      id: 'stage-all',
+      label: 'Stage All Changes',
+      description: 'Stage all modified and untracked files',
+      shortcut: 'a',
+      execute: () => void handleStageAll(),
     },
     {
       id: 'view-main',
@@ -430,6 +452,10 @@ export function App({ cwd }: { cwd: string }) {
           void handleStage(file.path)
         }
       }
+    }
+
+    if (key.sequence === 'a') {
+      void handleStageAll()
     }
 
     if (key.sequence === 'u') {

@@ -103,6 +103,14 @@ export class GitClient {
     }
   }
 
+  async stageAll(): Promise<void> {
+    try {
+      await execAsync('git add -A', { cwd: this.cwd })
+    } catch (error) {
+      throw new Error(`Failed to stage all files: ${error}`)
+    }
+  }
+
   async unstageFile(path: string): Promise<void> {
     try {
       await execAsync(`git reset HEAD "${path}"`, { cwd: this.cwd })
