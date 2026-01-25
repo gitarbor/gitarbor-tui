@@ -2,7 +2,28 @@
 // @ts-nocheck
 import { createCliRenderer } from '@opentui/core'
 import { createRoot } from '@opentui/react'
+import { homedir } from 'os'
+import { readFile } from 'fs/promises'
 import { App } from './src/App'
+import { setTheme } from './src/theme'
+
+// Load theme preference from config
+const CONFIG_PATH = `${homedir()}/.gitarborrc`
+
+async function loadThemePreference() {
+  try {
+    const config = await readFile(CONFIG_PATH, 'utf-8')
+    const configData = JSON.parse(config)
+    if (configData.theme) {
+      setTheme(configData.theme)
+    }
+  } catch {
+    // Config doesn't exist or is invalid - use default theme
+  }
+}
+
+// Load theme before starting the app
+await loadThemePreference()
 
 // Create the CLI renderer (async)
 const renderer = await createCliRenderer({
