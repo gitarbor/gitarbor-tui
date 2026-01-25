@@ -11,6 +11,7 @@ import { CommitModal } from './components/CommitModal'
 import { ExitModal } from './components/ExitModal'
 import { CommandPalette } from './components/CommandPalette'
 import { SettingsModal } from './components/SettingsModal'
+import { ProgressModal } from './components/ProgressModal'
 import type { GitStatus, GitCommit, GitBranch, View } from './types/git'
 import type { Command } from './types/commands'
 
@@ -38,6 +39,11 @@ export function App({ cwd }: { cwd: string }) {
   const [showCommandPalette, setShowCommandPalette] = useState(false)
   const [showSettingsModal, setShowSettingsModal] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [showProgressModal, setShowProgressModal] = useState(false)
+  const [progressTitle, setProgressTitle] = useState('')
+  const [progressMessages, setProgressMessages] = useState<string[]>([])
+  const [progressComplete, setProgressComplete] = useState(false)
+  const [progressError, setProgressError] = useState<string | undefined>(undefined)
 
   // Clean exit handler
   const handleExit = useCallback(() => {
@@ -158,6 +164,50 @@ export function App({ cwd }: { cwd: string }) {
     }
   }, [git, loadData])
 
+  const handlePush = useCallback(async () => {
+    try {
+      setProgressTitle('Pushing changes...')
+      setProgressMessages([])
+      setProgressComplete(false)
+      setProgressError(undefined)
+      setShowProgressModal(true)
+
+      await git.push((line) => {
+        setProgressMessages((prev) => [...prev, line])
+      })
+
+      setProgressComplete(true)
+      await loadData(true)
+      setMessage('Push completed successfully')
+    } catch (error) {
+      setProgressComplete(true)
+      setProgressError(String(error))
+      setMessage(`Push failed: ${error}`)
+    }
+  }, [git, loadData])
+
+  const handlePull = useCallback(async () => {
+    try {
+      setProgressTitle('Pulling changes...')
+      setProgressMessages([])
+      setProgressComplete(false)
+      setProgressError(undefined)
+      setShowProgressModal(true)
+
+      await git.pull((line) => {
+        setProgressMessages((prev) => [...prev, line])
+      })
+
+      setProgressComplete(true)
+      await loadData(true)
+      setMessage('Pull completed successfully')
+    } catch (error) {
+      setProgressComplete(true)
+      setProgressError(String(error))
+      setMessage(`Pull failed: ${error}`)
+    }
+  }, [git, loadData])
+
   const getMaxIndex = useCallback(() => {
     switch (view) {
       case 'main':
@@ -258,6 +308,20 @@ export function App({ cwd }: { cwd: string }) {
       },
     },
     {
+      id: 'push',
+      label: 'Push Changes',
+      description: 'Push commits to remote repository',
+      shortcut: 'P',
+      execute: () => void handlePush(),
+    },
+    {
+      id: 'pull',
+      label: 'Pull Changes',
+      description: 'Pull and merge changes from remote',
+      shortcut: 'p',
+      execute: () => void handlePull(),
+    },
+    {
       id: 'refresh',
       label: 'Refresh Data',
       description: 'Reload git status and data',
@@ -273,7 +337,7 @@ export function App({ cwd }: { cwd: string }) {
   ]
 
   useKeyboard((key) => {
-    if (showExitModal || showCommandPalette || showSettingsModal) {
+    if (showExitModal || showCommandPalette || showSettingsModal || showProgressModal) {
       // Modals handle their own keyboard input
       return
     }
@@ -374,6 +438,14 @@ export function App({ cwd }: { cwd: string }) {
         setMessage('No staged files to commit')
       }
     }
+
+    if (key.sequence === 'P') {
+      void handlePush()
+    }
+
+    if (key.sequence === 'p') {
+      void handlePull()
+    }
   })
 
   const getViewName = (): string => {
@@ -451,6 +523,16 @@ export function App({ cwd }: { cwd: string }) {
 
       {showSettingsModal && (
         <SettingsModal onClose={() => setShowSettingsModal(false)} />
+      )}
+
+      {showProgressModal && (
+        <ProgressModal
+          title={progressTitle}
+          messages={progressMessages}
+          isComplete={progressComplete}
+          error={progressError}
+          onClose={() => setShowProgressModal(false)}
+        />
       )}
     </box>
   )
