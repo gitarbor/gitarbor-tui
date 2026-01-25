@@ -15,6 +15,8 @@ export interface Theme {
     borderFocused: string
     background: {
       primary: string
+      secondary: string
+      highlight: string
       modal: string
       button: string
       buttonHover: string
@@ -66,6 +68,8 @@ const defaultDarkTheme: Theme = {
     borderFocused: '#CC8844',  // Orange - focused borders
     background: {
       primary: '#000000',      // Black - main background
+      secondary: '#1a1a1a',    // Dark gray - secondary background (tabs, panels)
+      highlight: '#2a2520',    // Dark brown - highlighted background
       modal: '#1a1a1a',        // Dark gray - modal background
       button: '#2a2520',       // Dark brown - button background
       buttonHover: '#333333',  // Lighter gray - button hover
@@ -117,6 +121,8 @@ const lightTheme: Theme = {
     borderFocused: '#0066CC',  // Blue - focused borders
     background: {
       primary: '#FFFFFF',      // White - main background
+      secondary: '#F5F5F5',    // Light gray - secondary background
+      highlight: '#E0E0E0',    // Gray - highlighted background
       modal: '#F5F5F5',        // Light gray - modal background
       button: '#E0E0E0',       // Gray - button background
       buttonHover: '#D0D0D0',  // Darker gray - button hover
@@ -168,6 +174,8 @@ const monokaiTheme: Theme = {
     borderFocused: '#F92672',  // Pink - focused borders
     background: {
       primary: '#272822',      // Dark background
+      secondary: '#1E1F1C',    // Darker gray - secondary background
+      highlight: '#3E3D32',    // Brown-gray - highlighted background
       modal: '#1E1F1C',        // Darker gray - modal background
       button: '#3E3D32',       // Brown-gray - button background
       buttonHover: '#49483E',  // Lighter gray - button hover
@@ -219,6 +227,8 @@ const nordTheme: Theme = {
     borderFocused: '#88C0D0',  // Frost blue - focused borders
     background: {
       primary: '#2E3440',      // Polar night - main background
+      secondary: '#242933',    // Darker polar night - secondary background
+      highlight: '#3B4252',    // Polar night gray - highlighted background
       modal: '#242933',        // Darker polar night - modal background
       button: '#3B4252',       // Polar night gray - button background
       buttonHover: '#434C5E',  // Lighter polar night - button hover
@@ -270,6 +280,8 @@ const solarizedDarkTheme: Theme = {
     borderFocused: '#268BD2',  // Blue - focused borders
     background: {
       primary: '#002B36',      // Base03 - main background
+      secondary: '#073642',    // Base02 - secondary background
+      highlight: '#586E75',    // Base01 - highlighted background
       modal: '#073642',        // Base02 - modal background
       button: '#073642',       // Base02 - button background
       buttonHover: '#586E75',  // Base01 - button hover
@@ -321,6 +333,8 @@ const solarizedLightTheme: Theme = {
     borderFocused: '#268BD2',  // Blue - focused borders
     background: {
       primary: '#FDF6E3',      // Base3 - main background
+      secondary: '#EEE8D5',    // Base2 - secondary background
+      highlight: '#93A1A1',    // Base1 - highlighted background
       modal: '#EEE8D5',        // Base2 - modal background
       button: '#EEE8D5',       // Base2 - button background
       buttonHover: '#93A1A1',  // Base1 - button hover
@@ -372,6 +386,8 @@ const gruvboxDarkTheme: Theme = {
     borderFocused: '#FE8019',  // Orange - focused borders
     background: {
       primary: '#282828',      // Dark background
+      secondary: '#1D2021',    // Darker background - secondary background
+      highlight: '#3C3836',    // Dark gray - highlighted background
       modal: '#1D2021',        // Darker background - modal background
       button: '#3C3836',       // Dark gray - button background
       buttonHover: '#504945',  // Lighter gray - button hover
@@ -423,6 +439,8 @@ const gruvboxLightTheme: Theme = {
     borderFocused: '#AF3A03',  // Orange - focused borders
     background: {
       primary: '#FBF1C7',      // Light background
+      secondary: '#F9F5D7',    // Lighter background - secondary background
+      highlight: '#EBDBB2',    // Beige - highlighted background
       modal: '#F9F5D7',        // Lighter background - modal background
       button: '#EBDBB2',       // Beige - button background
       buttonHover: '#D5C4A1',  // Darker beige - button hover
@@ -474,6 +492,8 @@ const draculaTheme: Theme = {
     borderFocused: '#BD93F9',  // Purple - focused borders
     background: {
       primary: '#282A36',      // Dark background
+      secondary: '#1E1F29',    // Darker background - secondary background
+      highlight: '#44475A',    // Gray - highlighted background
       modal: '#1E1F29',        // Darker background - modal background
       button: '#44475A',       // Gray - button background
       buttonHover: '#6272A4',  // Lighter gray - button hover
@@ -525,6 +545,8 @@ const tokyoNightTheme: Theme = {
     borderFocused: '#7AA2F7',  // Blue - focused borders
     background: {
       primary: '#1A1B26',      // Dark background
+      secondary: '#16161E',    // Darker background - secondary background
+      highlight: '#24283B',    // Gray - highlighted background
       modal: '#16161E',        // Darker background - modal background
       button: '#24283B',       // Gray - button background
       buttonHover: '#3B4261',  // Lighter gray - button hover

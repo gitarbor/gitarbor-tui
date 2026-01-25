@@ -4,7 +4,7 @@ import { createCliRenderer } from '@opentui/core'
 import { createRoot } from '@opentui/react'
 import { homedir } from 'os'
 import { readFile } from 'fs/promises'
-import { App } from './src/App'
+import { MultiRepoApp } from './src/MultiRepoApp'
 import { setTheme } from './src/theme'
 
 // Load theme preference from config
@@ -34,7 +34,7 @@ const renderer = await createCliRenderer({
 // Create and mount the React root
 const cwd = process.cwd()
 const root = createRoot(renderer)
-root.render(<App cwd={cwd} />)
+root.render(<MultiRepoApp initialCwd={cwd} />)
 
 // Clean exit handler
 const cleanExit = () => {
