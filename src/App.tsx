@@ -166,22 +166,13 @@ export function App({ cwd }: { cwd: string }) {
 
   const handlePush = useCallback(async () => {
     try {
-      setProgressTitle('Pushing changes...')
-      setProgressMessages([])
-      setProgressComplete(false)
-      setProgressError(undefined)
-      setShowProgressModal(true)
+      setMessage('Pushing changes...')
 
-      await git.push((line) => {
-        setProgressMessages((prev) => [...prev, line])
-      })
+      await git.push()
 
-      setProgressComplete(true)
       await loadData(true)
       setMessage('Push completed successfully')
     } catch (error) {
-      setProgressComplete(true)
-      setProgressError(String(error))
       setMessage(`Push failed: ${error}`)
     }
   }, [git, loadData])
