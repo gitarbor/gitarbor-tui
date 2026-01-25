@@ -280,7 +280,9 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
               padding={theme.spacing.xs}
             >
               <text fg={theme.colors.text.muted}>Preview: {selectedTheme.name}</text>
-              <text fg={theme.colors.text.muted}>{selectedTheme.description}</text>
+              <box flexDirection="row">
+                <text fg={theme.colors.text.muted}>{selectedTheme.description}</text>
+              </box>
               <text> </text>
               
               {/* Color samples */}
