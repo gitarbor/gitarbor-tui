@@ -29,23 +29,23 @@ export function Footer({
     // View-specific and context-specific commands
     if (view === 'main' && focusedPanel === 'status') {
       const line1 = `${globalCommands} | [c] Commit | [s] Stash`
-      const line2 = '[SPACE] Stage/Unstage | [a] Stage All | [A] Unstage All | [d] Discard | [D] Delete | [r] Rename | [ESC/q] Exit'
+      const line2 = '[SPACE] Stage/Unstage | [a] Stage All | [A] Unstage All | [d] Discard | [D] Delete | [r] Rename | [TAB/Shift+TAB] Panels | [ESC/q] Exit'
       return { line1, line2 }
     } else if (view === 'main' && focusedPanel === 'branches') {
       const line1 = `${globalCommands} | [ENTER] Checkout | [m] Merge`
-      const line2 = '[n] New Branch | [D] Delete | [R] Rename | [u] Set Upstream | [U] Unset Upstream | [ESC/q] Exit'
+      const line2 = '[n] New Branch | [D] Delete | [R] Rename | [u] Set Upstream | [U] Unset Upstream | [TAB/Shift+TAB] Panels | [ESC/q] Exit'
       return { line1, line2 }
     } else if (view === 'main' && focusedPanel === 'log') {
       const line1 = `${globalCommands} | [ENTER] View Diff`
-      const line2 = '[y] Cherry-pick | [R] Revert | [X] Reset | [Y] Copy Hash | [t] Tag | [ESC/q] Exit'
+      const line2 = '[y] Cherry-pick | [R] Revert | [X] Reset | [Y] Copy Hash | [t] Tag | [TAB/Shift+TAB] Panels | [ESC/q] Exit'
       return { line1, line2 }
     } else if (view === 'main' && focusedPanel === 'stashes') {
       const line1 = `${globalCommands} | [s] Create Stash`
-      const line2 = '[ENTER] Apply | [P] Pop | [D] Drop | [V] View Diff | [4] Full Stash View | [ESC/q] Exit'
+      const line2 = '[ENTER] Apply | [P] Pop | [D] Drop | [V] View Diff | [4] Full Stash View | [TAB/Shift+TAB] Panels | [ESC/q] Exit'
       return { line1, line2 }
     } else if (view === 'main' && focusedPanel === 'info') {
       const line1 = `${globalCommands}`
-      const line2 = '[[] Files | []] Branches | [\\] Commits | [|] Stashes | [ESC/q] Exit'
+      const line2 = '[[] Files | []] Branches | [\\] Commits | [|] Stashes | [TAB/Shift+TAB] Panels | [ESC/q] Exit'
       return { line1, line2 }
     } else if (view === 'log') {
       const line1 = `${globalCommands} | [ENTER] View Diff`
@@ -64,7 +64,7 @@ export function Footer({
     // Fallback
     return {
       line1: globalCommands,
-      line2: '[[] Files | []] Branches | [\\] Commits | [ESC/q] Exit',
+      line2: '[[] Files | []] Branches | [\\] Commits | [TAB/Shift+TAB] Panels | [ESC/q] Exit',
     }
   }
 

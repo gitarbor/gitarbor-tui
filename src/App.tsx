@@ -835,6 +835,24 @@ export function App({ cwd }: { cwd: string }) {
       },
     },
     {
+      id: 'cycle-panels',
+      label: 'Cycle Through Panels',
+      description: 'Navigate to next panel with Tab key',
+      shortcut: 'TAB / Shift+TAB',
+      execute: () => {
+        if (view === 'main') {
+          const panels: Array<'status' | 'branches' | 'log' | 'stashes' | 'info'> = stashes.length > 0
+            ? ['status', 'log', 'info', 'branches', 'stashes']
+            : ['status', 'log', 'info', 'branches']
+          
+          const currentIndex = panels.indexOf(focusedPanel)
+          const nextIndex = (currentIndex + 1) % panels.length
+          setFocusedPanel(panels[nextIndex]!)
+          setSelectedIndex(0)
+        }
+      },
+    },
+    {
       id: 'commit',
       label: 'Commit Changes',
       description: 'Create a new commit with staged files',
@@ -1272,6 +1290,23 @@ export function App({ cwd }: { cwd: string }) {
         setSelectedIndex(0)
       } else if (key.sequence === '{') {
         setFocusedPanel('info')
+        setSelectedIndex(0)
+      }
+      
+      // Tab key to cycle through panels (forward with Tab, backward with Shift+Tab)
+      if (key.name === 'tab') {
+        const panels: Array<'status' | 'branches' | 'log' | 'stashes' | 'info'> = stashes.length > 0
+          ? ['status', 'log', 'info', 'branches', 'stashes']
+          : ['status', 'log', 'info', 'branches']
+        
+        const currentIndex = panels.indexOf(focusedPanel)
+        
+        // Shift+Tab goes backward, Tab goes forward
+        const nextIndex = key.shift
+          ? (currentIndex - 1 + panels.length) % panels.length
+          : (currentIndex + 1) % panels.length
+        
+        setFocusedPanel(panels[nextIndex]!)
         setSelectedIndex(0)
       }
     }
