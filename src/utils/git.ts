@@ -1,6 +1,6 @@
 import { exec } from 'child_process'
 import { promisify } from 'util'
-import type { GitStatus, GitFile, GitCommit, GitBranch } from '../types/git'
+import type { GitStatus, GitFile, GitCommit, GitBranch, GitStash } from '../types/git'
 
 const execAsync = promisify(exec)
 
@@ -298,6 +298,92 @@ export class GitClient {
       })
     } catch (error) {
       throw new Error(`Failed to fetch: ${error}`)
+    }
+  }
+
+  async getStashes(): Promise<GitStash[]> {
+    try {
+      const { stdout } = await execAsync('git stash list', { cwd: this.cwd })
+      
+      if (!stdout.trim()) {
+        return []
+      }
+
+      return stdout
+        .split('\n')
+        .filter((line) => line)
+        .map((line) => {
+          // Format: stash@{0}: WIP on main: 1234567 commit message
+          // or: stash@{0}: On main: custom message
+          const match = line.match(/^(stash@\{(\d+)\}): (?:WIP on|On) ([^:]+): (.+)$/)
+          if (match) {
+            const [, name, indexStr, branch, message] = match
+            return {
+              name: name!,
+              index: parseInt(indexStr!, 10),
+              branch: branch!,
+              message: message!,
+            }
+          }
+          // Fallback parsing
+          const colonIndex = line.indexOf(':')
+          const name = line.substring(0, colonIndex)
+          const indexMatch = name.match(/\{(\d+)\}/)
+          const index = indexMatch ? parseInt(indexMatch[1]!, 10) : 0
+          return {
+            name,
+            index,
+            branch: 'unknown',
+            message: line.substring(colonIndex + 1).trim(),
+          }
+        })
+    } catch (error) {
+      throw new Error(`Failed to get stashes: ${error}`)
+    }
+  }
+
+  async createStash(message?: string): Promise<void> {
+    try {
+      if (message) {
+        await execAsync(`git stash push -m "${message.replace(/"/g, '\\"')}"`, { cwd: this.cwd })
+      } else {
+        await execAsync('git stash push', { cwd: this.cwd })
+      }
+    } catch (error) {
+      throw new Error(`Failed to create stash: ${error}`)
+    }
+  }
+
+  async applyStash(index: number): Promise<void> {
+    try {
+      await execAsync(`git stash apply stash@{${index}}`, { cwd: this.cwd })
+    } catch (error) {
+      throw new Error(`Failed to apply stash: ${error}`)
+    }
+  }
+
+  async popStash(index: number): Promise<void> {
+    try {
+      await execAsync(`git stash pop stash@{${index}}`, { cwd: this.cwd })
+    } catch (error) {
+      throw new Error(`Failed to pop stash: ${error}`)
+    }
+  }
+
+  async dropStash(index: number): Promise<void> {
+    try {
+      await execAsync(`git stash drop stash@{${index}}`, { cwd: this.cwd })
+    } catch (error) {
+      throw new Error(`Failed to drop stash: ${error}`)
+    }
+  }
+
+  async getStashDiff(index: number): Promise<string> {
+    try {
+      const { stdout } = await execAsync(`git stash show -p stash@{${index}}`, { cwd: this.cwd })
+      return stdout
+    } catch (error) {
+      throw new Error(`Failed to get stash diff: ${error}`)
     }
   }
 }

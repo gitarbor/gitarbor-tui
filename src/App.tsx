@@ -12,7 +12,9 @@ import { ExitModal } from './components/ExitModal'
 import { CommandPalette } from './components/CommandPalette'
 import { SettingsModal } from './components/SettingsModal'
 import { ProgressModal } from './components/ProgressModal'
-import type { GitStatus, GitCommit, GitBranch, View } from './types/git'
+import { StashView } from './components/StashView'
+import { StashModal } from './components/StashModal'
+import type { GitStatus, GitCommit, GitBranch, GitStash, View } from './types/git'
 import type { Command } from './types/commands'
 
 export function App({ cwd }: { cwd: string }) {
@@ -31,10 +33,12 @@ export function App({ cwd }: { cwd: string }) {
   })
   const [commits, setCommits] = useState<GitCommit[]>([])
   const [branches, setBranches] = useState<GitBranch[]>([])
+  const [stashes, setStashes] = useState<GitStash[]>([])
   const [diff, setDiff] = useState<string>('')
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [message, setMessage] = useState('')
   const [showCommitModal, setShowCommitModal] = useState(false)
+  const [showStashModal, setShowStashModal] = useState(false)
   const [showExitModal, setShowExitModal] = useState(false)
   const [showCommandPalette, setShowCommandPalette] = useState(false)
   const [showSettingsModal, setShowSettingsModal] = useState(false)
@@ -62,14 +66,16 @@ export function App({ cwd }: { cwd: string }) {
       if (!silent) {
         setLoading(true)
       }
-      const [statusData, commitsData, branchesData] = await Promise.all([
+      const [statusData, commitsData, branchesData, stashesData] = await Promise.all([
         git.getStatus(),
         git.getLog(50),
         git.getBranches(),
+        git.getStashes(),
       ])
       setStatus(statusData)
       setCommits(commitsData)
       setBranches(branchesData)
+      setStashes(stashesData)
       if (!silent) {
         setMessage('Data loaded')
       }
@@ -227,6 +233,59 @@ export function App({ cwd }: { cwd: string }) {
     }
   }, [git, loadData])
 
+  const handleCreateStash = useCallback(async (stashMessage: string) => {
+    try {
+      await git.createStash(stashMessage || undefined)
+      await loadData(true)
+      setMessage(stashMessage ? `Stashed: ${stashMessage}` : 'Changes stashed')
+      setShowStashModal(false)
+    } catch (error) {
+      setMessage(`Error creating stash: ${error}`)
+      setShowStashModal(false)
+    }
+  }, [git, loadData])
+
+  const handleApplyStash = useCallback(async (index: number) => {
+    try {
+      await git.applyStash(index)
+      await loadData(true)
+      setMessage(`Applied stash@{${index}}`)
+    } catch (error) {
+      setMessage(`Error applying stash: ${error}`)
+    }
+  }, [git, loadData])
+
+  const handlePopStash = useCallback(async (index: number) => {
+    try {
+      await git.popStash(index)
+      await loadData(true)
+      setMessage(`Popped stash@{${index}}`)
+    } catch (error) {
+      setMessage(`Error popping stash: ${error}`)
+    }
+  }, [git, loadData])
+
+  const handleDropStash = useCallback(async (index: number) => {
+    try {
+      await git.dropStash(index)
+      await loadData(true)
+      setMessage(`Dropped stash@{${index}}`)
+    } catch (error) {
+      setMessage(`Error dropping stash: ${error}`)
+    }
+  }, [git, loadData])
+
+  const handleViewStashDiff = useCallback(async (index: number) => {
+    try {
+      const stashDiff = await git.getStashDiff(index)
+      setDiff(stashDiff)
+      setView('diff')
+      setMessage(`Viewing diff for stash@{${index}}`)
+    } catch (error) {
+      setMessage(`Error loading stash diff: ${error}`)
+    }
+  }, [git])
+
   const getMaxIndex = useCallback(() => {
     switch (view) {
       case 'main':
@@ -239,10 +298,12 @@ export function App({ cwd }: { cwd: string }) {
         }
       case 'log':
         return commits.length - 1
+      case 'stash':
+        return stashes.length - 1
       default:
         return 0
     }
-  }, [view, focusedPanel, status, commits, branches])
+  }, [view, focusedPanel, status, commits, branches, stashes])
 
   // Define available commands
   const commands: Command[] = [
@@ -286,6 +347,16 @@ export function App({ cwd }: { cwd: string }) {
       description: 'Show file differences',
       shortcut: '3',
       execute: () => setView('diff'),
+    },
+    {
+      id: 'view-stash',
+      label: 'View: Stash',
+      description: 'Show stash list',
+      shortcut: '4',
+      execute: () => {
+        setView('stash')
+        setSelectedIndex(0)
+      },
     },
     {
       id: 'panel-status',
@@ -355,6 +426,13 @@ export function App({ cwd }: { cwd: string }) {
       execute: () => void handleFetch(),
     },
     {
+      id: 'create-stash',
+      label: 'Create Stash',
+      description: 'Stash working directory changes',
+      shortcut: 'S',
+      execute: () => setShowStashModal(true),
+    },
+    {
       id: 'refresh',
       label: 'Refresh Data',
       description: 'Reload git status and data',
@@ -375,9 +453,10 @@ export function App({ cwd }: { cwd: string }) {
       return
     }
 
-    if (showCommitModal) {
+    if (showCommitModal || showStashModal) {
       if (key.name === 'escape') {
         setShowCommitModal(false)
+        setShowStashModal(false)
       }
       return
     }
@@ -409,6 +488,9 @@ export function App({ cwd }: { cwd: string }) {
       setSelectedIndex(0)
     } else if (key.sequence === '3') {
       setView('diff')
+    } else if (key.sequence === '4') {
+      setView('stash')
+      setSelectedIndex(0)
     }
 
     // Panel switching (when in main view)
@@ -487,6 +569,30 @@ export function App({ cwd }: { cwd: string }) {
     if (key.sequence === 'f') {
       void handleFetch()
     }
+
+    // Stash operations
+    if (key.sequence === 'S') {
+      setShowStashModal(true)
+    }
+
+    // Stash view actions
+    if (view === 'stash' && stashes.length > 0) {
+      const stash = stashes[selectedIndex]
+      
+      if (stash && key.name === 'return') {
+        // Apply stash on Enter
+        void handleApplyStash(stash.index)
+      } else if (stash && key.sequence === 'P') {
+        // Pop stash on Shift+P
+        void handlePopStash(stash.index)
+      } else if (stash && key.sequence === 'D') {
+        // Drop stash on Shift+D
+        void handleDropStash(stash.index)
+      } else if (stash && key.sequence === 'V') {
+        // View stash diff on Shift+V
+        void handleViewStashDiff(stash.index)
+      }
+    }
   })
 
   const getViewName = (): string => {
@@ -498,6 +604,7 @@ export function App({ cwd }: { cwd: string }) {
       }
       case 'log': return 'Log'
       case 'diff': return 'Diff'
+      case 'stash': return 'Stash'
     }
   }
 
@@ -535,7 +642,15 @@ export function App({ cwd }: { cwd: string }) {
       {view === 'diff' && (
         <DiffView
           diff={diff}
-          focused={!showCommitModal}
+          focused={!showCommitModal && !showStashModal}
+        />
+      )}
+
+      {view === 'stash' && (
+        <StashView
+          stashes={stashes}
+          selectedIndex={selectedIndex}
+          focused={!showCommitModal && !showStashModal}
         />
       )}
 
@@ -545,6 +660,13 @@ export function App({ cwd }: { cwd: string }) {
         <CommitModal
           onCommit={handleCommit}
           onCancel={() => setShowCommitModal(false)}
+        />
+      )}
+
+      {showStashModal && (
+        <StashModal
+          onStash={handleCreateStash}
+          onCancel={() => setShowStashModal(false)}
         />
       )}
 

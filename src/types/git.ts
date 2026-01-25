@@ -27,4 +27,11 @@ export interface GitBranch {
   remote: boolean
 }
 
-export type View = 'main' | 'log' | 'diff'
+export interface GitStash {
+  index: number
+  name: string
+  branch: string
+  message: string
+}
+
+export type View = 'main' | 'log' | 'diff' | 'stash'
