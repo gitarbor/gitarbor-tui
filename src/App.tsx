@@ -429,7 +429,7 @@ export function App({ cwd }: { cwd: string }) {
       id: 'create-stash',
       label: 'Create Stash',
       description: 'Stash working directory changes',
-      shortcut: 'S',
+      shortcut: 's',
       execute: () => setShowStashModal(true),
     },
     {
@@ -526,28 +526,28 @@ export function App({ cwd }: { cwd: string }) {
       }
     }
 
-    if (key.sequence === 's') {
+    // Spacebar to stage/unstage file in status panel
+    if (key.name === 'space') {
       if (view === 'main' && focusedPanel === 'status') {
         const allFiles = [...status.staged, ...status.unstaged, ...status.untracked]
         const file = allFiles[selectedIndex]
-        if (file && !file.staged) {
-          void handleStage(file.path)
+        if (file) {
+          if (file.staged) {
+            void handleUnstage(file.path)
+          } else {
+            void handleStage(file.path)
+          }
         }
       }
+    }
+
+    // 's' key to create stash
+    if (key.sequence === 's') {
+      setShowStashModal(true)
     }
 
     if (key.sequence === 'a') {
       void handleStageAll()
-    }
-
-    if (key.sequence === 'u') {
-      if (view === 'main' && focusedPanel === 'status') {
-        const allFiles = [...status.staged, ...status.unstaged, ...status.untracked]
-        const file = allFiles[selectedIndex]
-        if (file && file.staged) {
-          void handleUnstage(file.path)
-        }
-      }
     }
 
     if (key.sequence === 'c') {
