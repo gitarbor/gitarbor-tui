@@ -22,6 +22,8 @@ import { BranchRenameModal } from './components/BranchRenameModal'
 import { SetUpstreamModal } from './components/SetUpstreamModal'
 import { MergeModal } from './components/MergeModal'
 import { ConflictResolutionModal } from './components/ConflictResolutionModal'
+import { ResetModal } from './components/ResetModal'
+import { TagModal } from './components/TagModal'
 import type { GitStatus, GitCommit, GitBranch, GitStash, GitMergeState, MergeStrategy, View } from './types/git'
 import type { Command } from './types/commands'
 
@@ -77,6 +79,9 @@ export function App({ cwd }: { cwd: string }) {
     currentBranch: '',
     conflicts: [],
   })
+  const [showResetModal, setShowResetModal] = useState(false)
+  const [showTagModal, setShowTagModal] = useState(false)
+  const [selectedCommitForAction, setSelectedCommitForAction] = useState<GitCommit | null>(null)
 
   // Clean exit handler
   const handleExit = useCallback(() => {
@@ -604,6 +609,80 @@ export function App({ cwd }: { cwd: string }) {
     }
   }, [git, loadData])
 
+  const handleCherryPick = useCallback(async (commitHash: string) => {
+    try {
+      await git.cherryPick(commitHash)
+      await loadData(true)
+      setMessage(`Cherry-picked commit ${commitHash}`)
+    } catch (error) {
+      setMessage(`Error cherry-picking: ${error}`)
+    }
+  }, [git, loadData])
+
+  const handleRevert = useCallback(async (commitHash: string) => {
+    try {
+      await git.revertCommit(commitHash)
+      await loadData(true)
+      setMessage(`Reverted commit ${commitHash}`)
+    } catch (error) {
+      setMessage(`Error reverting: ${error}`)
+    }
+  }, [git, loadData])
+
+  const handleAmend = useCallback(async (commitMessage: string) => {
+    try {
+      await git.amendCommit(commitMessage)
+      await loadData(true)
+      setMessage('Amended last commit')
+    } catch (error) {
+      setMessage(`Error amending commit: ${error}`)
+    }
+  }, [git, loadData])
+
+  const handleReset = useCallback(async (commitHash: string, mode: 'soft' | 'mixed' | 'hard') => {
+    try {
+      await git.resetToCommit(commitHash, mode)
+      await loadData(true)
+      setShowResetModal(false)
+      setMessage(`Reset to ${commitHash} (${mode})`)
+    } catch (error) {
+      setMessage(`Error resetting: ${error}`)
+      setShowResetModal(false)
+    }
+  }, [git, loadData])
+
+  const handleViewCommitDiff = useCallback(async (commitHash: string) => {
+    try {
+      const commitDiff = await git.getCommitDiff(commitHash)
+      setDiff(commitDiff)
+      setView('diff')
+      setMessage(`Viewing commit ${commitHash}`)
+    } catch (error) {
+      setMessage(`Error loading commit diff: ${error}`)
+    }
+  }, [git])
+
+  const handleCopyCommitHash = useCallback(async (commitHash: string) => {
+    try {
+      await git.copyToClipboard(commitHash)
+      setMessage(`Copied ${commitHash} to clipboard`)
+    } catch (error) {
+      setMessage(`Error copying to clipboard: ${error}`)
+    }
+  }, [git])
+
+  const handleCreateTag = useCallback(async (commitHash: string, tagName: string, message?: string) => {
+    try {
+      await git.createTag(tagName, commitHash, message)
+      await loadData(true)
+      setShowTagModal(false)
+      setMessage(`Created tag ${tagName} at ${commitHash}`)
+    } catch (error) {
+      setMessage(`Error creating tag: ${error}`)
+      setShowTagModal(false)
+    }
+  }, [git, loadData])
+
   const getMaxIndex = useCallback(() => {
     switch (view) {
       case 'main':
@@ -942,6 +1021,135 @@ export function App({ cwd }: { cwd: string }) {
       },
     },
     {
+      id: 'cherry-pick',
+      label: 'Cherry-pick Commit',
+      description: 'Apply changes from selected commit to current branch',
+      shortcut: 'y (in log view)',
+      execute: () => {
+        if (view === 'log' || (view === 'main' && focusedPanel === 'log')) {
+          const commit = commits[selectedIndex]
+          if (commit) {
+            setConfirmModalProps({
+              title: 'Cherry-pick Commit?',
+              message: `Apply changes from commit ${commit.shortHash}: ${commit.message}`,
+              onConfirm: () => {
+                setShowConfirmModal(false)
+                void handleCherryPick(commit.hash)
+              },
+              danger: false,
+            })
+            setShowConfirmModal(true)
+          }
+        }
+      },
+    },
+    {
+      id: 'revert-commit',
+      label: 'Revert Commit',
+      description: 'Create new commit that undoes selected commit',
+      shortcut: 'R (in log view)',
+      execute: () => {
+        if (view === 'log' || (view === 'main' && focusedPanel === 'log')) {
+          const commit = commits[selectedIndex]
+          if (commit) {
+            setConfirmModalProps({
+              title: 'Revert Commit?',
+              message: `Create a new commit that undoes ${commit.shortHash}: ${commit.message}`,
+              onConfirm: () => {
+                setShowConfirmModal(false)
+                void handleRevert(commit.hash)
+              },
+              danger: false,
+            })
+            setShowConfirmModal(true)
+          }
+        }
+      },
+    },
+    {
+      id: 'amend-commit',
+      label: 'Amend Last Commit',
+      description: 'Modify the last commit with staged changes',
+      shortcut: 'A (with staged changes)',
+      execute: () => {
+        if (status.staged.length > 0) {
+          setConfirmModalProps({
+            title: 'Amend Last Commit?',
+            message: `Add staged changes to the last commit? This will change commit history.`,
+            onConfirm: () => {
+              setShowConfirmModal(false)
+              const lastCommit = commits[0]
+              if (lastCommit) {
+                void handleAmend(lastCommit.message)
+              }
+            },
+            danger: true,
+          })
+          setShowConfirmModal(true)
+        } else {
+          setMessage('No staged changes to amend')
+        }
+      },
+    },
+    {
+      id: 'reset-to-commit',
+      label: 'Reset to Commit',
+      description: 'Reset current branch to selected commit',
+      shortcut: 'X (in log view)',
+      execute: () => {
+        if (view === 'log' || (view === 'main' && focusedPanel === 'log')) {
+          const commit = commits[selectedIndex]
+          if (commit) {
+            setSelectedCommitForAction(commit)
+            setShowResetModal(true)
+          }
+        }
+      },
+    },
+    {
+      id: 'view-commit-diff',
+      label: 'View Commit Diff',
+      description: 'Show changes introduced by commit',
+      shortcut: 'Enter (in log view)',
+      execute: () => {
+        if (view === 'log' || (view === 'main' && focusedPanel === 'log')) {
+          const commit = commits[selectedIndex]
+          if (commit) {
+            void handleViewCommitDiff(commit.hash)
+          }
+        }
+      },
+    },
+    {
+      id: 'copy-commit-hash',
+      label: 'Copy Commit Hash',
+      description: 'Copy commit hash to clipboard',
+      shortcut: 'Y (in log view)',
+      execute: () => {
+        if (view === 'log' || (view === 'main' && focusedPanel === 'log')) {
+          const commit = commits[selectedIndex]
+          if (commit) {
+            void handleCopyCommitHash(commit.hash)
+          }
+        }
+      },
+    },
+    {
+      id: 'create-tag',
+      label: 'Create Tag',
+      description: 'Create a tag at selected commit',
+      shortcut: 't (in log view)',
+      execute: () => {
+        if (view === 'log' || (view === 'main' && focusedPanel === 'log')) {
+          const commit = commits[selectedIndex]
+          if (commit) {
+            setSelectedCommitForAction(commit)
+            setShowTagModal(true)
+          }
+        }
+      },
+    },
+    {
       id: 'exit',
       label: 'Exit',
       description: 'Exit the application',
@@ -951,7 +1159,7 @@ export function App({ cwd }: { cwd: string }) {
   ]
 
   useKeyboard((key) => {
-    if (showExitModal || showCommandPalette || showSettingsModal || showProgressModal || showConfirmModal || showRenameModal || showBranchModal || showBranchRenameModal || showSetUpstreamModal || showMergeModal || showConflictModal) {
+    if (showExitModal || showCommandPalette || showSettingsModal || showProgressModal || showConfirmModal || showRenameModal || showBranchModal || showBranchRenameModal || showSetUpstreamModal || showMergeModal || showConflictModal || showResetModal || showTagModal) {
       // Modals handle their own keyboard input
       return
     }
@@ -1185,6 +1393,51 @@ export function App({ cwd }: { cwd: string }) {
         void handleViewStashDiff(stash.index)
       }
     }
+
+    // Log view actions
+    if (view === 'log' || (view === 'main' && focusedPanel === 'log')) {
+      const commit = commits[selectedIndex]
+      
+      if (commit && key.name === 'return') {
+        // View commit diff on Enter
+        void handleViewCommitDiff(commit.hash)
+      } else if (commit && key.sequence === 'y') {
+        // Cherry-pick on 'y'
+        setConfirmModalProps({
+          title: 'Cherry-pick Commit?',
+          message: `Apply changes from commit ${commit.shortHash}: ${commit.message}`,
+          onConfirm: () => {
+            setShowConfirmModal(false)
+            void handleCherryPick(commit.hash)
+          },
+          danger: false,
+        })
+        setShowConfirmModal(true)
+      } else if (commit && key.sequence === 'R') {
+        // Revert on Shift+R
+        setConfirmModalProps({
+          title: 'Revert Commit?',
+          message: `Create a new commit that undoes ${commit.shortHash}: ${commit.message}`,
+          onConfirm: () => {
+            setShowConfirmModal(false)
+            void handleRevert(commit.hash)
+          },
+          danger: false,
+        })
+        setShowConfirmModal(true)
+      } else if (commit && key.sequence === 'X') {
+        // Reset on Shift+X
+        setSelectedCommitForAction(commit)
+        setShowResetModal(true)
+      } else if (commit && key.sequence === 'Y') {
+        // Copy hash on Shift+Y
+        void handleCopyCommitHash(commit.hash)
+      } else if (commit && key.sequence === 't') {
+        // Create tag on 't'
+        setSelectedCommitForAction(commit)
+        setShowTagModal(true)
+      }
+    }
   })
 
   const getViewName = (): string => {
@@ -1354,6 +1607,24 @@ export function App({ cwd }: { cwd: string }) {
           onAbort={handleAbortMerge}
           onContinue={handleContinueMerge}
           onClose={() => setShowConflictModal(false)}
+        />
+      )}
+
+      {showResetModal && selectedCommitForAction && (
+        <ResetModal
+          commitHash={selectedCommitForAction.shortHash}
+          commitMessage={selectedCommitForAction.message}
+          onReset={(mode) => handleReset(selectedCommitForAction.hash, mode)}
+          onCancel={() => setShowResetModal(false)}
+        />
+      )}
+
+      {showTagModal && selectedCommitForAction && (
+        <TagModal
+          commitHash={selectedCommitForAction.shortHash}
+          commitMessage={selectedCommitForAction.message}
+          onCreateTag={(tagName, message) => handleCreateTag(selectedCommitForAction.hash, tagName, message)}
+          onCancel={() => setShowTagModal(false)}
         />
       )}
     </box>

@@ -779,4 +779,112 @@ export class GitClient {
       throw new Error(`Failed to continue merge: ${error}`)
     }
   }
+
+  async cherryPick(commitHash: string): Promise<void> {
+    try {
+      await execAsync(`git cherry-pick "${commitHash}"`, { cwd: this.cwd })
+    } catch (error) {
+      throw new Error(`Failed to cherry-pick commit: ${error}`)
+    }
+  }
+
+  async revertCommit(commitHash: string): Promise<void> {
+    try {
+      await execAsync(`git revert --no-edit "${commitHash}"`, { cwd: this.cwd })
+    } catch (error) {
+      throw new Error(`Failed to revert commit: ${error}`)
+    }
+  }
+
+  async amendCommit(message: string): Promise<void> {
+    try {
+      await execAsync(`git commit --amend -m "${message.replace(/"/g, '\\"')}"`, { cwd: this.cwd })
+    } catch (error) {
+      throw new Error(`Failed to amend commit: ${error}`)
+    }
+  }
+
+  async resetToCommit(commitHash: string, mode: 'soft' | 'mixed' | 'hard'): Promise<void> {
+    try {
+      await execAsync(`git reset --${mode} "${commitHash}"`, { cwd: this.cwd })
+    } catch (error) {
+      throw new Error(`Failed to reset to commit: ${error}`)
+    }
+  }
+
+  async getCommitDiff(commitHash: string): Promise<string> {
+    try {
+      const { stdout } = await execAsync(`git show "${commitHash}"`, { cwd: this.cwd })
+      return stdout
+    } catch (error) {
+      throw new Error(`Failed to get commit diff: ${error}`)
+    }
+  }
+
+  async createTag(tagName: string, commitHash: string, message?: string): Promise<void> {
+    try {
+      if (message) {
+        await execAsync(`git tag -a "${tagName}" "${commitHash}" -m "${message.replace(/"/g, '\\"')}"`, { cwd: this.cwd })
+      } else {
+        await execAsync(`git tag "${tagName}" "${commitHash}"`, { cwd: this.cwd })
+      }
+    } catch (error) {
+      throw new Error(`Failed to create tag: ${error}`)
+    }
+  }
+
+  async copyToClipboard(text: string): Promise<void> {
+    try {
+      // Try using pbcopy on macOS, xclip on Linux, or clip on Windows
+      const platform = process.platform
+      
+      if (platform === 'darwin') {
+        const { spawn } = await import('child_process')
+        return new Promise((resolve, reject) => {
+          const proc = spawn('pbcopy')
+          proc.stdin.write(text)
+          proc.stdin.end()
+          proc.on('close', (code) => {
+            if (code === 0) {
+              resolve()
+            } else {
+              reject(new Error('Failed to copy to clipboard'))
+            }
+          })
+        })
+      } else if (platform === 'linux') {
+        const { spawn } = await import('child_process')
+        return new Promise((resolve, reject) => {
+          const proc = spawn('xclip', ['-selection', 'clipboard'])
+          proc.stdin.write(text)
+          proc.stdin.end()
+          proc.on('close', (code) => {
+            if (code === 0) {
+              resolve()
+            } else {
+              reject(new Error('Failed to copy to clipboard'))
+            }
+          })
+        })
+      } else if (platform === 'win32') {
+        const { spawn } = await import('child_process')
+        return new Promise((resolve, reject) => {
+          const proc = spawn('clip')
+          proc.stdin.write(text)
+          proc.stdin.end()
+          proc.on('close', (code) => {
+            if (code === 0) {
+              resolve()
+            } else {
+              reject(new Error('Failed to copy to clipboard'))
+            }
+          })
+        })
+      } else {
+        throw new Error('Clipboard not supported on this platform')
+      }
+    } catch (error) {
+      throw new Error(`Failed to copy to clipboard: ${error}`)
+    }
+  }
 }
