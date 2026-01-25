@@ -3,7 +3,7 @@ import { promisify } from 'util'
 import { readFile } from 'fs/promises'
 import { existsSync } from 'fs'
 import { join } from 'path'
-import type { GitStatus, GitFile, GitCommit, GitBranch, GitStash, GitRemote, GitMergeState, GitConflict, MergeStrategy, ConflictMarker, CommandLogEntry } from '../types/git'
+import type { GitStatus, GitFile, GitCommit, GitBranch, GitStash, GitRemote, GitTag, GitMergeState, GitConflict, MergeStrategy, ConflictMarker, CommandLogEntry } from '../types/git'
 
 const execAsync = promisify(exec)
 
@@ -921,6 +921,86 @@ export class GitClient {
         }
       } catch (error) {
         throw new Error(`Failed to create tag: ${error}`)
+      }
+    })
+  }
+
+  async getTags(): Promise<GitTag[]> {
+    try {
+      // Get all tags with their commit hash and date
+      const { stdout } = await execAsync(
+        'git tag -l --format="%(refname:short)|%(objectname)|%(creatordate:short)|%(subject)|%(objecttype)"',
+        { cwd: this.cwd }
+      )
+
+      if (!stdout.trim()) {
+        return []
+      }
+
+      return stdout
+        .split('\n')
+        .filter((line) => line)
+        .map((line) => {
+          const [name, commit, date, message, objectType] = line.split('|')
+          return {
+            name: name!,
+            commit: commit!,
+            date: date!,
+            message: message || undefined,
+            isAnnotated: objectType === 'tag',
+          }
+        })
+    } catch (error) {
+      throw new Error(`Failed to get tags: ${error}`)
+    }
+  }
+
+  async deleteTag(tagName: string): Promise<void> {
+    await this.logCommand(`git tag -d "${tagName}"`, async () => {
+      try {
+        await execAsync(`git tag -d "${tagName}"`, { cwd: this.cwd })
+      } catch (error) {
+        throw new Error(`Failed to delete tag: ${error}`)
+      }
+    })
+  }
+
+  async deleteRemoteTag(remote: string, tagName: string): Promise<void> {
+    await this.logCommand(`git push "${remote}" --delete "refs/tags/${tagName}"`, async () => {
+      try {
+        await execAsync(`git push "${remote}" --delete "refs/tags/${tagName}"`, { cwd: this.cwd })
+      } catch (error) {
+        throw new Error(`Failed to delete remote tag: ${error}`)
+      }
+    })
+  }
+
+  async pushTag(tagName: string, remote: string = 'origin'): Promise<void> {
+    await this.logCommand(`git push "${remote}" "${tagName}"`, async () => {
+      try {
+        await execAsync(`git push "${remote}" "${tagName}"`, { cwd: this.cwd })
+      } catch (error) {
+        throw new Error(`Failed to push tag: ${error}`)
+      }
+    })
+  }
+
+  async pushAllTags(remote: string = 'origin'): Promise<void> {
+    await this.logCommand(`git push "${remote}" --tags`, async () => {
+      try {
+        await execAsync(`git push "${remote}" --tags`, { cwd: this.cwd })
+      } catch (error) {
+        throw new Error(`Failed to push all tags: ${error}`)
+      }
+    })
+  }
+
+  async checkoutTag(tagName: string): Promise<void> {
+    await this.logCommand(`git checkout "${tagName}"`, async () => {
+      try {
+        await execAsync(`git checkout "${tagName}"`, { cwd: this.cwd })
+      } catch (error) {
+        throw new Error(`Failed to checkout tag: ${error}`)
       }
     })
   }

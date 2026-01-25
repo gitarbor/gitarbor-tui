@@ -26,6 +26,7 @@ import { ResetModal } from './components/ResetModal'
 import { TagModal } from './components/TagModal'
 import { RemoteModal } from './components/RemoteModal'
 import { RemotesView } from './components/RemotesView'
+import { TagDetailsView } from './components/TagDetailsView'
 import { CommandLogView } from './components/CommandLogView'
 import type { GitStatus, GitCommit, GitBranch, GitStash, GitRemote, GitTag, GitMergeState, MergeStrategy, View, CommandLogEntry } from './types/git'
 import type { Command } from './types/commands'
@@ -112,13 +113,14 @@ export function App({ cwd }: { cwd: string }) {
       if (!silent) {
         setLoading(true)
       }
-      const [statusData, commitsData, branchesData, stashesData, mergeStateData, remotesData] = await Promise.all([
+      const [statusData, commitsData, branchesData, stashesData, mergeStateData, remotesData, tagsData] = await Promise.all([
         git.getStatus(),
         git.getLog(50),
         git.getBranches(),
         git.getStashes(),
         git.getMergeState(),
         git.getRemotes(),
+        git.getTags(),
       ])
       setStatus(statusData)
       setCommits(commitsData)
@@ -126,6 +128,7 @@ export function App({ cwd }: { cwd: string }) {
       setStashes(stashesData)
       setMergeState(mergeStateData)
       setRemotes(remotesData)
+      setTags(tagsData)
       
       // Auto-show conflict modal if merge is in progress with conflicts
       if (mergeStateData.inProgress && mergeStateData.conflicts.length > 0 && !showConflictModal) {
@@ -797,6 +800,81 @@ export function App({ cwd }: { cwd: string }) {
     }
   }, [git, loadData])
 
+  const handleDeleteTag = useCallback(async (tagName: string) => {
+    try {
+      await git.deleteTag(tagName)
+      await loadData(true)
+      setMessage(`Deleted tag: ${tagName}`)
+    } catch (error) {
+      setMessage(`Error deleting tag: ${error}`)
+    }
+  }, [git, loadData])
+
+  const handleDeleteTagWithConfirm = useCallback((tagName: string) => {
+    setConfirmModalProps({
+      title: 'Delete Tag?',
+      message: `Are you sure you want to delete tag "${tagName}"?`,
+      onConfirm: () => {
+        setShowConfirmModal(false)
+        void handleDeleteTag(tagName)
+      },
+      danger: true,
+    })
+    setShowConfirmModal(true)
+  }, [handleDeleteTag])
+
+  const handlePushTag = useCallback(async (tagName: string, remote: string = 'origin') => {
+    try {
+      setMessage(`Pushing tag ${tagName} to ${remote}...`)
+      await git.pushTag(tagName, remote)
+      await loadData(true)
+      setMessage(`Pushed tag ${tagName} to ${remote}`)
+    } catch (error) {
+      setMessage(`Error pushing tag: ${error}`)
+    }
+  }, [git, loadData])
+
+  const handlePushAllTags = useCallback(async (remote: string = 'origin') => {
+    try {
+      setMessage(`Pushing all tags to ${remote}...`)
+      await git.pushAllTags(remote)
+      await loadData(true)
+      setMessage(`Pushed all tags to ${remote}`)
+    } catch (error) {
+      setMessage(`Error pushing tags: ${error}`)
+    }
+  }, [git, loadData])
+
+  const handleCheckoutTag = useCallback(async (tagName: string) => {
+    try {
+      await git.checkoutTag(tagName)
+      await loadData(true)
+      setMessage(`Checked out tag: ${tagName}`)
+    } catch (error) {
+      setMessage(`Error checking out tag: ${error}`)
+    }
+  }, [git, loadData])
+
+  const handleDeleteRemoteTag = useCallback((tagName: string, remote: string) => {
+    setConfirmModalProps({
+      title: 'Delete Remote Tag?',
+      message: `Are you sure you want to delete tag "${tagName}" from remote "${remote}"? This will affect all users.`,
+      onConfirm: async () => {
+        setShowConfirmModal(false)
+        try {
+          await git.deleteRemoteTag(remote, tagName)
+          await loadData(true)
+          setMessage(`Deleted remote tag: ${tagName} from ${remote}`)
+        } catch (error) {
+          setMessage(`Error deleting remote tag: ${error}`)
+        }
+      },
+      danger: true,
+    })
+    setShowConfirmModal(true)
+  }, [git, loadData])
+
+
   const getMaxIndex = useCallback(() => {
     switch (view) {
       case 'main':
@@ -1395,6 +1473,107 @@ export function App({ cwd }: { cwd: string }) {
       },
     },
     {
+      id: 'create-tag',
+      label: 'Create Tag',
+      description: 'Create a new tag at selected commit or HEAD',
+      shortcut: 'n / t (in tags panel)',
+      execute: () => setShowTagModal(true),
+    },
+    {
+      id: 'delete-tag',
+      label: 'Delete Tag',
+      description: 'Delete selected local tag',
+      shortcut: 'D (in tags panel)',
+      execute: () => {
+        if (view === 'main' && focusedPanel === 'tags') {
+          const tag = tags[selectedIndex]
+          if (tag) {
+            handleDeleteTagWithConfirm(tag.name)
+          } else {
+            setMessage('No tag selected')
+          }
+        }
+      },
+    },
+    {
+      id: 'push-tag',
+      label: 'Push Tag',
+      description: 'Push selected tag to remote',
+      shortcut: 'P (in tags panel)',
+      execute: () => {
+        if (view === 'main' && focusedPanel === 'tags') {
+          const tag = tags[selectedIndex]
+          if (tag) {
+            void handlePushTag(tag.name)
+          } else {
+            setMessage('No tag selected')
+          }
+        }
+      },
+    },
+    {
+      id: 'push-all-tags',
+      label: 'Push All Tags',
+      description: 'Push all local tags to remote',
+      execute: () => void handlePushAllTags(),
+    },
+    {
+      id: 'delete-remote-tag',
+      label: 'Delete Remote Tag',
+      description: 'Delete a tag from remote repository',
+      execute: () => {
+        if (view === 'main' && focusedPanel === 'tags') {
+          const tag = tags[selectedIndex]
+          if (tag) {
+            setConfirmModalProps({
+              title: 'Delete Remote Tag?',
+              message: `Delete tag '${tag.name}' from remote 'origin'? This cannot be undone.`,
+              onConfirm: () => {
+                setShowConfirmModal(false)
+                void handleDeleteRemoteTag('origin', tag.name)
+              },
+              danger: true,
+            })
+            setShowConfirmModal(true)
+          } else {
+            setMessage('No tag selected')
+          }
+        }
+      },
+    },
+    {
+      id: 'checkout-tag',
+      label: 'Checkout Tag',
+      description: 'Checkout selected tag (detached HEAD)',
+      shortcut: 'ENTER (in tags panel)',
+      execute: () => {
+        if (view === 'main' && focusedPanel === 'tags') {
+          const tag = tags[selectedIndex]
+          if (tag) {
+            void handleCheckoutTag(tag.name)
+          } else {
+            setMessage('No tag selected')
+          }
+        }
+      },
+    },
+    {
+      id: 'view-tag-details',
+      label: 'View Tag Details',
+      description: 'Show full tag annotation and details',
+      shortcut: 'i (in tags panel)',
+      execute: () => {
+        if (view === 'main' && focusedPanel === 'tags') {
+          const tag = tags[selectedIndex]
+          if (tag) {
+            setView('tagDetails')
+          } else {
+            setMessage('No tag selected')
+          }
+        }
+      },
+    },
+    {
       id: 'exit',
       label: 'Exit',
       description: 'Exit the application',
@@ -1433,6 +1612,32 @@ export function App({ cwd }: { cwd: string }) {
     if (key.sequence === '`') {
       setShowCommandLog((prev) => !prev)
       return
+    }
+
+    // Tag details view navigation
+    if (view === 'tagDetails') {
+      const tag = tags[selectedIndex]
+      
+      if (key.name === 'escape') {
+        setView('main')
+        setFocusedPanel('tags')
+        return
+      }
+      
+      if (tag && key.sequence === 'D') {
+        handleDeleteTagWithConfirm(tag.name)
+        return
+      }
+      
+      if (tag && key.sequence === 'P') {
+        void handlePushTag(tag.name)
+        return
+      }
+      
+      if (tag && key.name === 'return') {
+        void handleCheckoutTag(tag.name)
+        return
+      }
     }
 
     // ESC or 'q' key should show exit modal
@@ -1721,6 +1926,42 @@ export function App({ cwd }: { cwd: string }) {
       }
     }
 
+    // Tag operations (when in tags panel or tags tab)
+    if ((view === 'main' && focusedPanel === 'tags') || (view === 'main' && branchRemoteTab === 'tags')) {
+      const tag = tags[selectedIndex]
+
+      // Enter key to checkout tag
+      if (tag && key.name === 'return') {
+        void handleCheckoutTag(tag.name)
+      }
+
+      // 'i' key to view tag details
+      if (tag && key.sequence === 'i') {
+        setView('tagDetails')
+      }
+
+      // 'n' key to create new tag
+      if (key.sequence === 'n') {
+        setShowTagModal(true)
+      }
+
+      // 'D' key to delete tag
+      if (tag && key.sequence === 'D') {
+        handleDeleteTagWithConfirm(tag.name)
+      }
+
+      // 'P' key to push tag
+      if (tag && key.sequence === 'P') {
+        void handlePushTag(tag.name)
+      }
+
+      // 't' key to create tag at HEAD
+      if (key.sequence === 't') {
+        setSelectedCommitForAction(commits[0] || null)
+        setShowTagModal(true)
+      }
+    }
+
     // Remotes view and panel actions
     if ((view === 'remotes' || (view === 'main' && focusedPanel === 'remotes')) && remotes.length > 0) {
       const remote = remotes[selectedIndex]
@@ -1879,6 +2120,10 @@ export function App({ cwd }: { cwd: string }) {
         />
       )}
 
+      {view === 'tagDetails' && tags[selectedIndex] && (
+        <TagDetailsView tag={tags[selectedIndex]!} />
+      )}
+
       <Footer 
         message={loading ? 'Loading...' : message}
         view={view}
@@ -2007,11 +2252,14 @@ export function App({ cwd }: { cwd: string }) {
         />
       )}
 
-      {showTagModal && selectedCommitForAction && (
+      {showTagModal && (
         <TagModal
-          commitHash={selectedCommitForAction.shortHash}
-          commitMessage={selectedCommitForAction.message}
-          onCreateTag={(tagName, message) => handleCreateTag(selectedCommitForAction.hash, tagName, message)}
+          commitHash={selectedCommitForAction?.shortHash}
+          commitMessage={selectedCommitForAction?.message}
+          onCreateTag={(tagName, message) => {
+            const commitHash = selectedCommitForAction?.hash || 'HEAD'
+            void handleCreateTag(commitHash, tagName, message)
+          }}
           onCancel={() => setShowTagModal(false)}
         />
       )}

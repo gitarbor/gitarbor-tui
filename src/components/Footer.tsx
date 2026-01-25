@@ -47,6 +47,10 @@ export function Footer({
       const line1 = `${globalCommands} | [ENTER] Fetch`
       const line2 = '[n] Add Remote | [e] Edit | [D] Delete | [TAB/Shift+TAB] Panels | [ESC/q] Exit'
       return { line1, line2 }
+    } else if (view === 'main' && focusedPanel === 'tags') {
+      const line1 = `${globalCommands} | [ENTER] Checkout | [i] View Details`
+      const line2 = '[n] Create Tag | [t] Tag at HEAD | [D] Delete | [P] Push | [←/→] Switch Tabs | [TAB/Shift+TAB] Panels | [ESC/q] Exit'
+      return { line1, line2 }
     } else if (view === 'log') {
       const line1 = `${globalCommands} | [ENTER] View Diff`
       const line2 = '[y] Cherry-pick | [R] Revert | [X] Reset | [Y] Copy Hash | [t] Tag | [1-5] Switch View | [ESC/q] Exit'
@@ -62,6 +66,10 @@ export function Footer({
     } else if (view === 'diff') {
       const line1 = `${globalCommands} | [1-5] Switch View`
       const line2 = '[ESC/q] Exit'
+      return { line1, line2 }
+    } else if (view === 'tagDetails') {
+      const line1 = `${globalCommands} | [ESC] Back`
+      const line2 = '[ENTER] Checkout | [D] Delete | [P] Push'
       return { line1, line2 }
     }
     

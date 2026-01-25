@@ -79,7 +79,7 @@ export interface ConflictMarker {
 
 export type MergeStrategy = 'default' | 'no-ff' | 'ff-only'
 
-export type View = 'main' | 'log' | 'diff' | 'stash' | 'remotes'
+export type View = 'main' | 'log' | 'diff' | 'stash' | 'remotes' | 'tagDetails'
 
 export interface CommandLogEntry {
   timestamp: Date
