@@ -4,7 +4,7 @@ import type { View } from '../types/git'
 interface FooterProps {
   message: string
   view: View
-  focusedPanel?: 'status' | 'branches' | 'log' | 'stashes' | 'info'
+  focusedPanel?: 'status' | 'branches' | 'log' | 'stashes' | 'info' | 'remotes'
   hasStaged?: boolean
   hasUnstaged?: boolean
   hasUntracked?: boolean
@@ -45,18 +45,26 @@ export function Footer({
       return { line1, line2 }
     } else if (view === 'main' && focusedPanel === 'info') {
       const line1 = `${globalCommands}`
-      const line2 = '[[] Files | []] Branches | [\\] Commits | [|] Stashes | [TAB/Shift+TAB] Panels | [ESC/q] Exit'
+      const line2 = '[[] Files | []] Branches | [\\] Commits | [|] Stashes | [}] Remotes | [TAB/Shift+TAB] Panels | [ESC/q] Exit'
+      return { line1, line2 }
+    } else if (view === 'main' && focusedPanel === 'remotes') {
+      const line1 = `${globalCommands} | [ENTER] Fetch`
+      const line2 = '[n] Add Remote | [e] Edit | [D] Delete | [TAB/Shift+TAB] Panels | [ESC/q] Exit'
       return { line1, line2 }
     } else if (view === 'log') {
       const line1 = `${globalCommands} | [ENTER] View Diff`
-      const line2 = '[y] Cherry-pick | [R] Revert | [X] Reset | [Y] Copy Hash | [t] Tag | [1-4] Switch View | [ESC/q] Exit'
+      const line2 = '[y] Cherry-pick | [R] Revert | [X] Reset | [Y] Copy Hash | [t] Tag | [1-5] Switch View | [ESC/q] Exit'
       return { line1, line2 }
     } else if (view === 'stash') {
       const line1 = `${globalCommands} | [s] Create Stash`
-      const line2 = '[ENTER] Apply | [P] Pop | [D] Drop | [V] View Diff | [1-4] Switch View | [ESC/q] Exit'
+      const line2 = '[ENTER] Apply | [P] Pop | [D] Drop | [V] View Diff | [1-5] Switch View | [ESC/q] Exit'
+      return { line1, line2 }
+    } else if (view === 'remotes') {
+      const line1 = `${globalCommands} | [ENTER] Fetch`
+      const line2 = '[n] Add Remote | [e] Edit | [D] Delete | [1-5] Switch View | [ESC/q] Exit'
       return { line1, line2 }
     } else if (view === 'diff') {
-      const line1 = `${globalCommands} | [1-4] Switch View`
+      const line1 = `${globalCommands} | [1-5] Switch View`
       const line2 = '[ESC/q] Exit'
       return { line1, line2 }
     }

@@ -1,5 +1,5 @@
 import { theme } from '../theme'
-import type { GitFile, GitBranch, GitCommit, GitMergeState, GitStash } from '../types/git'
+import type { GitFile, GitBranch, GitCommit, GitMergeState, GitStash, GitRemote } from '../types/git'
 import { Fieldset } from './Fieldset'
 
 interface MainViewProps {
@@ -9,8 +9,9 @@ interface MainViewProps {
   branches: GitBranch[]
   commits: GitCommit[]
   stashes: GitStash[]
+  remotes: GitRemote[]
   selectedIndex: number
-  focusedPanel: 'status' | 'branches' | 'log' | 'stashes' | 'info'
+  focusedPanel: 'status' | 'branches' | 'log' | 'stashes' | 'info' | 'remotes'
   onStage: (path: string) => void
   onUnstage: (path: string) => void
   mergeState?: GitMergeState
@@ -26,6 +27,7 @@ export function MainView({
   branches,
   commits,
   stashes,
+  remotes,
   selectedIndex,
   focusedPanel,
   mergeState,
@@ -327,6 +329,42 @@ export function MainView({
             </box>
           </Fieldset>
         )}
+
+        <Fieldset
+          title="Remotes"
+          focused={focusedPanel === 'remotes'}
+          height={8}
+          paddingX={theme.spacing.xs}
+          paddingY={theme.spacing.none}
+        >
+          <box flexDirection="column">
+            {remotes.length === 0 ? (
+              <text fg={theme.colors.text.muted}>No remotes configured</text>
+            ) : (
+              remotes.slice(0, 3).map((remote, idx) => {
+                const isSelected = idx === selectedIndex && focusedPanel === 'remotes'
+                
+                return (
+                  <box key={remote.name} flexDirection="column">
+                    <box flexDirection="row">
+                      <text fg={isSelected ? theme.colors.primary : theme.colors.border}>
+                        {isSelected ? '>' : ' '}
+                      </text>
+                      <text fg={isSelected ? theme.colors.primary : theme.colors.text.secondary}>
+                        {' '}{remote.name}
+                      </text>
+                    </box>
+                    <box flexDirection="row" paddingLeft={theme.spacing.md}>
+                      <text fg={theme.colors.text.muted}>
+                        {remote.fetchUrl.length > 40 ? remote.fetchUrl.substring(0, 37) + '...' : remote.fetchUrl}
+                      </text>
+                    </box>
+                  </box>
+                )
+              })
+            )}
+          </box>
+        </Fieldset>
       </box>
     </box>
   )

@@ -39,6 +39,12 @@ export interface GitStash {
   message: string
 }
 
+export interface GitRemote {
+  name: string
+  fetchUrl: string
+  pushUrl: string
+}
+
 export interface GitMergeState {
   inProgress: boolean
   currentBranch: string
@@ -65,4 +71,4 @@ export interface ConflictMarker {
 
 export type MergeStrategy = 'default' | 'no-ff' | 'ff-only'
 
-export type View = 'main' | 'log' | 'diff' | 'stash'
+export type View = 'main' | 'log' | 'diff' | 'stash' | 'remotes'

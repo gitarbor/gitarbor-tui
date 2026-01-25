@@ -3,7 +3,7 @@ import { promisify } from 'util'
 import { readFile } from 'fs/promises'
 import { existsSync } from 'fs'
 import { join } from 'path'
-import type { GitStatus, GitFile, GitCommit, GitBranch, GitStash, GitMergeState, GitConflict, MergeStrategy, ConflictMarker } from '../types/git'
+import type { GitStatus, GitFile, GitCommit, GitBranch, GitStash, GitRemote, GitMergeState, GitConflict, MergeStrategy, ConflictMarker } from '../types/git'
 
 const execAsync = promisify(exec)
 
@@ -894,6 +894,82 @@ export class GitClient {
       return stdout.trim()
     } catch (error) {
       throw new Error(`Failed to get git version: ${error}`)
+    }
+  }
+
+  async getRemotes(): Promise<GitRemote[]> {
+    try {
+      const { stdout } = await execAsync('git remote -v', { cwd: this.cwd })
+      
+      if (!stdout.trim()) {
+        return []
+      }
+
+      const remotes = new Map<string, GitRemote>()
+
+      stdout.split('\n').forEach((line) => {
+        if (!line) return
+        
+        // Format: "origin  https://github.com/user/repo.git (fetch)"
+        const match = line.match(/^(\S+)\s+(\S+)\s+\((fetch|push)\)$/)
+        if (match) {
+          const [, name, url, type] = match
+          
+          if (!remotes.has(name!)) {
+            remotes.set(name!, {
+              name: name!,
+              fetchUrl: '',
+              pushUrl: '',
+            })
+          }
+          
+          const remote = remotes.get(name!)!
+          if (type === 'fetch') {
+            remote.fetchUrl = url!
+          } else if (type === 'push') {
+            remote.pushUrl = url!
+          }
+        }
+      })
+
+      return Array.from(remotes.values())
+    } catch (error) {
+      throw new Error(`Failed to get remotes: ${error}`)
+    }
+  }
+
+  async addRemote(name: string, url: string): Promise<void> {
+    try {
+      await execAsync(`git remote add "${name}" "${url}"`, { cwd: this.cwd })
+    } catch (error) {
+      throw new Error(`Failed to add remote: ${error}`)
+    }
+  }
+
+  async removeRemote(name: string): Promise<void> {
+    try {
+      await execAsync(`git remote remove "${name}"`, { cwd: this.cwd })
+    } catch (error) {
+      throw new Error(`Failed to remove remote: ${error}`)
+    }
+  }
+
+  async renameRemote(oldName: string, newName: string): Promise<void> {
+    try {
+      await execAsync(`git remote rename "${oldName}" "${newName}"`, { cwd: this.cwd })
+    } catch (error) {
+      throw new Error(`Failed to rename remote: ${error}`)
+    }
+  }
+
+  async setRemoteUrl(name: string, url: string, pushUrl?: string): Promise<void> {
+    try {
+      await execAsync(`git remote set-url "${name}" "${url}"`, { cwd: this.cwd })
+      if (pushUrl) {
+        await execAsync(`git remote set-url --push "${name}" "${pushUrl}"`, { cwd: this.cwd })
+      }
+    } catch (error) {
+      throw new Error(`Failed to set remote URL: ${error}`)
     }
   }
 }

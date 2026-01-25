@@ -24,7 +24,9 @@ import { MergeModal } from './components/MergeModal'
 import { ConflictResolutionModal } from './components/ConflictResolutionModal'
 import { ResetModal } from './components/ResetModal'
 import { TagModal } from './components/TagModal'
-import type { GitStatus, GitCommit, GitBranch, GitStash, GitMergeState, MergeStrategy, View } from './types/git'
+import { RemoteModal } from './components/RemoteModal'
+import { RemotesView } from './components/RemotesView'
+import type { GitStatus, GitCommit, GitBranch, GitStash, GitRemote, GitMergeState, MergeStrategy, View } from './types/git'
 import type { Command } from './types/commands'
 
 export function App({ cwd }: { cwd: string }) {
@@ -32,7 +34,7 @@ export function App({ cwd }: { cwd: string }) {
   const [git] = useState(() => new GitClient(cwd))
   const [watcher] = useState(() => new FileSystemWatcher(cwd, () => {}))
   const [view, setView] = useState<View>('main')
-  const [focusedPanel, setFocusedPanel] = useState<'status' | 'branches' | 'log' | 'stashes' | 'info'>('status')
+  const [focusedPanel, setFocusedPanel] = useState<'status' | 'branches' | 'log' | 'stashes' | 'info' | 'remotes'>('status')
   const [status, setStatus] = useState<GitStatus>({
     branch: '',
     ahead: 0,
@@ -44,6 +46,7 @@ export function App({ cwd }: { cwd: string }) {
   const [commits, setCommits] = useState<GitCommit[]>([])
   const [branches, setBranches] = useState<GitBranch[]>([])
   const [stashes, setStashes] = useState<GitStash[]>([])
+  const [remotes, setRemotes] = useState<GitRemote[]>([])
   const [diff, setDiff] = useState<string>('')
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [message, setMessage] = useState('')
@@ -81,6 +84,9 @@ export function App({ cwd }: { cwd: string }) {
   })
   const [showResetModal, setShowResetModal] = useState(false)
   const [showTagModal, setShowTagModal] = useState(false)
+  const [showRemoteModal, setShowRemoteModal] = useState(false)
+  const [remoteModalMode, setRemoteModalMode] = useState<'add' | 'edit'>('add')
+  const [remoteToEdit, setRemoteToEdit] = useState<GitRemote | undefined>(undefined)
   const [selectedCommitForAction, setSelectedCommitForAction] = useState<GitCommit | null>(null)
 
   // Clean exit handler
@@ -100,18 +106,20 @@ export function App({ cwd }: { cwd: string }) {
       if (!silent) {
         setLoading(true)
       }
-      const [statusData, commitsData, branchesData, stashesData, mergeStateData] = await Promise.all([
+      const [statusData, commitsData, branchesData, stashesData, mergeStateData, remotesData] = await Promise.all([
         git.getStatus(),
         git.getLog(50),
         git.getBranches(),
         git.getStashes(),
         git.getMergeState(),
+        git.getRemotes(),
       ])
       setStatus(statusData)
       setCommits(commitsData)
       setBranches(branchesData)
       setStashes(stashesData)
       setMergeState(mergeStateData)
+      setRemotes(remotesData)
       
       // Auto-show conflict modal if merge is in progress with conflicts
       if (mergeStateData.inProgress && mergeStateData.conflicts.length > 0 && !showConflictModal) {
@@ -696,6 +704,67 @@ export function App({ cwd }: { cwd: string }) {
     }
   }, [git, loadData])
 
+  const handleAddRemote = useCallback(async (name: string, fetchUrl: string, pushUrl?: string) => {
+    try {
+      await git.addRemote(name, fetchUrl)
+      if (pushUrl && pushUrl !== fetchUrl) {
+        await git.setRemoteUrl(name, fetchUrl, pushUrl)
+      }
+      await loadData(true)
+      setShowRemoteModal(false)
+      setMessage(`Added remote: ${name}`)
+    } catch (error) {
+      setMessage(`Error adding remote: ${error}`)
+      setShowRemoteModal(false)
+    }
+  }, [git, loadData])
+
+  const handleEditRemote = useCallback(async (name: string, fetchUrl: string, pushUrl?: string) => {
+    try {
+      await git.setRemoteUrl(name, fetchUrl, pushUrl)
+      await loadData(true)
+      setShowRemoteModal(false)
+      setMessage(`Updated remote: ${name}`)
+    } catch (error) {
+      setMessage(`Error updating remote: ${error}`)
+      setShowRemoteModal(false)
+    }
+  }, [git, loadData])
+
+  const handleRemoveRemote = useCallback(async (name: string) => {
+    try {
+      await git.removeRemote(name)
+      await loadData(true)
+      setMessage(`Removed remote: ${name}`)
+    } catch (error) {
+      setMessage(`Error removing remote: ${error}`)
+    }
+  }, [git, loadData])
+
+  const handleRemoveRemoteWithConfirm = useCallback((name: string) => {
+    setConfirmModalProps({
+      title: 'Remove Remote?',
+      message: `Are you sure you want to remove remote "${name}"?`,
+      onConfirm: () => {
+        setShowConfirmModal(false)
+        void handleRemoveRemote(name)
+      },
+      danger: true,
+    })
+    setShowConfirmModal(true)
+  }, [handleRemoveRemote])
+
+  const handleFetchRemote = useCallback(async (name: string) => {
+    try {
+      setMessage(`Fetching from ${name}...`)
+      await git.fetch()
+      await loadData(true)
+      setMessage(`Fetch from ${name} completed`)
+    } catch (error) {
+      setMessage(`Error fetching from ${name}: ${error}`)
+    }
+  }, [git, loadData])
+
   const getMaxIndex = useCallback(() => {
     switch (view) {
       case 'main':
@@ -705,6 +774,8 @@ export function App({ cwd }: { cwd: string }) {
           return branches.filter((b) => !b.remote).length - 1
         } else if (focusedPanel === 'stashes') {
           return Math.min(stashes.length - 1, 2) // Only show first 3 stashes in sidebar
+        } else if (focusedPanel === 'remotes') {
+          return remotes.length - 1
         } else if (focusedPanel === 'info') {
           return 0 // Info panel is not selectable
         } else {
@@ -714,6 +785,8 @@ export function App({ cwd }: { cwd: string }) {
         return commits.length - 1
       case 'stash':
         return stashes.length - 1
+      case 'remotes':
+        return remotes.length - 1
       default:
         return 0
     }
@@ -780,6 +853,16 @@ export function App({ cwd }: { cwd: string }) {
       },
     },
     {
+      id: 'view-remotes',
+      label: 'View: Remotes',
+      description: 'Show remotes list',
+      shortcut: '5',
+      execute: () => {
+        setView('remotes')
+        setSelectedIndex(0)
+      },
+    },
+    {
       id: 'panel-status',
       label: 'Panel: Files',
       description: 'Focus files panel',
@@ -835,15 +918,26 @@ export function App({ cwd }: { cwd: string }) {
       },
     },
     {
+      id: 'panel-remotes',
+      label: 'Panel: Remotes',
+      description: 'Focus remotes panel',
+      shortcut: '}',
+      execute: () => {
+        setView('main')
+        setFocusedPanel('remotes')
+        setSelectedIndex(0)
+      },
+    },
+    {
       id: 'cycle-panels',
       label: 'Cycle Through Panels',
       description: 'Navigate to next panel with Tab key',
       shortcut: 'TAB / Shift+TAB',
       execute: () => {
         if (view === 'main') {
-          const panels: Array<'status' | 'branches' | 'log' | 'stashes' | 'info'> = stashes.length > 0
-            ? ['status', 'log', 'info', 'branches', 'stashes']
-            : ['status', 'log', 'info', 'branches']
+          const panels: Array<'status' | 'branches' | 'log' | 'stashes' | 'info' | 'remotes'> = stashes.length > 0
+            ? ['status', 'log', 'info', 'branches', 'stashes', 'remotes']
+            : ['status', 'log', 'info', 'branches', 'remotes']
           
           const currentIndex = panels.indexOf(focusedPanel)
           const nextIndex = (currentIndex + 1) % panels.length
@@ -1207,6 +1301,47 @@ export function App({ cwd }: { cwd: string }) {
       },
     },
     {
+      id: 'add-remote',
+      label: 'Add Remote',
+      description: 'Add a new remote repository',
+      shortcut: 'n (in remotes panel)',
+      execute: () => {
+        setRemoteModalMode('add')
+        setRemoteToEdit(undefined)
+        setShowRemoteModal(true)
+      },
+    },
+    {
+      id: 'edit-remote',
+      label: 'Edit Remote',
+      description: 'Edit selected remote URL',
+      shortcut: 'e (in remotes panel)',
+      execute: () => {
+        if ((view === 'main' && focusedPanel === 'remotes') || view === 'remotes') {
+          const remote = remotes[selectedIndex]
+          if (remote) {
+            setRemoteModalMode('edit')
+            setRemoteToEdit(remote)
+            setShowRemoteModal(true)
+          }
+        }
+      },
+    },
+    {
+      id: 'remove-remote',
+      label: 'Remove Remote',
+      description: 'Remove selected remote',
+      shortcut: 'D (in remotes panel)',
+      execute: () => {
+        if ((view === 'main' && focusedPanel === 'remotes') || view === 'remotes') {
+          const remote = remotes[selectedIndex]
+          if (remote) {
+            handleRemoveRemoteWithConfirm(remote.name)
+          }
+        }
+      },
+    },
+    {
       id: 'show-git-version',
       label: 'Show Git Version',
       description: 'Display the git version being used',
@@ -1229,7 +1364,7 @@ export function App({ cwd }: { cwd: string }) {
   ]
 
   useKeyboard((key) => {
-    if (showExitModal || showCommandPalette || showSettingsModal || showProgressModal || showConfirmModal || showRenameModal || showBranchModal || showBranchRenameModal || showSetUpstreamModal || showMergeModal || showConflictModal || showResetModal || showTagModal) {
+    if (showExitModal || showCommandPalette || showSettingsModal || showProgressModal || showConfirmModal || showRenameModal || showBranchModal || showBranchRenameModal || showSetUpstreamModal || showMergeModal || showConflictModal || showResetModal || showTagModal || showRemoteModal) {
       // Modals handle their own keyboard input
       return
     }
@@ -1272,6 +1407,9 @@ export function App({ cwd }: { cwd: string }) {
     } else if (key.sequence === '4') {
       setView('stash')
       setSelectedIndex(0)
+    } else if (key.sequence === '5') {
+      setView('remotes')
+      setSelectedIndex(0)
     }
 
     // Panel switching (when in main view)
@@ -1291,13 +1429,16 @@ export function App({ cwd }: { cwd: string }) {
       } else if (key.sequence === '{') {
         setFocusedPanel('info')
         setSelectedIndex(0)
+      } else if (key.sequence === '}') {
+        setFocusedPanel('remotes')
+        setSelectedIndex(0)
       }
       
       // Tab key to cycle through panels (forward with Tab, backward with Shift+Tab)
       if (key.name === 'tab') {
-        const panels: Array<'status' | 'branches' | 'log' | 'stashes' | 'info'> = stashes.length > 0
-          ? ['status', 'log', 'info', 'branches', 'stashes']
-          : ['status', 'log', 'info', 'branches']
+        const panels: Array<'status' | 'branches' | 'log' | 'stashes' | 'info' | 'remotes'> = stashes.length > 0
+          ? ['status', 'log', 'info', 'branches', 'stashes', 'remotes']
+          : ['status', 'log', 'info', 'branches', 'remotes']
         
         const currentIndex = panels.indexOf(focusedPanel)
         
@@ -1506,6 +1647,36 @@ export function App({ cwd }: { cwd: string }) {
       }
     }
 
+    // Remotes view and panel actions
+    if ((view === 'remotes' || (view === 'main' && focusedPanel === 'remotes')) && remotes.length > 0) {
+      const remote = remotes[selectedIndex]
+      
+      if (remote && key.name === 'return') {
+        // Fetch from remote on Enter
+        void handleFetchRemote(remote.name)
+      } else if (key.sequence === 'n') {
+        // Add new remote on 'n'
+        setRemoteModalMode('add')
+        setRemoteToEdit(undefined)
+        setShowRemoteModal(true)
+      } else if (remote && key.sequence === 'e') {
+        // Edit remote on 'e'
+        setRemoteModalMode('edit')
+        setRemoteToEdit(remote)
+        setShowRemoteModal(true)
+      } else if (remote && key.sequence === 'D') {
+        // Delete remote on Shift+D
+        handleRemoveRemoteWithConfirm(remote.name)
+      }
+    } else if ((view === 'remotes' || (view === 'main' && focusedPanel === 'remotes')) && remotes.length === 0) {
+      // Allow adding remotes even when list is empty
+      if (key.sequence === 'n') {
+        setRemoteModalMode('add')
+        setRemoteToEdit(undefined)
+        setShowRemoteModal(true)
+      }
+    }
+
     // Log view actions
     if (view === 'log' || (view === 'main' && focusedPanel === 'log')) {
       const commit = commits[selectedIndex]
@@ -1559,11 +1730,13 @@ export function App({ cwd }: { cwd: string }) {
         if (focusedPanel === 'branches') return 'Main (Branches)'
         if (focusedPanel === 'stashes') return 'Main (Stashes)'
         if (focusedPanel === 'info') return 'Main (Info)'
+        if (focusedPanel === 'remotes') return 'Main (Remotes)'
         return 'Main (Commits)'
       }
       case 'log': return 'Log'
       case 'diff': return 'Diff'
       case 'stash': return 'Stash'
+      case 'remotes': return 'Remotes'
     }
   }
 
@@ -1584,6 +1757,7 @@ export function App({ cwd }: { cwd: string }) {
           branches={branches}
           commits={commits}
           stashes={stashes}
+          remotes={remotes}
           selectedIndex={selectedIndex}
           focusedPanel={focusedPanel}
           onStage={handleStage}
@@ -1615,6 +1789,14 @@ export function App({ cwd }: { cwd: string }) {
           stashes={stashes}
           selectedIndex={selectedIndex}
           focused={!showCommitModal && !showStashModal}
+        />
+      )}
+
+      {view === 'remotes' && (
+        <RemotesView
+          remotes={remotes}
+          selectedIndex={selectedIndex}
+          focused={!showRemoteModal}
         />
       )}
 
@@ -1752,6 +1934,15 @@ export function App({ cwd }: { cwd: string }) {
           commitMessage={selectedCommitForAction.message}
           onCreateTag={(tagName, message) => handleCreateTag(selectedCommitForAction.hash, tagName, message)}
           onCancel={() => setShowTagModal(false)}
+        />
+      )}
+
+      {showRemoteModal && (
+        <RemoteModal
+          mode={remoteModalMode}
+          existingRemote={remoteToEdit}
+          onSubmit={remoteModalMode === 'add' ? handleAddRemote : handleEditRemote}
+          onCancel={() => setShowRemoteModal(false)}
         />
       )}
     </box>
