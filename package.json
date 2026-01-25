@@ -5,7 +5,8 @@
   "private": true,
   "scripts": {
     "start": "bun run index.tsx",
-    "dev": "bun run index.tsx"
+    "dev": "bun run index.tsx",
+    "build": "bun build ./index.tsx --compile --outfile ./dist/gitarbor"
   },
   "devDependencies": {
     "@types/bun": "latest",
