@@ -386,4 +386,36 @@ export class GitClient {
       throw new Error(`Failed to get stash diff: ${error}`)
     }
   }
+
+  async unstageAll(): Promise<void> {
+    try {
+      await execAsync('git reset HEAD', { cwd: this.cwd })
+    } catch (error) {
+      throw new Error(`Failed to unstage all files: ${error}`)
+    }
+  }
+
+  async discardChanges(path: string): Promise<void> {
+    try {
+      await execAsync(`git checkout -- "${path}"`, { cwd: this.cwd })
+    } catch (error) {
+      throw new Error(`Failed to discard changes: ${error}`)
+    }
+  }
+
+  async deleteUntrackedFile(path: string): Promise<void> {
+    try {
+      await execAsync(`git clean -f "${path}"`, { cwd: this.cwd })
+    } catch (error) {
+      throw new Error(`Failed to delete untracked file: ${error}`)
+    }
+  }
+
+  async renameFile(oldPath: string, newPath: string): Promise<void> {
+    try {
+      await execAsync(`git mv "${oldPath}" "${newPath}"`, { cwd: this.cwd })
+    } catch (error) {
+      throw new Error(`Failed to rename file: ${error}`)
+    }
+  }
 }

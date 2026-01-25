@@ -15,6 +15,8 @@ import { SettingsModal } from './components/SettingsModal'
 import { ProgressModal } from './components/ProgressModal'
 import { StashView } from './components/StashView'
 import { StashModal } from './components/StashModal'
+import { ConfirmModal } from './components/ConfirmModal'
+import { RenameModal } from './components/RenameModal'
 import type { GitStatus, GitCommit, GitBranch, GitStash, View } from './types/git'
 import type { Command } from './types/commands'
 
@@ -49,6 +51,15 @@ export function App({ cwd }: { cwd: string }) {
   const [progressMessages, setProgressMessages] = useState<string[]>([])
   const [progressComplete, setProgressComplete] = useState(false)
   const [progressError, setProgressError] = useState<string | undefined>(undefined)
+  const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const [confirmModalProps, setConfirmModalProps] = useState<{
+    title: string
+    message: string
+    onConfirm: () => void
+    danger?: boolean
+  }>({ title: '', message: '', onConfirm: () => {} })
+  const [showRenameModal, setShowRenameModal] = useState(false)
+  const [renameFilePath, setRenameFilePath] = useState('')
 
   // Clean exit handler
   const handleExit = useCallback(() => {
@@ -287,6 +298,100 @@ export function App({ cwd }: { cwd: string }) {
     }
   }, [git])
 
+  const handleUnstageAll = useCallback(async () => {
+    try {
+      if (status.staged.length === 0) {
+        setMessage('No staged files to unstage')
+        return
+      }
+      await git.unstageAll()
+      await loadData(true)
+      setMessage(`Unstaged all files (${status.staged.length})`)
+    } catch (error) {
+      setMessage(`Error unstaging all: ${error}`)
+    }
+  }, [git, loadData, status])
+
+  const handleDiscardChanges = useCallback(async (path: string) => {
+    try {
+      await git.discardChanges(path)
+      await loadData(true)
+      setMessage(`Discarded changes: ${path}`)
+    } catch (error) {
+      setMessage(`Error discarding changes: ${error}`)
+    }
+  }, [git, loadData])
+
+  const handleDeleteUntracked = useCallback(async (path: string) => {
+    try {
+      await git.deleteUntrackedFile(path)
+      await loadData(true)
+      setMessage(`Deleted untracked file: ${path}`)
+    } catch (error) {
+      setMessage(`Error deleting file: ${error}`)
+    }
+  }, [git, loadData])
+
+  const handleRenameFile = useCallback(async (oldPath: string, newPath: string) => {
+    try {
+      await git.renameFile(oldPath, newPath)
+      await loadData(true)
+      setMessage(`Renamed: ${oldPath} → ${newPath}`)
+      setShowRenameModal(false)
+    } catch (error) {
+      setMessage(`Error renaming file: ${error}`)
+      setShowRenameModal(false)
+    }
+  }, [git, loadData])
+
+  const handleDiscardWithConfirm = useCallback((path: string) => {
+    setConfirmModalProps({
+      title: 'Discard Changes?',
+      message: `Are you sure you want to discard all changes to "${path}"?`,
+      onConfirm: () => {
+        setShowConfirmModal(false)
+        void handleDiscardChanges(path)
+      },
+      danger: true,
+    })
+    setShowConfirmModal(true)
+  }, [handleDiscardChanges])
+
+  const handleDeleteWithConfirm = useCallback((path: string) => {
+    setConfirmModalProps({
+      title: 'Delete Untracked File?',
+      message: `Are you sure you want to delete "${path}"?`,
+      onConfirm: () => {
+        setShowConfirmModal(false)
+        void handleDeleteUntracked(path)
+      },
+      danger: true,
+    })
+    setShowConfirmModal(true)
+  }, [handleDeleteUntracked])
+
+  const handleUnstageAllWithConfirm = useCallback(() => {
+    if (status.staged.length === 0) {
+      setMessage('No staged files to unstage')
+      return
+    }
+    setConfirmModalProps({
+      title: 'Unstage All Files?',
+      message: `Are you sure you want to unstage all ${status.staged.length} staged files?`,
+      onConfirm: () => {
+        setShowConfirmModal(false)
+        void handleUnstageAll()
+      },
+      danger: false,
+    })
+    setShowConfirmModal(true)
+  }, [handleUnstageAll, status])
+
+  const handleRenameWithModal = useCallback((path: string) => {
+    setRenameFilePath(path)
+    setShowRenameModal(true)
+  }, [])
+
   const getMaxIndex = useCallback(() => {
     switch (view) {
       case 'main':
@@ -321,6 +426,13 @@ export function App({ cwd }: { cwd: string }) {
       description: 'Stage all modified and untracked files',
       shortcut: 'a',
       execute: () => void handleStageAll(),
+    },
+    {
+      id: 'unstage-all',
+      label: 'Unstage All Changes',
+      description: 'Unstage all staged files',
+      shortcut: 'A',
+      execute: () => handleUnstageAllWithConfirm(),
     },
     {
       id: 'view-main',
@@ -440,6 +552,56 @@ export function App({ cwd }: { cwd: string }) {
       execute: () => void loadData(),
     },
     {
+      id: 'discard-changes',
+      label: 'Discard Changes',
+      description: 'Discard changes to selected unstaged file',
+      shortcut: 'd',
+      execute: () => {
+        if (view === 'main' && focusedPanel === 'status') {
+          const file = status.unstaged[selectedIndex]
+          if (file) {
+            handleDiscardWithConfirm(file.path)
+          } else {
+            setMessage('No unstaged file selected')
+          }
+        }
+      },
+    },
+    {
+      id: 'delete-untracked',
+      label: 'Delete Untracked File',
+      description: 'Delete selected untracked file',
+      shortcut: 'D',
+      execute: () => {
+        if (view === 'main' && focusedPanel === 'status') {
+          const untrackedIndex = selectedIndex - status.staged.length - status.unstaged.length
+          const file = status.untracked[untrackedIndex]
+          if (file && untrackedIndex >= 0) {
+            handleDeleteWithConfirm(file.path)
+          } else {
+            setMessage('No untracked file selected')
+          }
+        }
+      },
+    },
+    {
+      id: 'rename-file',
+      label: 'Rename/Move File',
+      description: 'Rename or move selected file through git',
+      shortcut: 'r',
+      execute: () => {
+        if (view === 'main' && focusedPanel === 'status') {
+          const allFiles = [...status.staged, ...status.unstaged, ...status.untracked]
+          const file = allFiles[selectedIndex]
+          if (file) {
+            handleRenameWithModal(file.path)
+          } else {
+            setMessage('No file selected')
+          }
+        }
+      },
+    },
+    {
       id: 'exit',
       label: 'Exit',
       description: 'Exit the application',
@@ -449,7 +611,7 @@ export function App({ cwd }: { cwd: string }) {
   ]
 
   useKeyboard((key) => {
-    if (showExitModal || showCommandPalette || showSettingsModal || showProgressModal) {
+    if (showExitModal || showCommandPalette || showSettingsModal || showProgressModal || showConfirmModal || showRenameModal) {
       // Modals handle their own keyboard input
       return
     }
@@ -540,6 +702,43 @@ export function App({ cwd }: { cwd: string }) {
           }
         }
       }
+    }
+
+    // 'd' key to discard changes to unstaged files
+    if (key.sequence === 'd') {
+      if (view === 'main' && focusedPanel === 'status') {
+        const file = status.unstaged[selectedIndex]
+        if (file) {
+          handleDiscardWithConfirm(file.path)
+        }
+      }
+    }
+
+    // 'D' key (shift+d) to delete untracked files
+    if (key.sequence === 'D') {
+      if (view === 'main' && focusedPanel === 'status') {
+        const untrackedIndex = selectedIndex - status.staged.length - status.unstaged.length
+        const file = status.untracked[untrackedIndex]
+        if (file && untrackedIndex >= 0) {
+          handleDeleteWithConfirm(file.path)
+        }
+      }
+    }
+
+    // 'r' key to rename/move file
+    if (key.sequence === 'r') {
+      if (view === 'main' && focusedPanel === 'status') {
+        const allFiles = [...status.staged, ...status.unstaged, ...status.untracked]
+        const file = allFiles[selectedIndex]
+        if (file) {
+          handleRenameWithModal(file.path)
+        }
+      }
+    }
+
+    // 'A' key (shift+a) to unstage all
+    if (key.sequence === 'A') {
+      handleUnstageAllWithConfirm()
     }
 
     // 's' key to create stash
@@ -696,6 +895,24 @@ export function App({ cwd }: { cwd: string }) {
           isComplete={progressComplete}
           error={progressError}
           onClose={() => setShowProgressModal(false)}
+        />
+      )}
+
+      {showConfirmModal && (
+        <ConfirmModal
+          title={confirmModalProps.title}
+          message={confirmModalProps.message}
+          onConfirm={confirmModalProps.onConfirm}
+          onCancel={() => setShowConfirmModal(false)}
+          danger={confirmModalProps.danger}
+        />
+      )}
+
+      {showRenameModal && (
+        <RenameModal
+          currentPath={renameFilePath}
+          onRename={(newPath) => void handleRenameFile(renameFilePath, newPath)}
+          onCancel={() => setShowRenameModal(false)}
         />
       )}
     </box>
