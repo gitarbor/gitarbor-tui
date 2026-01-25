@@ -34,7 +34,8 @@ export function App({ cwd }: { cwd: string }) {
   const [git] = useState(() => new GitClient(cwd))
   const [watcher] = useState(() => new FileSystemWatcher(cwd, () => {}))
   const [view, setView] = useState<View>('main')
-  const [focusedPanel, setFocusedPanel] = useState<'status' | 'branches' | 'log' | 'stashes' | 'info' | 'remotes'>('status')
+  const [focusedPanel, setFocusedPanel] = useState<'status' | 'branches' | 'log' | 'stashes' | 'remotes' | 'diff'>('status')
+  const [branchRemoteTab, setBranchRemoteTab] = useState<'branches' | 'remotes'>('branches')
   const [status, setStatus] = useState<GitStatus>({
     branch: '',
     ahead: 0,
@@ -48,6 +49,7 @@ export function App({ cwd }: { cwd: string }) {
   const [stashes, setStashes] = useState<GitStash[]>([])
   const [remotes, setRemotes] = useState<GitRemote[]>([])
   const [diff, setDiff] = useState<string>('')
+  const [selectedFilePath, setSelectedFilePath] = useState<string | undefined>(undefined)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [message, setMessage] = useState('')
   const [showCommitModal, setShowCommitModal] = useState(false)
@@ -140,22 +142,33 @@ export function App({ cwd }: { cwd: string }) {
 
   const loadDiff = useCallback(async () => {
     try {
-      const allFiles = [...status.staged, ...status.unstaged]
-      if (allFiles.length > 0 && selectedIndex < allFiles.length) {
-        const file = allFiles[selectedIndex]
-        if (file) {
-          const diffContent = file.staged
-            ? await git.getStagedDiff(file.path)
-            : await git.getDiff(file.path)
-          setDiff(diffContent)
+      if (view === 'main' && focusedPanel === 'status') {
+        // Load diff for selected file in status panel
+        const allFiles = [...status.staged, ...status.unstaged]
+        if (allFiles.length > 0 && selectedIndex < allFiles.length) {
+          const file = allFiles[selectedIndex]
+          if (file) {
+            const diffContent = file.staged
+              ? await git.getStagedDiff(file.path)
+              : await git.getDiff(file.path)
+            setDiff(diffContent)
+            setSelectedFilePath(file.path)
+          }
+        } else {
+          setDiff('')
+          setSelectedFilePath(undefined)
         }
+      } else if (view === 'diff') {
+        // Keep existing diff when in dedicated diff view
+        // (diff is already loaded from other actions)
       } else {
         setDiff('')
+        setSelectedFilePath(undefined)
       }
     } catch (error) {
       setMessage(`Error loading diff: ${error}`)
     }
-  }, [git, status, selectedIndex])
+  }, [git, status, selectedIndex, view, focusedPanel])
 
   useEffect(() => {
     void loadData(true)
@@ -173,10 +186,10 @@ export function App({ cwd }: { cwd: string }) {
   }, [watcher])
 
   useEffect(() => {
-    if (view === 'diff') {
+    if (view === 'diff' || (view === 'main' && focusedPanel === 'status')) {
       void loadDiff()
     }
-  }, [view, loadDiff])
+  }, [view, focusedPanel, selectedIndex, loadDiff])
 
   const handleStage = useCallback(async (path: string) => {
     try {
@@ -776,8 +789,8 @@ export function App({ cwd }: { cwd: string }) {
           return Math.min(stashes.length - 1, 2) // Only show first 3 stashes in sidebar
         } else if (focusedPanel === 'remotes') {
           return remotes.length - 1
-        } else if (focusedPanel === 'info') {
-          return 0 // Info panel is not selectable
+        } else if (focusedPanel === 'diff') {
+          return 0 // Diff panel is not selectable (uses scrolling)
         } else {
           return Math.min(commits.length - 1, 9) // log panel shows max 10 commits
         }
@@ -790,7 +803,7 @@ export function App({ cwd }: { cwd: string }) {
       default:
         return 0
     }
-  }, [view, focusedPanel, status, commits, branches, stashes])
+  }, [view, focusedPanel, status, commits, branches, stashes, remotes])
 
   // Define available commands
   const commands: Command[] = [
@@ -907,17 +920,6 @@ export function App({ cwd }: { cwd: string }) {
       },
     },
     {
-      id: 'panel-info',
-      label: 'Panel: Repository Info',
-      description: 'Focus repository info panel',
-      shortcut: '{',
-      execute: () => {
-        setView('main')
-        setFocusedPanel('info')
-        setSelectedIndex(0)
-      },
-    },
-    {
       id: 'panel-remotes',
       label: 'Panel: Remotes',
       description: 'Focus remotes panel',
@@ -935,9 +937,9 @@ export function App({ cwd }: { cwd: string }) {
       shortcut: 'TAB / Shift+TAB',
       execute: () => {
         if (view === 'main') {
-          const panels: Array<'status' | 'branches' | 'log' | 'stashes' | 'info' | 'remotes'> = stashes.length > 0
-            ? ['status', 'log', 'info', 'branches', 'stashes', 'remotes']
-            : ['status', 'log', 'info', 'branches', 'remotes']
+          const panels: Array<'status' | 'branches' | 'log' | 'stashes' | 'remotes' | 'diff'> = stashes.length > 0
+            ? ['status', 'branches', 'stashes', 'log', 'diff']
+            : ['status', 'branches', 'log', 'diff']
           
           const currentIndex = panels.indexOf(focusedPanel)
           const nextIndex = (currentIndex + 1) % panels.length
@@ -1426,9 +1428,6 @@ export function App({ cwd }: { cwd: string }) {
       } else if (key.sequence === '|') {
         setFocusedPanel('stashes')
         setSelectedIndex(0)
-      } else if (key.sequence === '{') {
-        setFocusedPanel('info')
-        setSelectedIndex(0)
       } else if (key.sequence === '}') {
         setFocusedPanel('remotes')
         setSelectedIndex(0)
@@ -1436,9 +1435,9 @@ export function App({ cwd }: { cwd: string }) {
       
       // Tab key to cycle through panels (forward with Tab, backward with Shift+Tab)
       if (key.name === 'tab') {
-        const panels: Array<'status' | 'branches' | 'log' | 'stashes' | 'info' | 'remotes'> = stashes.length > 0
-          ? ['status', 'log', 'info', 'branches', 'stashes', 'remotes']
-          : ['status', 'log', 'info', 'branches', 'remotes']
+        const panels: Array<'status' | 'branches' | 'log' | 'stashes' | 'remotes' | 'diff'> = stashes.length > 0
+          ? ['status', 'branches', 'stashes', 'log', 'diff']
+          : ['status', 'branches', 'log', 'diff']
         
         const currentIndex = panels.indexOf(focusedPanel)
         
@@ -1449,6 +1448,19 @@ export function App({ cwd }: { cwd: string }) {
         
         setFocusedPanel(panels[nextIndex]!)
         setSelectedIndex(0)
+      }
+      
+      // Switch between Branches/Remotes tabs with left/right arrow when panel is focused
+      if (focusedPanel === 'branches' || focusedPanel === 'remotes') {
+        if (key.name === 'left') {
+          setBranchRemoteTab('branches')
+          setFocusedPanel('branches')
+          setSelectedIndex(0)
+        } else if (key.name === 'right') {
+          setBranchRemoteTab('remotes')
+          setFocusedPanel('remotes')
+          setSelectedIndex(0)
+        }
       }
     }
 
@@ -1464,7 +1476,7 @@ export function App({ cwd }: { cwd: string }) {
 
     // Actions
     if (key.name === 'return') {
-      if (view === 'main' && focusedPanel === 'branches') {
+      if (view === 'main' && focusedPanel === 'branches' && branchRemoteTab === 'branches') {
         const localBranches = branches.filter((b) => !b.remote)
         const branch = localBranches[selectedIndex]
         if (branch && !branch.current) {
@@ -1473,8 +1485,8 @@ export function App({ cwd }: { cwd: string }) {
       }
     }
 
-    // Branch operations (when in branches panel)
-    if (view === 'main' && focusedPanel === 'branches') {
+    // Branch operations (when in branches panel and branches tab is active)
+    if (view === 'main' && focusedPanel === 'branches' && branchRemoteTab === 'branches') {
       const localBranches = branches.filter((b) => !b.remote)
       const branch = localBranches[selectedIndex]
 
@@ -1749,12 +1761,15 @@ export function App({ cwd }: { cwd: string }) {
           remotes={remotes}
           selectedIndex={selectedIndex}
           focusedPanel={focusedPanel}
+          branchRemoteTab={branchRemoteTab}
           onStage={handleStage}
           onUnstage={handleUnstage}
           mergeState={mergeState}
           currentBranch={status.branch}
           ahead={status.ahead}
           behind={status.behind}
+          diff={diff}
+          selectedFilePath={selectedFilePath}
         />
       )}
 

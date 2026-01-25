@@ -1,3 +1,5 @@
+import { useMemo } from 'react'
+import { SyntaxStyle, parseColor } from '@opentui/core'
 import { theme } from '../theme'
 import type { GitFile, GitBranch, GitCommit, GitMergeState, GitStash, GitRemote } from '../types/git'
 import { Fieldset } from './Fieldset'
@@ -11,13 +13,16 @@ interface MainViewProps {
   stashes: GitStash[]
   remotes: GitRemote[]
   selectedIndex: number
-  focusedPanel: 'status' | 'branches' | 'log' | 'stashes' | 'info' | 'remotes'
+  focusedPanel: 'status' | 'branches' | 'log' | 'stashes' | 'remotes' | 'diff'
+  branchRemoteTab: 'branches' | 'remotes'
   onStage: (path: string) => void
   onUnstage: (path: string) => void
   mergeState?: GitMergeState
   currentBranch: string
   ahead: number
   behind: number
+  diff: string
+  selectedFilePath?: string
 }
 
 export function MainView({
@@ -30,11 +35,66 @@ export function MainView({
   remotes,
   selectedIndex,
   focusedPanel,
+  branchRemoteTab,
   mergeState,
   currentBranch,
   ahead,
   behind,
+  diff,
+  selectedFilePath,
 }: MainViewProps) {
+  // Create syntax style for diff component
+  const syntaxStyle = useMemo(() => SyntaxStyle.fromStyles({
+    keyword: { fg: parseColor('#FF7B72'), bold: true },
+    'keyword.import': { fg: parseColor('#FF7B72'), bold: true },
+    string: { fg: parseColor('#A5D6FF') },
+    comment: { fg: parseColor('#8B949E'), italic: true },
+    number: { fg: parseColor('#79C0FF') },
+    boolean: { fg: parseColor('#79C0FF') },
+    constant: { fg: parseColor('#79C0FF') },
+    function: { fg: parseColor('#D2A8FF') },
+    'function.call': { fg: parseColor('#D2A8FF') },
+    constructor: { fg: parseColor('#FFA657') },
+    type: { fg: parseColor('#FFA657') },
+    operator: { fg: parseColor('#FF7B72') },
+    variable: { fg: parseColor('#E6EDF3') },
+    property: { fg: parseColor('#79C0FF') },
+    bracket: { fg: parseColor('#F0F6FC') },
+    punctuation: { fg: parseColor('#F0F6FC') },
+    default: { fg: parseColor('#E6EDF3') },
+  }), [])
+
+  // Determine filetype from file path extension
+  const getFiletype = (filePath?: string): string => {
+    if (!filePath) return 'text'
+    const ext = filePath.split('.').pop()?.toLowerCase()
+    const filetypeMap: Record<string, string> = {
+      'ts': 'typescript',
+      'tsx': 'typescript',
+      'js': 'javascript',
+      'jsx': 'javascript',
+      'py': 'python',
+      'rb': 'ruby',
+      'go': 'go',
+      'rs': 'rust',
+      'java': 'java',
+      'c': 'c',
+      'cpp': 'cpp',
+      'h': 'c',
+      'hpp': 'cpp',
+      'css': 'css',
+      'scss': 'scss',
+      'html': 'html',
+      'json': 'json',
+      'yaml': 'yaml',
+      'yml': 'yaml',
+      'md': 'markdown',
+      'sh': 'bash',
+      'bash': 'bash',
+    }
+    return filetypeMap[ext || ''] || 'text'
+  }
+  
   const allFiles = [
     ...staged.map((f) => ({ ...f, section: 'staged' })),
     ...unstaged.map((f) => ({ ...f, section: 'unstaged' })),
@@ -67,8 +127,8 @@ export function MainView({
 
   return (
     <box width="100%" flexGrow={1} flexDirection="row">
-      {/* Left column: Working Directory and Commit History */}
-      <box flexGrow={1} flexDirection="column">
+      {/* Left column: Working Directory and Branches/Remotes */}
+      <box width="40%" flexDirection="column">
         <Fieldset
           title="Working Directory"
           focused={focusedPanel === 'status'}
@@ -187,109 +247,81 @@ export function MainView({
         </Fieldset>
 
         <Fieldset
-          title="Recent Commits"
-          focused={focusedPanel === 'log'}
-          height="40%"
+          title="Branches / Remotes"
+          focused={focusedPanel === 'branches' || focusedPanel === 'remotes'}
+          height="30%"
           paddingX={theme.spacing.xs}
           paddingY={theme.spacing.none}
         >
           <box flexDirection="column">
-            {commits.length === 0 ? (
-              <text fg={theme.colors.text.muted}>No commits</text>
-            ) : (
-              commits.slice(0, 10).map((commit, idx) => {
-                const isSelected = idx === selectedIndex && focusedPanel === 'log'
-                
-                return (
-                  <box key={commit.hash} flexDirection="row">
-                    <text fg={isSelected ? theme.colors.primary : theme.colors.border}>
-                      {isSelected ? '>' : ' '}
-                    </text>
-                    <text fg={theme.colors.git.modified}> {commit.shortHash} </text>
-                    <text fg={theme.colors.text.muted}>{commit.date}</text>
-                    <text fg={theme.colors.text.muted}> - </text>
-                    <text fg={theme.colors.status.info}>{commit.author}</text>
-                    <text fg={theme.colors.text.muted}> - </text>
-                    <text fg={isSelected ? theme.colors.text.primary : theme.colors.text.secondary}>
-                      {commit.message}
-                    </text>
-                  </box>
-                )
-              })
-            )}
-          </box>
-        </Fieldset>
-      </box>
-
-      {/* Right sidebar: Repository Info, Branches, and Stashes */}
-      <box width="40%" flexDirection="column">
-        <Fieldset
-          title="Repository"
-          focused={focusedPanel === 'info'}
-          height={8}
-          paddingX={theme.spacing.xs}
-          paddingY={theme.spacing.none}
-        >
-          <box flexDirection="column">
-            <box flexDirection="row">
-              <text fg={theme.colors.text.secondary}>Branch: </text>
-              <text fg={theme.colors.git.staged}>{currentBranch}</text>
-            </box>
-            {(ahead > 0 || behind > 0) && (
-              <box flexDirection="row">
-                <text fg={theme.colors.text.secondary}>Status: </text>
-                {ahead > 0 && <text fg={theme.colors.status.info}>↑{ahead} </text>}
-                {behind > 0 && <text fg={theme.colors.status.warning}>↓{behind}</text>}
-              </box>
-            )}
-            <box flexDirection="row">
-              <text fg={theme.colors.text.secondary}>Changes: </text>
-              <text fg={staged.length > 0 ? theme.colors.git.staged : theme.colors.text.muted}>
-                {staged.length} staged
+            {/* Tab Bar */}
+            <box flexDirection="row" marginBottom={theme.spacing.xs}>
+              <text fg={branchRemoteTab === 'branches' ? theme.colors.primary : theme.colors.text.muted}>
+                [Branches{branchRemoteTab === 'branches' ? ' ●' : ''}]
               </text>
-              <text fg={theme.colors.text.muted}>, </text>
-              <text fg={unstaged.length > 0 ? theme.colors.git.modified : theme.colors.text.muted}>
-                {unstaged.length} modified
+              <text> </text>
+              <text fg={branchRemoteTab === 'remotes' ? theme.colors.primary : theme.colors.text.muted}>
+                [Remotes{branchRemoteTab === 'remotes' ? ' ●' : ''}]
               </text>
             </box>
-            {stashes.length > 0 && (
-              <box flexDirection="row">
-                <text fg={theme.colors.text.secondary}>Stashes: </text>
-                <text fg={theme.colors.primary}>{stashes.length}</text>
+
+            {/* Tab Content: Branches */}
+            {branchRemoteTab === 'branches' && (
+              <box flexDirection="column">
+                {localBranches.length === 0 ? (
+                  <text fg={theme.colors.text.muted}>No branches</text>
+                ) : (
+                  localBranches.slice(0, 15).map((branch, idx) => {
+                    const isSelected = idx === selectedIndex && focusedPanel === 'branches'
+                    
+                    return (
+                      <box key={branch.name} flexDirection="row">
+                        <text fg={isSelected ? theme.colors.primary : theme.colors.border}>
+                          {isSelected ? '>' : ' '}
+                        </text>
+                        <text fg={branch.current ? theme.colors.git.staged : theme.colors.text.secondary}>
+                          {branch.current ? '* ' : '  '}
+                          {branch.name}
+                        </text>
+                        {branch.upstream && (
+                          <text fg={theme.colors.text.muted}> → {branch.upstream.replace('remotes/', '')}</text>
+                        )}
+                      </box>
+                    )
+                  })
+                )}
               </box>
             )}
-          </box>
-        </Fieldset>
 
-        <Fieldset
-          title="Branches"
-          focused={focusedPanel === 'branches'}
-          flexGrow={1}
-          paddingX={theme.spacing.xs}
-          paddingY={theme.spacing.none}
-        >
-          <box flexDirection="column">
-            {localBranches.length === 0 ? (
-              <text fg={theme.colors.text.muted}>No branches</text>
-            ) : (
-              localBranches.slice(0, 15).map((branch, idx) => {
-                const isSelected = idx === selectedIndex && focusedPanel === 'branches'
-                
-                return (
-                  <box key={branch.name} flexDirection="row">
-                    <text fg={isSelected ? theme.colors.primary : theme.colors.border}>
-                      {isSelected ? '>' : ' '}
-                    </text>
-                    <text fg={branch.current ? theme.colors.git.staged : theme.colors.text.secondary}>
-                      {branch.current ? '* ' : '  '}
-                      {branch.name}
-                    </text>
-                    {branch.upstream && (
-                      <text fg={theme.colors.text.muted}> → {branch.upstream.replace('remotes/', '')}</text>
-                    )}
-                  </box>
-                )
-              })
+            {/* Tab Content: Remotes */}
+            {branchRemoteTab === 'remotes' && (
+              <box flexDirection="column">
+                {remotes.length === 0 ? (
+                  <text fg={theme.colors.text.muted}>No remotes configured</text>
+                ) : (
+                  remotes.map((remote, idx) => {
+                    const isSelected = idx === selectedIndex && focusedPanel === 'remotes'
+                    
+                    return (
+                      <box key={remote.name} flexDirection="column">
+                        <box flexDirection="row">
+                          <text fg={isSelected ? theme.colors.primary : theme.colors.border}>
+                            {isSelected ? '>' : ' '}
+                          </text>
+                          <text fg={isSelected ? theme.colors.primary : theme.colors.text.secondary}>
+                            {' '}{remote.name}
+                          </text>
+                        </box>
+                        <box flexDirection="row" paddingLeft={theme.spacing.md}>
+                          <text fg={theme.colors.text.muted}>
+                            {remote.fetchUrl.length > 40 ? remote.fetchUrl.substring(0, 37) + '...' : remote.fetchUrl}
+                          </text>
+                        </box>
+                      </box>
+                    )
+                  })
+                )}
+              </box>
             )}
           </box>
         </Fieldset>
@@ -329,41 +361,83 @@ export function MainView({
             </box>
           </Fieldset>
         )}
+      </box>
 
+      {/* Right column: Recent Commits and Diff */}
+      <box width="60%" flexDirection="column">
         <Fieldset
-          title="Remotes"
-          focused={focusedPanel === 'remotes'}
-          height={8}
+          title="Recent Commits"
+          focused={focusedPanel === 'log'}
+          height="30%"
           paddingX={theme.spacing.xs}
           paddingY={theme.spacing.none}
         >
           <box flexDirection="column">
-            {remotes.length === 0 ? (
-              <text fg={theme.colors.text.muted}>No remotes configured</text>
+            {commits.length === 0 ? (
+              <text fg={theme.colors.text.muted}>No commits</text>
             ) : (
-              remotes.slice(0, 3).map((remote, idx) => {
-                const isSelected = idx === selectedIndex && focusedPanel === 'remotes'
+              commits.slice(0, 10).map((commit, idx) => {
+                const isSelected = idx === selectedIndex && focusedPanel === 'log'
                 
                 return (
-                  <box key={remote.name} flexDirection="column">
-                    <box flexDirection="row">
-                      <text fg={isSelected ? theme.colors.primary : theme.colors.border}>
-                        {isSelected ? '>' : ' '}
-                      </text>
-                      <text fg={isSelected ? theme.colors.primary : theme.colors.text.secondary}>
-                        {' '}{remote.name}
-                      </text>
-                    </box>
-                    <box flexDirection="row" paddingLeft={theme.spacing.md}>
-                      <text fg={theme.colors.text.muted}>
-                        {remote.fetchUrl.length > 40 ? remote.fetchUrl.substring(0, 37) + '...' : remote.fetchUrl}
-                      </text>
-                    </box>
+                  <box key={commit.hash} flexDirection="row">
+                    <text fg={isSelected ? theme.colors.primary : theme.colors.border}>
+                      {isSelected ? '>' : ' '}
+                    </text>
+                    <text fg={theme.colors.git.modified}> {commit.shortHash} </text>
+                    <text fg={theme.colors.text.muted}>{commit.date}</text>
+                    <text fg={theme.colors.text.muted}> - </text>
+                    <text fg={theme.colors.status.info}>{commit.author}</text>
+                    <text fg={theme.colors.text.muted}> - </text>
+                    <text fg={isSelected ? theme.colors.text.primary : theme.colors.text.secondary}>
+                      {commit.message}
+                    </text>
                   </box>
                 )
               })
             )}
           </box>
+        </Fieldset>
+
+        <Fieldset
+          title="Diff"
+          focused={focusedPanel === 'diff'}
+          flexGrow={1}
+          paddingX={theme.spacing.none}
+          paddingY={theme.spacing.none}
+        >
+          {!diff || diff.trim() === '' ? (
+            <box paddingLeft={theme.spacing.xs}>
+              <text fg={theme.colors.text.muted}>No changes to display</text>
+            </box>
+          ) : (
+            <scrollbox width="100%" height="100%">
+              <diff
+                diff={diff}
+                view="unified"
+                filetype={getFiletype(selectedFilePath)}
+                syntaxStyle={syntaxStyle}
+                showLineNumbers={true}
+                wrapMode="none"
+                addedBg="#1a4d1a"
+                removedBg="#4d1a1a"
+                contextBg="transparent"
+                addedSignColor={theme.colors.git.added}
+                removedSignColor={theme.colors.git.deleted}
+                lineNumberFg={theme.colors.text.muted}
+                lineNumberBg="transparent"
+                addedLineNumberBg="#0d3a0d"
+                removedLineNumberBg="#3a0d0d"
+                selectionBg={theme.colors.primary}
+                selectionFg={theme.colors.text.primary}
+                style={{
+                  flexGrow: 1,
+                  width: '100%',
+                  height: '100%',
+                }}
+              />
+            </scrollbox>
+          )}
         </Fieldset>
       </box>
     </box>

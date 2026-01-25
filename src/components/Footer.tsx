@@ -4,7 +4,7 @@ import type { View } from '../types/git'
 interface FooterProps {
   message: string
   view: View
-  focusedPanel?: 'status' | 'branches' | 'log' | 'stashes' | 'info' | 'remotes'
+  focusedPanel?: 'status' | 'branches' | 'log' | 'stashes' | 'remotes' | 'diff'
   hasStaged?: boolean
   hasUnstaged?: boolean
   hasUntracked?: boolean
@@ -42,10 +42,6 @@ export function Footer({
     } else if (view === 'main' && focusedPanel === 'stashes') {
       const line1 = `${globalCommands} | [s] Create Stash`
       const line2 = '[ENTER] Apply | [P] Pop | [D] Drop | [V] View Diff | [4] Full Stash View | [TAB/Shift+TAB] Panels | [ESC/q] Exit'
-      return { line1, line2 }
-    } else if (view === 'main' && focusedPanel === 'info') {
-      const line1 = `${globalCommands}`
-      const line2 = '[[] Files | []] Branches | [\\] Commits | [|] Stashes | [}] Remotes | [TAB/Shift+TAB] Panels | [ESC/q] Exit'
       return { line1, line2 }
     } else if (view === 'main' && focusedPanel === 'remotes') {
       const line1 = `${globalCommands} | [ENTER] Fetch`
