@@ -133,7 +133,7 @@ export function MainView({
   return (
     <box width="100%" flexGrow={1} flexDirection="column">
       <box width="100%" flexGrow={1} flexDirection="row">
-        {/* Left column: Working Directory and Branches/Remotes */}
+        {/* Left column: Working Directory, Branches/Remotes, and Recent Commits */}
         <box width="40%" flexDirection="column">
         <Fieldset
           title="Working Directory"
@@ -332,6 +332,42 @@ export function MainView({
           </box>
         </Fieldset>
 
+        <Fieldset
+          title="Recent Commits"
+          focused={focusedPanel === 'log'}
+          height="30%"
+          paddingX={theme.spacing.none}
+          paddingY={theme.spacing.none}
+        >
+          {commits.length === 0 ? (
+            <box paddingLeft={theme.spacing.xs}>
+              <text fg={theme.colors.text.muted}>No commits</text>
+            </box>
+          ) : (
+            <scrollbox width="100%" height="100%" flexDirection="column">
+              {commits.map((commit, idx) => {
+                const isSelected = idx === selectedIndex && focusedPanel === 'log'
+                
+                return (
+                  <box key={commit.hash} flexDirection="row" paddingLeft={theme.spacing.xs}>
+                    <text fg={isSelected ? theme.colors.primary : theme.colors.border}>
+                      {isSelected ? '>' : ' '}
+                    </text>
+                    <text fg={theme.colors.git.modified}> {commit.shortHash} </text>
+                    <text fg={theme.colors.text.muted}>{commit.date}</text>
+                    <text fg={theme.colors.text.muted}> - </text>
+                    <text fg={theme.colors.status.info}>{commit.author}</text>
+                    <text fg={theme.colors.text.muted}> - </text>
+                    <text fg={isSelected ? theme.colors.text.primary : theme.colors.text.secondary}>
+                      {commit.message}
+                    </text>
+                  </box>
+                )
+              })}
+            </scrollbox>
+          )}
+        </Fieldset>
+
         {stashes.length > 0 && (
           <Fieldset
             title="Stashes"
@@ -369,44 +405,8 @@ export function MainView({
         )}
       </box>
 
-      {/* Right column: Recent Commits and Diff */}
+      {/* Right column: Diff and Command Log */}
       <box width="60%" flexDirection="column">
-        <Fieldset
-          title="Recent Commits"
-          focused={focusedPanel === 'log'}
-          height="30%"
-          paddingX={theme.spacing.none}
-          paddingY={theme.spacing.none}
-        >
-          {commits.length === 0 ? (
-            <box paddingLeft={theme.spacing.xs}>
-              <text fg={theme.colors.text.muted}>No commits</text>
-            </box>
-          ) : (
-            <scrollbox width="100%" height="100%" flexDirection="column">
-              {commits.map((commit, idx) => {
-                const isSelected = idx === selectedIndex && focusedPanel === 'log'
-                
-                return (
-                  <box key={commit.hash} flexDirection="row" paddingLeft={theme.spacing.xs}>
-                    <text fg={isSelected ? theme.colors.primary : theme.colors.border}>
-                      {isSelected ? '>' : ' '}
-                    </text>
-                    <text fg={theme.colors.git.modified}> {commit.shortHash} </text>
-                    <text fg={theme.colors.text.muted}>{commit.date}</text>
-                    <text fg={theme.colors.text.muted}> - </text>
-                    <text fg={theme.colors.status.info}>{commit.author}</text>
-                    <text fg={theme.colors.text.muted}> - </text>
-                    <text fg={isSelected ? theme.colors.text.primary : theme.colors.text.secondary}>
-                      {commit.message}
-                    </text>
-                  </box>
-                )
-              })}
-            </scrollbox>
-          )}
-        </Fieldset>
-
         <Fieldset
           title="Diff"
           focused={focusedPanel === 'diff'}
@@ -447,13 +447,13 @@ export function MainView({
             </scrollbox>
           )}
         </Fieldset>
+
+        {/* Command Log below Diff */}
+        {showCommandLog && (
+          <CommandLogView commandLog={commandLog} maxHeight={10} />
+        )}
       </box>
     </box>
-
-    {/* Command Log at bottom */}
-    {showCommandLog && (
-      <CommandLogView commandLog={commandLog} maxHeight={10} />
-    )}
   </box>
   )
 }
