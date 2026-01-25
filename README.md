@@ -10,6 +10,8 @@ A functional Git client built as a Terminal User Interface (TUI) using OpenTUI a
 - **Diff Viewer**: See file changes in a color-coded diff view
 - **Keyboard Navigation**: Full keyboard-driven interface
 - **Git Operations**: Stage/unstage files, create commits, switch branches
+- **Multi-line Commits**: Support for commit subject and body with character count guidance
+- **Commit Preview**: Preview formatted commit messages before submitting
 
 ## Installation
 
@@ -51,7 +53,9 @@ bun run index.tsx
 - `q` - Quit application
 
 ### Commit Modal
-- `Enter` - Submit commit
+- `Tab` - Switch between subject and body fields
+- `Ctrl+Enter` or `Ctrl+S` - Submit commit
+- `Ctrl+P` - Toggle commit message preview
 - `Esc` - Cancel commit
 
 ## Project Structure
@@ -88,7 +92,7 @@ gitarbor-tui/
 - **LogView**: Displays commit history with hash, author, date, and message
 - **BranchesView**: Lists local and remote branches, indicates current branch
 - **DiffView**: Shows color-coded diff output for selected files
-- **CommitModal**: Modal dialog for entering commit messages
+- **CommitModal**: Modal dialog for entering multi-line commit messages with subject and body fields
 
 ### Git Operations
 
@@ -136,11 +140,9 @@ This is an MVP with the following limitations:
 
 - Diff view shows first 100 lines only
 - Commit log limited to 50 commits
-- No git push/pull operations
 - No merge conflict resolution
 - No interactive rebase
 - No stash management
-- Single-line commit messages only
 
 ## Future Enhancements
 
