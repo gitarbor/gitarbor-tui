@@ -317,6 +317,19 @@ export function App({ cwd }: { cwd: string }) {
     }
   }, [git, loadData])
 
+  const handleDropStashWithConfirm = useCallback((index: number, stashName: string, message: string) => {
+    setConfirmModalProps({
+      title: 'Drop Stash?',
+      message: `Are you sure you want to drop ${stashName}: ${message}? This cannot be undone.`,
+      onConfirm: () => {
+        setShowConfirmModal(false)
+        void handleDropStash(index)
+      },
+      danger: true,
+    })
+    setShowConfirmModal(true)
+  }, [handleDropStash])
+
   const handleViewStashDiff = useCallback(async (index: number) => {
     try {
       const stashDiff = await git.getStashDiff(index)
@@ -1387,7 +1400,7 @@ export function App({ cwd }: { cwd: string }) {
         void handlePopStash(stash.index)
       } else if (stash && key.sequence === 'D') {
         // Drop stash on Shift+D
-        void handleDropStash(stash.index)
+        handleDropStashWithConfirm(stash.index, stash.name, stash.message)
       } else if (stash && key.sequence === 'V') {
         // View stash diff on Shift+V
         void handleViewStashDiff(stash.index)
