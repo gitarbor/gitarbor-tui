@@ -1,5 +1,6 @@
 {
   "name": "gitarbor-tui",
+  "version": "0.1.0",
   "module": "index.tsx",
   "type": "module",
   "private": true,

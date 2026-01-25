@@ -1,6 +1,7 @@
 import { theme } from '../theme'
 import { Tabs } from './Tabs'
 import type { View } from '../types/git'
+import packageJson from '../../package.json'
 
 interface HeaderProps {
   branch: string
@@ -24,7 +25,7 @@ export function Header({ branch, ahead, behind, view, onViewChange }: HeaderProp
       padding={theme.spacing.none}
     >
       <box flexDirection="row" paddingLeft={theme.spacing.xs} paddingTop={theme.spacing.none}>
-        <text fg={theme.colors.primary}>GitArbor</text>
+        <text fg={theme.colors.primary}>GitArbor v{packageJson.version}</text>
         <text fg={theme.colors.text.muted}> - </text>
         <text fg={theme.colors.git.modified}>{branch}</text>
         <text fg={theme.colors.text.muted}>{aheadBehind}</text>
