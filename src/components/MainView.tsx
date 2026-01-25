@@ -369,18 +369,20 @@ export function MainView({
           title="Recent Commits"
           focused={focusedPanel === 'log'}
           height="30%"
-          paddingX={theme.spacing.xs}
+          paddingX={theme.spacing.none}
           paddingY={theme.spacing.none}
         >
-          <box flexDirection="column">
-            {commits.length === 0 ? (
+          {commits.length === 0 ? (
+            <box paddingLeft={theme.spacing.xs}>
               <text fg={theme.colors.text.muted}>No commits</text>
-            ) : (
-              commits.slice(0, 10).map((commit, idx) => {
+            </box>
+          ) : (
+            <scrollbox width="100%" height="100%" flexDirection="column">
+              {commits.map((commit, idx) => {
                 const isSelected = idx === selectedIndex && focusedPanel === 'log'
                 
                 return (
-                  <box key={commit.hash} flexDirection="row">
+                  <box key={commit.hash} flexDirection="row" paddingLeft={theme.spacing.xs}>
                     <text fg={isSelected ? theme.colors.primary : theme.colors.border}>
                       {isSelected ? '>' : ' '}
                     </text>
@@ -394,9 +396,9 @@ export function MainView({
                     </text>
                   </box>
                 )
-              })
-            )}
-          </box>
+              })}
+            </scrollbox>
+          )}
         </Fieldset>
 
         <Fieldset
