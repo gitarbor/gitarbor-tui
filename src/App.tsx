@@ -27,7 +27,7 @@ import { TagModal } from './components/TagModal'
 import { RemoteModal } from './components/RemoteModal'
 import { RemotesView } from './components/RemotesView'
 import { CommandLogView } from './components/CommandLogView'
-import type { GitStatus, GitCommit, GitBranch, GitStash, GitRemote, GitMergeState, MergeStrategy, View, CommandLogEntry } from './types/git'
+import type { GitStatus, GitCommit, GitBranch, GitStash, GitRemote, GitTag, GitMergeState, MergeStrategy, View, CommandLogEntry } from './types/git'
 import type { Command } from './types/commands'
 
 export function App({ cwd }: { cwd: string }) {
@@ -35,8 +35,8 @@ export function App({ cwd }: { cwd: string }) {
   const [git] = useState(() => new GitClient(cwd))
   const [watcher] = useState(() => new FileSystemWatcher(cwd, () => {}))
   const [view, setView] = useState<View>('main')
-  const [focusedPanel, setFocusedPanel] = useState<'status' | 'branches' | 'log' | 'stashes' | 'remotes' | 'diff'>('status')
-  const [branchRemoteTab, setBranchRemoteTab] = useState<'branches' | 'remotes'>('branches')
+  const [focusedPanel, setFocusedPanel] = useState<'status' | 'branches' | 'log' | 'stashes' | 'remotes' | 'tags' | 'diff'>('status')
+  const [branchRemoteTab, setBranchRemoteTab] = useState<'branches' | 'remotes' | 'tags'>('branches')
   const [status, setStatus] = useState<GitStatus>({
     branch: '',
     ahead: 0,
@@ -49,6 +49,7 @@ export function App({ cwd }: { cwd: string }) {
   const [branches, setBranches] = useState<GitBranch[]>([])
   const [stashes, setStashes] = useState<GitStash[]>([])
   const [remotes, setRemotes] = useState<GitRemote[]>([])
+  const [tags, setTags] = useState<GitTag[]>([])
   const [diff, setDiff] = useState<string>('')
   const [selectedFilePath, setSelectedFilePath] = useState<string | undefined>(undefined)
   const [selectedIndex, setSelectedIndex] = useState(0)
@@ -807,6 +808,8 @@ export function App({ cwd }: { cwd: string }) {
           return Math.min(stashes.length - 1, 2) // Only show first 3 stashes in sidebar
         } else if (focusedPanel === 'remotes') {
           return remotes.length - 1
+        } else if (focusedPanel === 'tags') {
+          return Math.min(tags.length - 1, 14) // Show max 15 tags (0-14)
         } else if (focusedPanel === 'diff') {
           return 0 // Diff panel is not selectable (uses scrolling)
         } else {
@@ -821,7 +824,7 @@ export function App({ cwd }: { cwd: string }) {
       default:
         return 0
     }
-  }, [view, focusedPanel, status, commits, branches, stashes, remotes])
+  }, [view, focusedPanel, status, commits, branches, stashes, remotes, tags])
 
   // Define available commands
   const commands: Command[] = [
@@ -956,13 +959,23 @@ export function App({ cwd }: { cwd: string }) {
       },
     },
     {
+      id: 'panel-tags',
+      label: 'Panel: Tags',
+      description: 'Focus tags panel',
+      execute: () => {
+        setView('main')
+        setFocusedPanel('tags')
+        setSelectedIndex(0)
+      },
+    },
+    {
       id: 'cycle-panels',
       label: 'Cycle Through Panels',
       description: 'Navigate to next panel with Tab key',
       shortcut: 'TAB / Shift+TAB',
       execute: () => {
         if (view === 'main') {
-          const panels: Array<'status' | 'branches' | 'log' | 'stashes' | 'remotes' | 'diff'> = stashes.length > 0
+          const panels: Array<'status' | 'branches' | 'log' | 'stashes' | 'remotes' | 'tags' | 'diff'> = stashes.length > 0
             ? ['status', 'branches', 'stashes', 'log', 'diff']
             : ['status', 'branches', 'log', 'diff']
           
@@ -1466,7 +1479,7 @@ export function App({ cwd }: { cwd: string }) {
       
       // Tab key to cycle through panels (forward with Tab, backward with Shift+Tab)
       if (key.name === 'tab') {
-        const panels: Array<'status' | 'branches' | 'log' | 'stashes' | 'remotes' | 'diff'> = stashes.length > 0
+        const panels: Array<'status' | 'branches' | 'log' | 'stashes' | 'remotes' | 'tags' | 'diff'> = stashes.length > 0
           ? ['status', 'branches', 'stashes', 'log', 'diff']
           : ['status', 'branches', 'log', 'diff']
         
@@ -1481,15 +1494,33 @@ export function App({ cwd }: { cwd: string }) {
         setSelectedIndex(0)
       }
       
-      // Switch between Branches/Remotes tabs with left/right arrow when panel is focused
-      if (focusedPanel === 'branches' || focusedPanel === 'remotes') {
+      // Switch between Branches/Remotes/Tags tabs with left/right arrow when panel is focused
+      if (focusedPanel === 'branches' || focusedPanel === 'remotes' || focusedPanel === 'tags') {
         if (key.name === 'left') {
-          setBranchRemoteTab('branches')
-          setFocusedPanel('branches')
+          // Cycle left: tags -> remotes -> branches -> tags
+          if (branchRemoteTab === 'branches') {
+            setBranchRemoteTab('tags')
+            setFocusedPanel('tags')
+          } else if (branchRemoteTab === 'remotes') {
+            setBranchRemoteTab('branches')
+            setFocusedPanel('branches')
+          } else if (branchRemoteTab === 'tags') {
+            setBranchRemoteTab('remotes')
+            setFocusedPanel('remotes')
+          }
           setSelectedIndex(0)
         } else if (key.name === 'right') {
-          setBranchRemoteTab('remotes')
-          setFocusedPanel('remotes')
+          // Cycle right: branches -> remotes -> tags -> branches
+          if (branchRemoteTab === 'branches') {
+            setBranchRemoteTab('remotes')
+            setFocusedPanel('remotes')
+          } else if (branchRemoteTab === 'remotes') {
+            setBranchRemoteTab('tags')
+            setFocusedPanel('tags')
+          } else if (branchRemoteTab === 'tags') {
+            setBranchRemoteTab('branches')
+            setFocusedPanel('branches')
+          }
           setSelectedIndex(0)
         }
       }
@@ -1790,6 +1821,7 @@ export function App({ cwd }: { cwd: string }) {
           commits={commits}
           stashes={stashes}
           remotes={remotes}
+          tags={tags}
           selectedIndex={selectedIndex}
           focusedPanel={focusedPanel}
           branchRemoteTab={branchRemoteTab}

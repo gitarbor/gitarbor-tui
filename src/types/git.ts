@@ -45,6 +45,14 @@ export interface GitRemote {
   pushUrl: string
 }
 
+export interface GitTag {
+  name: string
+  commit: string
+  date: string
+  message?: string
+  isAnnotated: boolean
+}
+
 export interface GitMergeState {
   inProgress: boolean
   currentBranch: string

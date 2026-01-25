@@ -4,7 +4,7 @@ import type { View } from '../types/git'
 interface FooterProps {
   message: string
   view: View
-  focusedPanel?: 'status' | 'branches' | 'log' | 'stashes' | 'remotes' | 'diff'
+  focusedPanel?: 'status' | 'branches' | 'log' | 'stashes' | 'remotes' | 'tags' | 'diff'
   hasStaged?: boolean
   hasUnstaged?: boolean
   hasUntracked?: boolean

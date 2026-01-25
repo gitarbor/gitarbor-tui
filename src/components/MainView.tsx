@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { SyntaxStyle, parseColor } from '@opentui/core'
 import { theme } from '../theme'
-import type { GitFile, GitBranch, GitCommit, GitMergeState, GitStash, GitRemote, CommandLogEntry } from '../types/git'
+import type { GitFile, GitBranch, GitCommit, GitMergeState, GitStash, GitRemote, GitTag, CommandLogEntry } from '../types/git'
 import { Fieldset } from './Fieldset'
 import { CommandLogView } from './CommandLogView'
 
@@ -13,9 +13,10 @@ interface MainViewProps {
   commits: GitCommit[]
   stashes: GitStash[]
   remotes: GitRemote[]
+  tags: GitTag[]
   selectedIndex: number
-  focusedPanel: 'status' | 'branches' | 'log' | 'stashes' | 'remotes' | 'diff'
-  branchRemoteTab: 'branches' | 'remotes'
+  focusedPanel: 'status' | 'branches' | 'log' | 'stashes' | 'remotes' | 'tags' | 'diff'
+  branchRemoteTab: 'branches' | 'remotes' | 'tags'
   onStage: (path: string) => void
   onUnstage: (path: string) => void
   mergeState?: GitMergeState
@@ -36,6 +37,7 @@ export function MainView({
   commits,
   stashes,
   remotes,
+  tags,
   selectedIndex,
   focusedPanel,
   branchRemoteTab,
@@ -253,8 +255,8 @@ export function MainView({
         </Fieldset>
 
         <Fieldset
-          title="Branches / Remotes"
-          focused={focusedPanel === 'branches' || focusedPanel === 'remotes'}
+          title="Branches / Remotes / Tags"
+          focused={focusedPanel === 'branches' || focusedPanel === 'remotes' || focusedPanel === 'tags'}
           height="30%"
           paddingX={theme.spacing.xs}
           paddingY={theme.spacing.none}
@@ -268,6 +270,10 @@ export function MainView({
               <text> </text>
               <text fg={branchRemoteTab === 'remotes' ? theme.colors.primary : theme.colors.text.muted}>
                 [Remotes{branchRemoteTab === 'remotes' ? ' ●' : ''}]
+              </text>
+              <text> </text>
+              <text fg={branchRemoteTab === 'tags' ? theme.colors.primary : theme.colors.text.muted}>
+                [Tags{branchRemoteTab === 'tags' ? ' ●' : ''}]
               </text>
             </box>
 
@@ -323,6 +329,39 @@ export function MainView({
                             {remote.fetchUrl.length > 40 ? remote.fetchUrl.substring(0, 37) + '...' : remote.fetchUrl}
                           </text>
                         </box>
+                      </box>
+                    )
+                  })
+                )}
+              </box>
+            )}
+
+            {/* Tab Content: Tags */}
+            {branchRemoteTab === 'tags' && (
+              <box flexDirection="column">
+                {tags.length === 0 ? (
+                  <text fg={theme.colors.text.muted}>No tags</text>
+                ) : (
+                  tags.slice(0, 15).map((tag, idx) => {
+                    const isSelected = idx === selectedIndex && focusedPanel === 'tags'
+                    
+                    return (
+                      <box key={tag.name} flexDirection="column">
+                        <box flexDirection="row">
+                          <text fg={isSelected ? theme.colors.primary : theme.colors.border}>
+                            {isSelected ? '>' : ' '}
+                          </text>
+                          <text fg={isSelected ? theme.colors.primary : theme.colors.git.modified}>
+                            {' '}{tag.isAnnotated ? '◆ ' : '◇ '}{tag.name}
+                          </text>
+                        </box>
+                        {tag.message && (
+                          <box flexDirection="row" paddingLeft={theme.spacing.md}>
+                            <text fg={theme.colors.text.muted}>
+                              {tag.message.length > 40 ? tag.message.substring(0, 37) + '...' : tag.message}
+                            </text>
+                          </box>
+                        )}
                       </box>
                     )
                   })
