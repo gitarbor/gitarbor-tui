@@ -208,6 +208,19 @@ export function App({ cwd }: { cwd: string }) {
     }
   }, [git, loadData])
 
+  const handleFetch = useCallback(async () => {
+    try {
+      setMessage('Fetching from remotes...')
+
+      await git.fetch()
+
+      await loadData(true)
+      setMessage('Fetch completed successfully')
+    } catch (error) {
+      setMessage(`Fetch failed: ${error}`)
+    }
+  }, [git, loadData])
+
   const getMaxIndex = useCallback(() => {
     switch (view) {
       case 'main':
@@ -320,6 +333,13 @@ export function App({ cwd }: { cwd: string }) {
       description: 'Pull and merge changes from remote',
       shortcut: 'p',
       execute: () => void handlePull(),
+    },
+    {
+      id: 'fetch',
+      label: 'Fetch from Remotes',
+      description: 'Fetch updates from all remotes',
+      shortcut: 'f',
+      execute: () => void handleFetch(),
     },
     {
       id: 'refresh',
@@ -445,6 +465,10 @@ export function App({ cwd }: { cwd: string }) {
 
     if (key.sequence === 'p') {
       void handlePull()
+    }
+
+    if (key.sequence === 'f') {
+      void handleFetch()
     }
   })
 

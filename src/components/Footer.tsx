@@ -14,7 +14,7 @@ export function Footer({ message }: FooterProps) {
       padding={theme.spacing.none}
     >
       <box paddingLeft={theme.spacing.xs} paddingTop={theme.spacing.none}>
-        <text fg={theme.colors.text.muted}>Commands: [/] Palette | [,] Settings | [1-4] View | [s] Stage | [u] Unstage | [c] Commit | [ESC/q] Exit</text>
+        <text fg={theme.colors.text.muted}>Commands: [/] Palette | [,] Settings | [P] Push | [p] Pull | [f] Fetch | [c] Commit | [s] Stage | [u] Unstage | [ESC/q] Exit</text>
         {message && (
           <text fg={theme.colors.primary}>{message}</text>
         )}

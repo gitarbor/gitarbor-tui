@@ -244,4 +244,52 @@ export class GitClient {
       throw new Error(`Failed to pull: ${error}`)
     }
   }
+
+  async fetch(onProgress?: (line: string) => void): Promise<void> {
+    try {
+      const { spawn } = await import('child_process')
+      
+      return new Promise((resolve, reject) => {
+        const gitProcess = spawn('git', ['fetch', '--progress', '--all'], {
+          cwd: this.cwd,
+          env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
+        })
+
+        let errorOutput = ''
+
+        gitProcess.stderr.on('data', (data: Buffer) => {
+          const lines = data.toString().split('\n')
+          lines.forEach((line: string) => {
+            if (line.trim()) {
+              onProgress?.(line.trim())
+              errorOutput += line + '\n'
+            }
+          })
+        })
+
+        gitProcess.stdout.on('data', (data: Buffer) => {
+          const lines = data.toString().split('\n')
+          lines.forEach((line: string) => {
+            if (line.trim()) {
+              onProgress?.(line.trim())
+            }
+          })
+        })
+
+        gitProcess.on('close', (code: number | null) => {
+          if (code === 0) {
+            resolve()
+          } else {
+            reject(new Error(errorOutput || `Fetch failed with code ${code}`))
+          }
+        })
+
+        gitProcess.on('error', (error: Error) => {
+          reject(new Error(`Failed to fetch: ${error.message}`))
+        })
+      })
+    } catch (error) {
+      throw new Error(`Failed to fetch: ${error}`)
+    }
+  }
 }
