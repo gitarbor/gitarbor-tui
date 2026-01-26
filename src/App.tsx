@@ -2095,16 +2095,11 @@ export function App({ cwd }: { cwd: string }) {
       )}
 
       {view === 'stash' && (
-        <box flexDirection="column" flexGrow={1} width="100%">
-          <StashView
-            stashes={stashes}
-            selectedIndex={selectedIndex}
-            focused={!showCommitModal && !showStashModal}
-          />
-          {showCommandLog && (
-            <CommandLogView commandLog={commandLog} maxHeight={10} />
-          )}
-        </box>
+        <StashView
+          stashes={stashes}
+          selectedIndex={selectedIndex}
+          focused={!showCommitModal && !showStashModal}
+        />
       )}
 
       {view === 'remotes' && (
