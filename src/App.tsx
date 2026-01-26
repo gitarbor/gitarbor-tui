@@ -120,7 +120,7 @@ export function App({ cwd }: { cwd: string }) {
         git.getStashes(),
         git.getMergeState(),
         git.getRemotes(),
-        git.getTags(),
+        git.getTags(50), // Limit to 50 most recent tags for performance
       ])
       setStatus(statusData)
       setCommits(commitsData)
@@ -892,7 +892,7 @@ export function App({ cwd }: { cwd: string }) {
         } else if (focusedPanel === 'remotes') {
           return remotes.length - 1
         } else if (focusedPanel === 'tags') {
-          return Math.min(tags.length - 1, 14) // Show max 15 tags (0-14)
+          return tags.length - 1 // All tags are now scrollable
         } else if (focusedPanel === 'diff') {
           return 0 // Diff panel is not selectable (uses scrolling)
         } else {

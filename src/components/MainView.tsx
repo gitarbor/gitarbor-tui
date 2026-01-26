@@ -1,5 +1,5 @@
-import { useMemo } from 'react'
-import { SyntaxStyle, parseColor } from '@opentui/core'
+import { useMemo, useEffect, useRef } from 'react'
+import { SyntaxStyle, parseColor, ScrollBoxRenderable } from '@opentui/core'
 import { theme } from '../theme'
 import type { GitFile, GitBranch, GitCommit, GitMergeState, GitStash, GitRemote, GitTag, CommandLogEntry } from '../types/git'
 import { Fieldset } from './Fieldset'
@@ -70,6 +70,41 @@ export function MainView({
     punctuation: { fg: parseColor('#F0F6FC') },
     default: { fg: parseColor('#E6EDF3') },
   }), [])
+
+  // Refs for scrollboxes to enable auto-scrolling
+  const branchesScrollRef = useRef<ScrollBoxRenderable>(null)
+  const remotesScrollRef = useRef<ScrollBoxRenderable>(null)
+  const tagsScrollRef = useRef<ScrollBoxRenderable>(null)
+  const commitsScrollRef = useRef<ScrollBoxRenderable>(null)
+
+  // Auto-scroll to selected item when selection changes
+  useEffect(() => {
+    const lineHeight = 1 // Each item is roughly 1 line tall (single line items)
+    const remoteLineHeight = 2 // Remotes take 2 lines (name + URL)
+    let scrollRef: typeof branchesScrollRef | null = null
+    let itemHeight = lineHeight
+    
+    if (focusedPanel === 'branches' && branchRemoteTab === 'branches') {
+      scrollRef = branchesScrollRef
+      itemHeight = lineHeight
+    } else if (focusedPanel === 'remotes' && branchRemoteTab === 'remotes') {
+      scrollRef = remotesScrollRef
+      itemHeight = remoteLineHeight
+    } else if (focusedPanel === 'tags' && branchRemoteTab === 'tags') {
+      scrollRef = tagsScrollRef
+      itemHeight = lineHeight
+    } else if (focusedPanel === 'log') {
+      scrollRef = commitsScrollRef
+      itemHeight = lineHeight
+    }
+
+    if (scrollRef?.current) {
+      // Calculate scroll position with some offset to keep item visible
+      // Subtract a small offset to ensure the item isn't at the very bottom
+      const scrollPosition = Math.max(0, selectedIndex * itemHeight - 2)
+      scrollRef.current.scrollTo({ x: 0, y: scrollPosition })
+    }
+  }, [selectedIndex, focusedPanel, branchRemoteTab])
 
   // Determine filetype from file path extension
   const getFiletype = (filePath?: string): string => {
@@ -279,72 +314,82 @@ export function MainView({
 
             {/* Tab Content: Branches */}
             {branchRemoteTab === 'branches' && (
-              <box flexDirection="column">
+              <>
                 {localBranches.length === 0 ? (
-                  <text fg={theme.colors.text.muted}>No branches</text>
+                  <box paddingLeft={theme.spacing.xs}>
+                    <text fg={theme.colors.text.muted}>No branches</text>
+                  </box>
                 ) : (
-                  localBranches.slice(0, 15).map((branch, idx) => {
-                    const isSelected = idx === selectedIndex && focusedPanel === 'branches'
-                    
-                    return (
-                      <box key={branch.name} flexDirection="row">
-                        <text fg={isSelected ? theme.colors.primary : theme.colors.border}>
-                          {isSelected ? '>' : ' '}
-                        </text>
-                        <text fg={branch.current ? theme.colors.git.staged : theme.colors.text.secondary}>
-                          {branch.current ? '* ' : '  '}
-                          {branch.name}
-                        </text>
-                      </box>
-                    )
-                  })
+                  <scrollbox ref={branchesScrollRef} width="100%" height="100%" flexDirection="column">
+                    {localBranches.map((branch, idx) => {
+                      const isSelected = idx === selectedIndex && focusedPanel === 'branches'
+                      
+                      return (
+                        <box key={branch.name} flexDirection="row" paddingLeft={theme.spacing.xs}>
+                          <text fg={isSelected ? theme.colors.primary : theme.colors.border}>
+                            {isSelected ? '>' : ' '}
+                          </text>
+                          <text fg={branch.current ? theme.colors.git.staged : theme.colors.text.secondary}>
+                            {branch.current ? '* ' : '  '}
+                            {branch.name}
+                          </text>
+                        </box>
+                      )
+                    })}
+                  </scrollbox>
                 )}
-              </box>
+              </>
             )}
 
             {/* Tab Content: Remotes */}
             {branchRemoteTab === 'remotes' && (
-              <box flexDirection="column">
+              <>
                 {remotes.length === 0 ? (
-                  <text fg={theme.colors.text.muted}>No remotes configured</text>
+                  <box paddingLeft={theme.spacing.xs}>
+                    <text fg={theme.colors.text.muted}>No remotes configured</text>
+                  </box>
                 ) : (
-                  remotes.map((remote, idx) => {
-                    const isSelected = idx === selectedIndex && focusedPanel === 'remotes'
-                    
-                    return (
-                      <box key={remote.name} flexDirection="column">
-                        <box flexDirection="row">
-                          <text fg={isSelected ? theme.colors.primary : theme.colors.border}>
-                            {isSelected ? '>' : ' '}
-                          </text>
-                          <text fg={isSelected ? theme.colors.primary : theme.colors.text.secondary}>
-                            {' '}{remote.name}
-                          </text>
+                  <scrollbox ref={remotesScrollRef} width="100%" height="100%" flexDirection="column">
+                    {remotes.map((remote, idx) => {
+                      const isSelected = idx === selectedIndex && focusedPanel === 'remotes'
+                      
+                      return (
+                        <box key={remote.name} flexDirection="column" paddingLeft={theme.spacing.xs}>
+                          <box flexDirection="row">
+                            <text fg={isSelected ? theme.colors.primary : theme.colors.border}>
+                              {isSelected ? '>' : ' '}
+                            </text>
+                            <text fg={isSelected ? theme.colors.primary : theme.colors.text.secondary}>
+                              {' '}{remote.name}
+                            </text>
+                          </box>
+                          <box flexDirection="row" paddingLeft={theme.spacing.md}>
+                            <text fg={theme.colors.text.muted}>
+                              {remote.fetchUrl.length > 40 ? remote.fetchUrl.substring(0, 37) + '...' : remote.fetchUrl}
+                            </text>
+                          </box>
                         </box>
-                        <box flexDirection="row" paddingLeft={theme.spacing.md}>
-                          <text fg={theme.colors.text.muted}>
-                            {remote.fetchUrl.length > 40 ? remote.fetchUrl.substring(0, 37) + '...' : remote.fetchUrl}
-                          </text>
-                        </box>
-                      </box>
-                    )
-                  })
+                      )
+                    })}
+                  </scrollbox>
                 )}
-              </box>
+              </>
             )}
 
             {/* Tab Content: Tags */}
             {branchRemoteTab === 'tags' && (
-              <box flexDirection="column">
+              <>
                 {tags.length === 0 ? (
-                  <text fg={theme.colors.text.muted}>No tags</text>
+                  <box paddingLeft={theme.spacing.xs}>
+                    <text fg={theme.colors.text.muted}>No tags</text>
+                  </box>
                 ) : (
-                  tags.slice(0, 15).map((tag, idx) => {
-                    const isSelected = idx === selectedIndex && focusedPanel === 'tags'
-                    
-                    return (
-                      <box key={tag.name} flexDirection="column">
-                        <box flexDirection="row">
+                  <scrollbox ref={tagsScrollRef} width="100%" height="100%" flexDirection="column">
+                    {tags.map((tag, idx) => {
+                      const isSelected = idx === selectedIndex && focusedPanel === 'tags'
+                      
+                      return (
+                        <box key={tag.name} flexDirection="row" paddingLeft={theme.spacing.xs}>
                           <text fg={isSelected ? theme.colors.primary : theme.colors.border}>
                             {isSelected ? '>' : ' '}
                           </text>
@@ -352,18 +397,11 @@ export function MainView({
                             {' '}{tag.isAnnotated ? '◆ ' : '◇ '}{tag.name}
                           </text>
                         </box>
-                        {tag.message && (
-                          <box flexDirection="row" paddingLeft={theme.spacing.md}>
-                            <text fg={theme.colors.text.muted}>
-                              {tag.message.length > 40 ? tag.message.substring(0, 37) + '...' : tag.message}
-                            </text>
-                          </box>
-                        )}
-                      </box>
-                    )
-                  })
+                      )
+                    })}
+                  </scrollbox>
                 )}
-              </box>
+              </>
             )}
           </box>
         </Fieldset>
@@ -380,7 +418,7 @@ export function MainView({
               <text fg={theme.colors.text.muted}>No commits</text>
             </box>
           ) : (
-            <scrollbox width="100%" height="100%" flexDirection="column">
+            <scrollbox ref={commitsScrollRef} width="100%" height="100%" flexDirection="column">
               {commits.map((commit, idx) => {
                 const isSelected = idx === selectedIndex && focusedPanel === 'log'
                 

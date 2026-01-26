@@ -981,11 +981,11 @@ export class GitClient {
     })
   }
 
-  async getTags(): Promise<GitTag[]> {
+  async getTags(limit?: number): Promise<GitTag[]> {
     try {
-      // Get all tags with their commit hash and date
+      // Get all tags with their commit hash and date, sorted by creation date (newest first)
       const { stdout } = await execAsync(
-        'git tag -l --format="%(refname:short)|%(objectname)|%(creatordate:short)|%(subject)|%(objecttype)"',
+        'git tag -l --format="%(refname:short)|%(objectname)|%(creatordate:short)|%(subject)|%(objecttype)|%(creatordate:unix)" --sort=-creatordate',
         { cwd: this.cwd }
       )
 
@@ -993,7 +993,7 @@ export class GitClient {
         return []
       }
 
-      return stdout
+      const tags = stdout
         .split('\n')
         .filter((line) => line)
         .map((line) => {
@@ -1006,6 +1006,9 @@ export class GitClient {
             isAnnotated: objectType === 'tag',
           }
         })
+
+      // Return limited results if specified
+      return limit ? tags.slice(0, limit) : tags
     } catch (error) {
       throw new Error(`Failed to get tags: ${error}`)
     }
