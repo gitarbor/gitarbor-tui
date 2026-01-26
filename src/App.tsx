@@ -946,7 +946,7 @@ export function App({ cwd }: { cwd: string }) {
     },
     {
       id: 'view-log',
-      label: 'View: Log',
+      label: 'View: History',
       description: 'Show commit history (full screen)',
       shortcut: '2',
       execute: () => {

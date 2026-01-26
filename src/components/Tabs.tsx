@@ -9,7 +9,7 @@ interface TabsProps {
 export function Tabs({ activeView, onViewChange }: TabsProps) {
   const tabs: Array<{ id: View; label: string; key: string }> = [
     { id: 'main', label: 'Main', key: '1' },
-    { id: 'log', label: 'Log', key: '2' },
+    { id: 'log', label: 'History', key: '2' },
     { id: 'diff', label: 'Diff', key: '3' },
     { id: 'stash', label: 'Stash', key: '4' },
     { id: 'remotes', label: 'Remotes', key: '5' },
