@@ -2088,15 +2088,10 @@ export function App({ cwd }: { cwd: string }) {
       )}
 
       {view === 'diff' && (
-        <box flexDirection="column" flexGrow={1} width="100%">
-          <DiffView
-            diff={diff}
-            focused={!showCommitModal && !showStashModal}
-          />
-          {showCommandLog && (
-            <CommandLogView commandLog={commandLog} maxHeight={10} />
-          )}
-        </box>
+        <DiffView
+          diff={diff}
+          focused={!showCommitModal && !showStashModal}
+        />
       )}
 
       {view === 'stash' && (
