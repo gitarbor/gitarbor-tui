@@ -499,7 +499,7 @@ export function MainView({
                 filetype={getFiletype(selectedFilePath)}
                 syntaxStyle={syntaxStyle}
                 showLineNumbers={true}
-                wrapMode="none"
+                wrapMode="word"
                 addedBg="#1a4d1a"
                 removedBg="#4d1a1a"
                 contextBg="transparent"

@@ -81,7 +81,7 @@ export function DiffView({ diff, focused, filePath }: DiffViewProps) {
             filetype={getFiletype(filePath)}
             syntaxStyle={syntaxStyle}
             showLineNumbers={true}
-            wrapMode="none"
+            wrapMode="word"
             addedBg="#1a4d1a"
             removedBg="#4d1a1a"
             contextBg="transparent"
