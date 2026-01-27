@@ -40,6 +40,7 @@ export class WorkspaceManager {
     }
   }
 
+  
   getConfig(): WorkspaceConfig {
     return this.config
   }

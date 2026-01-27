@@ -13,6 +13,7 @@ export function Tabs({ activeView, onViewChange }: TabsProps) {
     { id: 'diff', label: 'Diff', key: '3' },
     { id: 'stash', label: 'Stash', key: '4' },
     { id: 'remotes', label: 'Remotes', key: '5' },
+    { id: 'repos', label: 'Repos', key: '6' },
   ]
 
   return (

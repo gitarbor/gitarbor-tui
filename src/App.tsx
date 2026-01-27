@@ -29,13 +29,24 @@ import { RemoteModal } from './components/RemoteModal'
 import { RemotesView } from './components/RemotesView'
 import { TagDetailsView } from './components/TagDetailsView'
 import { CommandLogView } from './components/CommandLogView'
+import { ReposView } from './components/ReposView'
+import { RepoSwitchModal } from './components/RepoSwitchModal'
+import { WorkspaceManager } from './utils/workspace'
+import type { Repository } from './types/workspace'
 import type { GitStatus, GitCommit, GitBranch, GitStash, GitRemote, GitTag, GitMergeState, MergeStrategy, View, CommandLogEntry } from './types/git'
 import type { Command } from './types/commands'
 
 export function App({ cwd }: { cwd: string }) {
   const renderer = useRenderer()
-  const [git] = useState(() => new GitClient(cwd))
-  const [watcher] = useState(() => new FileSystemWatcher(cwd, () => {}))
+  const [currentRepoPath, setCurrentRepoPath] = useState(cwd)
+  const [git, setGit] = useState(() => new GitClient(cwd))
+  const [watcher, setWatcher] = useState(() => new FileSystemWatcher(cwd, () => {}))
+  const [workspaceManager] = useState(() => new WorkspaceManager())
+  const [repos, setRepos] = useState<Repository[]>([])
+  const [repoFilterQuery, setRepoFilterQuery] = useState('')
+  const [repoFocusedPanel, setRepoFocusedPanel] = useState<'filter' | 'repos'>('repos')
+  const [showRepoSwitchModal, setShowRepoSwitchModal] = useState(false)
+  const [pendingRepoSwitch, setPendingRepoSwitch] = useState<string | null>(null)
   const [view, setView] = useState<View>('main')
   const [focusedPanel, setFocusedPanel] = useState<'status' | 'branches' | 'log' | 'stashes' | 'remotes' | 'tags' | 'diff'>('status')
   const [branchRemoteTab, setBranchRemoteTab] = useState<'branches' | 'remotes' | 'tags'>('branches')
@@ -107,6 +118,37 @@ export function App({ cwd }: { cwd: string }) {
     return unsubscribe
   }, [])
 
+  // Reinitialize git client and watcher when repo path changes
+  useEffect(() => {
+    // Stop old watcher
+    watcher.stop()
+    
+    // Create new instances for the new repo path
+    const newGit = new GitClient(currentRepoPath)
+    const newWatcher = new FileSystemWatcher(currentRepoPath, () => {})
+    
+    setGit(newGit)
+    setWatcher(newWatcher)
+    
+    // Cleanup on unmount or when changing repos
+    return () => {
+      newWatcher.stop()
+    }
+  }, [currentRepoPath])
+
+  // Track current repo in history and load repo list
+  useEffect(() => {
+    void (async () => {
+      try {
+        await workspaceManager.initialize()
+        await workspaceManager.addRepository(currentRepoPath)
+        setRepos(workspaceManager.getConfig().recentRepositories)
+      } catch (error) {
+        setMessage(`Failed to load workspace: ${error}`)
+      }
+    })()
+  }, [workspaceManager, currentRepoPath])
+
   // Clean exit handler
   const handleExit = useCallback(() => {
     const cleanExit = (globalThis as any).__gitarborCleanExit
@@ -118,6 +160,68 @@ export function App({ cwd }: { cwd: string }) {
       process.exit(0)
     }
   }, [renderer])
+
+  // Perform the actual repository switch
+  const performRepoSwitch = useCallback(async (repoPath: string) => {
+    try {
+      setLoading(true)
+      setMessage(`Switching to ${repoPath}...`)
+      
+      // Update the current repo path (this will trigger useEffect to reinitialize git & watcher)
+      setCurrentRepoPath(repoPath)
+      
+      // Reset all state
+      setView('main')
+      setFocusedPanel('status')
+      setSelectedIndex(0)
+      setDiff('')
+      setSelectedFilePath(undefined)
+      setStatus({
+        branch: '',
+        ahead: 0,
+        behind: 0,
+        staged: [],
+        unstaged: [],
+        untracked: [],
+      })
+      setCommits([])
+      setBranches([])
+      setStashes([])
+      setRemotes([])
+      setTags([])
+      
+      // Update workspace history
+      await workspaceManager.addRepository(repoPath)
+      setRepos(workspaceManager.getConfig().recentRepositories)
+      
+      setMessage(`Switched to ${repoPath}`)
+    } catch (error) {
+      setMessage(`Failed to switch repository: ${error}`)
+    } finally {
+      setLoading(false)
+    }
+  }, [workspaceManager])
+
+  const handleRepoSwitch = useCallback((repoPath: string) => {
+    const hasChanges = status.staged.length > 0 || status.unstaged.length > 0 || status.untracked.length > 0
+
+    if (hasChanges) {
+      // Show confirmation modal
+      setPendingRepoSwitch(repoPath)
+      setShowRepoSwitchModal(true)
+    } else {
+      // Switch immediately if no changes
+      void performRepoSwitch(repoPath)
+    }
+  }, [status, performRepoSwitch])
+
+  const handleConfirmRepoSwitch = useCallback(() => {
+    if (pendingRepoSwitch) {
+      void performRepoSwitch(pendingRepoSwitch)
+      setShowRepoSwitchModal(false)
+      setPendingRepoSwitch(null)
+    }
+  }, [pendingRepoSwitch, performRepoSwitch])
 
   const loadData = useCallback(async (silent: boolean = false) => {
     try {
@@ -915,10 +1019,16 @@ export function App({ cwd }: { cwd: string }) {
         return stashes.length - 1
       case 'remotes':
         return remotes.length - 1
+      case 'repos':
+        return repos.filter(r => 
+          !repoFilterQuery || 
+          r.name.toLowerCase().includes(repoFilterQuery.toLowerCase()) ||
+          r.path.toLowerCase().includes(repoFilterQuery.toLowerCase())
+        ).length - 1
       default:
         return 0
     }
-  }, [view, focusedPanel, status, commits, branches, stashes, remotes, tags])
+  }, [view, focusedPanel, status, commits, branches, stashes, remotes, tags, repos, repoFilterQuery])
 
   // Define available commands
   const commands: Command[] = [
@@ -1001,6 +1111,18 @@ export function App({ cwd }: { cwd: string }) {
       execute: () => {
         setView('remotes')
         setSelectedIndex(0)
+      },
+    },
+    {
+      id: 'view-repos',
+      label: 'View: Repos',
+      description: 'Show repository history and switch repos',
+      shortcut: '6',
+      execute: () => {
+        setView('repos')
+        setSelectedIndex(0)
+        setRepoFilterQuery('')
+        setRepoFocusedPanel('repos')
       },
     },
     {
@@ -1650,7 +1772,7 @@ export function App({ cwd }: { cwd: string }) {
   ]
 
   useKeyboard((key) => {
-    if (showExitModal || showCommandPalette || showConfigModal || showThemesModal || showProgressModal || showConfirmModal || showRenameModal || showBranchModal || showBranchRenameModal || showSetUpstreamModal || showMergeModal || showConflictModal || showResetModal || showTagModal || showRemoteModal) {
+    if (showExitModal || showCommandPalette || showConfigModal || showThemesModal || showProgressModal || showConfirmModal || showRenameModal || showBranchModal || showBranchRenameModal || showSetUpstreamModal || showMergeModal || showConflictModal || showResetModal || showTagModal || showRemoteModal || showRepoSwitchModal) {
       // Modals handle their own keyboard input
       return
     }
@@ -1660,6 +1782,42 @@ export function App({ cwd }: { cwd: string }) {
         setShowCommitModal(false)
         setShowStashModal(false)
       }
+      return
+    }
+
+    // Special handling for repos view filter panel - intercept all keys except Tab and Escape
+    if (view === 'repos' && repoFocusedPanel === 'filter') {
+      // Tab to switch to repos panel
+      if (key.name === 'tab') {
+        setRepoFocusedPanel('repos')
+        setSelectedIndex(0)
+        return
+      }
+
+      // Only Escape exits (not 'q' - that's a valid filter character)
+      if (key.name === 'escape') {
+        setShowExitModal(true)
+        return
+      }
+
+      // Handle text input for filtering
+      if (key.sequence && key.sequence.length === 1 && !key.ctrl && !key.meta) {
+        const char = key.sequence
+        if (/^[a-zA-Z0-9_\-\/. ]$/.test(char)) {
+          setRepoFilterQuery(prev => prev + char)
+          return
+        }
+      }
+
+      // Backspace to remove character from filter
+      if (key.name === 'backspace') {
+        if (repoFilterQuery.length > 0) {
+          setRepoFilterQuery(prev => prev.slice(0, -1))
+        }
+        return
+      }
+
+      // Block all other shortcuts when in filter panel
       return
     }
 
@@ -1728,6 +1886,11 @@ export function App({ cwd }: { cwd: string }) {
     } else if (key.sequence === '5') {
       setView('remotes')
       setSelectedIndex(0)
+    } else if (key.sequence === '6') {
+      setView('repos')
+      setSelectedIndex(0)
+      setRepoFilterQuery('')
+      setRepoFocusedPanel('repos')
     }
 
     // Panel switching (when in main view)
@@ -1835,7 +1998,10 @@ export function App({ cwd }: { cwd: string }) {
 
     // Navigation (only for views with selectable items, not diff view)
     if (view !== 'diff') {
-      if (key.name === 'up') {
+      // In repos view, only navigate when repos panel is focused (not filter panel)
+      if (view === 'repos' && repoFocusedPanel === 'filter') {
+        // Don't allow up/down navigation in filter panel
+      } else if (key.name === 'up') {
         setSelectedIndex((prev) => Math.max(0, prev - 1))
       } else if (key.name === 'down') {
         const max = getMaxIndex()
@@ -2146,6 +2312,73 @@ export function App({ cwd }: { cwd: string }) {
         setShowTagModal(true)
       }
     }
+
+    // Repos view actions (only when repos panel is focused, filter panel is handled above)
+    if (view === 'repos' && repoFocusedPanel === 'repos') {
+      // Tab to switch back to filter panel
+      if (key.name === 'tab') {
+        setRepoFocusedPanel('filter')
+        setSelectedIndex(0)
+        return
+      }
+
+      // Enter to switch to selected repo
+      if (key.name === 'return') {
+        const filteredRepos = repoFilterQuery
+          ? repos.filter(r => 
+              r.name.toLowerCase().includes(repoFilterQuery.toLowerCase()) ||
+              r.path.toLowerCase().includes(repoFilterQuery.toLowerCase())
+            )
+          : repos
+
+        const selectedRepo = filteredRepos[selectedIndex]
+        if (selectedRepo) {
+          handleRepoSwitch(selectedRepo.path)
+        }
+        return
+      }
+
+      // 'D' to delete repo from history with confirmation
+      if (key.sequence === 'D') {
+        const filteredRepos = repoFilterQuery
+          ? repos.filter(r => 
+              r.name.toLowerCase().includes(repoFilterQuery.toLowerCase()) ||
+              r.path.toLowerCase().includes(repoFilterQuery.toLowerCase())
+            )
+          : repos
+
+        const selectedRepo = filteredRepos[selectedIndex]
+        if (selectedRepo) {
+          // Prevent deleting the currently active repository
+          if (selectedRepo.path === currentRepoPath) {
+            setMessage('Cannot remove the currently active repository from history')
+            return
+          }
+
+          setConfirmModalProps({
+            title: 'Remove from History?',
+            message: `Remove "${selectedRepo.name}" from repository history?\n\nPath: ${selectedRepo.path}\n\nThis will not delete the repository, only remove it from GitArbor's history.`,
+            onConfirm: () => {
+              setShowConfirmModal(false)
+              // Remove from workspace recentRepositories
+              const config = workspaceManager.getConfig()
+              config.recentRepositories = config.recentRepositories.filter(r => r.path !== selectedRepo.path)
+              void workspaceManager.save().then(() => {
+                setRepos(workspaceManager.getConfig().recentRepositories)
+                setMessage(`Removed ${selectedRepo.name} from history`)
+                // Adjust selected index if needed
+                if (selectedIndex >= filteredRepos.length - 1) {
+                  setSelectedIndex(Math.max(0, filteredRepos.length - 2))
+                }
+              })
+            },
+            danger: false,
+          })
+          setShowConfirmModal(true)
+        }
+        return
+      }
+    }
   })
 
   const handleViewChange = useCallback((newView: View) => {
@@ -2217,6 +2450,16 @@ export function App({ cwd }: { cwd: string }) {
           remotes={remotes}
           selectedIndex={selectedIndex}
           focused={!showRemoteModal}
+        />
+      )}
+
+      {view === 'repos' && (
+        <ReposView
+          repos={repos}
+          selectedIndex={selectedIndex}
+          focusedPanel={repoFocusedPanel}
+          filterQuery={repoFilterQuery}
+          onFilterChange={setRepoFilterQuery}
         />
       )}
 
@@ -2374,6 +2617,20 @@ export function App({ cwd }: { cwd: string }) {
           existingRemote={remoteToEdit}
           onSubmit={remoteModalMode === 'add' ? handleAddRemote : handleEditRemote}
           onCancel={() => setShowRemoteModal(false)}
+        />
+      )}
+
+      {showRepoSwitchModal && pendingRepoSwitch && (
+        <RepoSwitchModal
+          repoName={repos.find(r => r.path === pendingRepoSwitch)?.name || pendingRepoSwitch}
+          stagedCount={status.staged.length}
+          unstagedCount={status.unstaged.length}
+          untrackedCount={status.untracked.length}
+          onConfirm={handleConfirmRepoSwitch}
+          onCancel={() => {
+            setShowRepoSwitchModal(false)
+            setPendingRepoSwitch(null)
+          }}
         />
       )}
     </box>
