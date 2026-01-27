@@ -12,6 +12,7 @@ import { CommitModal } from './components/CommitModal'
 import { ExitModal } from './components/ExitModal'
 import { CommandPalette } from './components/CommandPalette'
 import { SettingsModal } from './components/SettingsModal'
+import { ThemesModal } from './components/ThemesModal'
 import { ProgressModal } from './components/ProgressModal'
 import { StashView } from './components/StashView'
 import { StashModal } from './components/StashModal'
@@ -60,6 +61,7 @@ export function App({ cwd }: { cwd: string }) {
   const [showExitModal, setShowExitModal] = useState(false)
   const [showCommandPalette, setShowCommandPalette] = useState(false)
   const [showSettingsModal, setShowSettingsModal] = useState(false)
+  const [showThemesModal, setShowThemesModal] = useState(false)
   const [loading, setLoading] = useState(false)
   const [showProgressModal, setShowProgressModal] = useState(false)
   const [progressTitle, setProgressTitle] = useState('')
@@ -919,6 +921,12 @@ export function App({ cwd }: { cwd: string }) {
       execute: () => setShowSettingsModal(true),
     },
     {
+      id: 'open-themes',
+      label: 'Open Themes',
+      description: 'Choose and apply a color theme',
+      execute: () => setShowThemesModal(true),
+    },
+    {
       id: 'toggle-command-log',
       label: 'Toggle Command Log',
       description: 'Show/hide git command history panel',
@@ -1633,7 +1641,7 @@ export function App({ cwd }: { cwd: string }) {
   ]
 
   useKeyboard((key) => {
-    if (showExitModal || showCommandPalette || showSettingsModal || showProgressModal || showConfirmModal || showRenameModal || showBranchModal || showBranchRenameModal || showSetUpstreamModal || showMergeModal || showConflictModal || showResetModal || showTagModal || showRemoteModal) {
+    if (showExitModal || showCommandPalette || showSettingsModal || showThemesModal || showProgressModal || showConfirmModal || showRenameModal || showBranchModal || showBranchRenameModal || showSetUpstreamModal || showMergeModal || showConflictModal || showResetModal || showTagModal || showRemoteModal) {
       // Modals handle their own keyboard input
       return
     }
@@ -2248,6 +2256,10 @@ export function App({ cwd }: { cwd: string }) {
 
       {showSettingsModal && (
         <SettingsModal onClose={() => setShowSettingsModal(false)} />
+      )}
+
+      {showThemesModal && (
+        <ThemesModal onClose={() => setShowThemesModal(false)} />
       )}
 
       {showProgressModal && (
