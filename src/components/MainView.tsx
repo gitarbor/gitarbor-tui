@@ -293,12 +293,12 @@ export function MainView({
           title="Branches / Remotes / Tags"
           focused={focusedPanel === 'branches' || focusedPanel === 'remotes' || focusedPanel === 'tags'}
           height="30%"
-          paddingX={theme.spacing.xs}
+          paddingX={theme.spacing.none}
           paddingY={theme.spacing.none}
         >
-          <box flexDirection="column">
-            {/* Tab Bar */}
-            <box flexDirection="row" marginBottom={theme.spacing.xs}>
+          <box flexDirection="column" width="100%" height="100%">
+            {/* Tab Bar - fixed height */}
+            <box flexDirection="row" height={1} paddingLeft={theme.spacing.xs}>
               <text fg={branchRemoteTab === 'branches' ? theme.colors.primary : theme.colors.text.muted}>
                 [Branches{branchRemoteTab === 'branches' ? ' ●' : ''}]
               </text>
@@ -312,44 +312,41 @@ export function MainView({
               </text>
             </box>
 
-            {/* Tab Content: Branches */}
-            {branchRemoteTab === 'branches' && (
-              <>
-                {localBranches.length === 0 ? (
-                  <box paddingLeft={theme.spacing.xs}>
+            {/* Tab Content Container - single container that switches content */}
+            <box width="100%" flexGrow={1}>
+              {branchRemoteTab === 'branches' && (
+                localBranches.length === 0 ? (
+                  <box paddingLeft={theme.spacing.xs} width="100%" height="100%">
                     <text fg={theme.colors.text.muted}>No branches</text>
                   </box>
                 ) : (
-                  <scrollbox ref={branchesScrollRef} width="100%" height="100%" flexDirection="column">
+                  <scrollbox ref={branchesScrollRef} width="100%" height="100%" flexDirection="column" viewportCulling={true}>
                     {localBranches.map((branch, idx) => {
                       const isSelected = idx === selectedIndex && focusedPanel === 'branches'
                       
                       return (
-                        <box key={branch.name} flexDirection="row" paddingLeft={theme.spacing.xs}>
+                        <box key={branch.name} flexDirection="row" paddingLeft={theme.spacing.xs} height={1}>
                           <text fg={isSelected ? theme.colors.primary : theme.colors.border}>
                             {isSelected ? '>' : ' '}
                           </text>
                           <text fg={branch.current ? theme.colors.git.staged : theme.colors.text.secondary}>
-                            {branch.current ? '* ' : '  '}
+                            {branch.current ? ' * ' : '   '}
                             {branch.name}
                           </text>
                         </box>
                       )
                     })}
                   </scrollbox>
-                )}
-              </>
-            )}
+                )
+              )}
 
-            {/* Tab Content: Remotes */}
-            {branchRemoteTab === 'remotes' && (
-              <>
-                {remotes.length === 0 ? (
-                  <box paddingLeft={theme.spacing.xs}>
+              {branchRemoteTab === 'remotes' && (
+                remotes.length === 0 ? (
+                  <box paddingLeft={theme.spacing.xs} width="100%" height="100%">
                     <text fg={theme.colors.text.muted}>No remotes configured</text>
                   </box>
                 ) : (
-                  <scrollbox ref={remotesScrollRef} width="100%" height="100%" flexDirection="column">
+                  <scrollbox ref={remotesScrollRef} width="100%" height="100%" flexDirection="column" viewportCulling={true}>
                     {remotes.map((remote, idx) => {
                       const isSelected = idx === selectedIndex && focusedPanel === 'remotes'
                       
@@ -372,24 +369,21 @@ export function MainView({
                       )
                     })}
                   </scrollbox>
-                )}
-              </>
-            )}
+                )
+              )}
 
-            {/* Tab Content: Tags */}
-            {branchRemoteTab === 'tags' && (
-              <>
-                {tags.length === 0 ? (
-                  <box paddingLeft={theme.spacing.xs}>
+              {branchRemoteTab === 'tags' && (
+                tags.length === 0 ? (
+                  <box paddingLeft={theme.spacing.xs} width="100%" height="100%">
                     <text fg={theme.colors.text.muted}>No tags</text>
                   </box>
                 ) : (
-                  <scrollbox ref={tagsScrollRef} width="100%" height="100%" flexDirection="column">
+                  <scrollbox ref={tagsScrollRef} width="100%" height="100%" flexDirection="column" viewportCulling={true}>
                     {tags.map((tag, idx) => {
                       const isSelected = idx === selectedIndex && focusedPanel === 'tags'
                       
                       return (
-                        <box key={tag.name} flexDirection="row" paddingLeft={theme.spacing.xs}>
+                        <box key={tag.name} flexDirection="row" paddingLeft={theme.spacing.xs} height={1}>
                           <text fg={isSelected ? theme.colors.primary : theme.colors.border}>
                             {isSelected ? '>' : ' '}
                           </text>
@@ -400,9 +394,9 @@ export function MainView({
                       )
                     })}
                   </scrollbox>
-                )}
-              </>
-            )}
+                )
+              )}
+            </box>
           </box>
         </Fieldset>
 
