@@ -987,25 +987,65 @@ export function App({ cwd }: { cwd: string }) {
       },
     },
     {
-      id: 'panel-status',
-      label: 'Panel: Files',
-      description: 'Focus files panel',
+      id: 'panel-tab-prev',
+      label: 'Previous Tab',
+      description: 'Navigate to previous tab in focused panel',
       shortcut: '[',
       execute: () => {
-        setView('main')
-        setFocusedPanel('status')
-        setSelectedIndex(0)
+        if (view === 'main' && (focusedPanel === 'branches' || focusedPanel === 'remotes' || focusedPanel === 'tags')) {
+          // Navigate to previous tab
+          if (branchRemoteTab === 'branches') {
+            setBranchRemoteTab('tags')
+            setFocusedPanel('tags')
+          } else if (branchRemoteTab === 'remotes') {
+            setBranchRemoteTab('branches')
+            setFocusedPanel('branches')
+          } else if (branchRemoteTab === 'tags') {
+            setBranchRemoteTab('remotes')
+            setFocusedPanel('remotes')
+          }
+          setSelectedIndex(0)
+        }
       },
     },
     {
-      id: 'panel-branches',
-      label: 'Panel: Branches',
-      description: 'Focus branches panel',
+      id: 'panel-tab-next',
+      label: 'Next Tab',
+      description: 'Navigate to next tab in focused panel',
       shortcut: ']',
       execute: () => {
-        setView('main')
-        setFocusedPanel('branches')
-        setSelectedIndex(0)
+        if (view === 'main' && (focusedPanel === 'branches' || focusedPanel === 'remotes' || focusedPanel === 'tags')) {
+          // Navigate to next tab
+          if (branchRemoteTab === 'branches') {
+            setBranchRemoteTab('remotes')
+            setFocusedPanel('remotes')
+          } else if (branchRemoteTab === 'remotes') {
+            setBranchRemoteTab('tags')
+            setFocusedPanel('tags')
+          } else if (branchRemoteTab === 'tags') {
+            setBranchRemoteTab('branches')
+            setFocusedPanel('branches')
+          }
+          setSelectedIndex(0)
+        }
+      },
+    },
+    {
+      id: 'cycle-panels',
+      label: 'Cycle Through Panels',
+      description: 'Navigate to next panel with Tab key',
+      shortcut: 'TAB / Shift+TAB',
+      execute: () => {
+        if (view === 'main') {
+          const panels: Array<'status' | 'branches' | 'log' | 'stashes' | 'remotes' | 'tags' | 'diff'> = stashes.length > 0
+            ? ['status', 'branches', 'stashes', 'log', 'diff']
+            : ['status', 'branches', 'log', 'diff']
+          
+          const currentIndex = panels.indexOf(focusedPanel)
+          const nextIndex = (currentIndex + 1) % panels.length
+          setFocusedPanel(panels[nextIndex]!)
+          setSelectedIndex(0)
+        }
       },
     },
     {
@@ -1033,40 +1073,11 @@ export function App({ cwd }: { cwd: string }) {
     {
       id: 'panel-remotes',
       label: 'Panel: Remotes',
-      description: 'Focus remotes panel',
-      shortcut: '}',
+      description: 'Focus remotes panel (removed shortcut)',
       execute: () => {
         setView('main')
         setFocusedPanel('remotes')
         setSelectedIndex(0)
-      },
-    },
-    {
-      id: 'panel-tags',
-      label: 'Panel: Tags',
-      description: 'Focus tags panel',
-      execute: () => {
-        setView('main')
-        setFocusedPanel('tags')
-        setSelectedIndex(0)
-      },
-    },
-    {
-      id: 'cycle-panels',
-      label: 'Cycle Through Panels',
-      description: 'Navigate to next panel with Tab key',
-      shortcut: 'TAB / Shift+TAB',
-      execute: () => {
-        if (view === 'main') {
-          const panels: Array<'status' | 'branches' | 'log' | 'stashes' | 'remotes' | 'tags' | 'diff'> = stashes.length > 0
-            ? ['status', 'branches', 'stashes', 'log', 'diff']
-            : ['status', 'branches', 'log', 'diff']
-          
-          const currentIndex = panels.indexOf(focusedPanel)
-          const nextIndex = (currentIndex + 1) % panels.length
-          setFocusedPanel(panels[nextIndex]!)
-          setSelectedIndex(0)
-        }
       },
     },
     {
@@ -1670,20 +1681,44 @@ export function App({ cwd }: { cwd: string }) {
 
     // Panel switching (when in main view)
     if (view === 'main') {
-      if (key.sequence === '[') {
-        setFocusedPanel('status')
-        setSelectedIndex(0)
-      } else if (key.sequence === ']') {
-        setFocusedPanel('branches')
-        setSelectedIndex(0)
-      } else if (key.sequence === '\\') {
+      // [ and ] keys navigate between tabs when inside a tabbed panel
+      if (focusedPanel === 'branches' || focusedPanel === 'remotes' || focusedPanel === 'tags') {
+        if (key.sequence === '[') {
+          // Navigate to previous tab: branches <- remotes <- tags <- branches
+          if (branchRemoteTab === 'branches') {
+            setBranchRemoteTab('tags')
+            setFocusedPanel('tags')
+          } else if (branchRemoteTab === 'remotes') {
+            setBranchRemoteTab('branches')
+            setFocusedPanel('branches')
+          } else if (branchRemoteTab === 'tags') {
+            setBranchRemoteTab('remotes')
+            setFocusedPanel('remotes')
+          }
+          setSelectedIndex(0)
+          return
+        } else if (key.sequence === ']') {
+          // Navigate to next tab: branches -> remotes -> tags -> branches
+          if (branchRemoteTab === 'branches') {
+            setBranchRemoteTab('remotes')
+            setFocusedPanel('remotes')
+          } else if (branchRemoteTab === 'remotes') {
+            setBranchRemoteTab('tags')
+            setFocusedPanel('tags')
+          } else if (branchRemoteTab === 'tags') {
+            setBranchRemoteTab('branches')
+            setFocusedPanel('branches')
+          }
+          setSelectedIndex(0)
+          return
+        }
+      }
+      
+      if (key.sequence === '\\') {
         setFocusedPanel('log')
         setSelectedIndex(0)
       } else if (key.sequence === '|') {
         setFocusedPanel('stashes')
-        setSelectedIndex(0)
-      } else if (key.sequence === '}') {
-        setFocusedPanel('remotes')
         setSelectedIndex(0)
       }
       
