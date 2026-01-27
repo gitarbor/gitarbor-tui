@@ -178,7 +178,7 @@ export function MainView({
         {/* Left column: Working Directory, Branches/Remotes, and Recent Commits */}
         <box width="40%" flexDirection="column">
         <Fieldset
-          title="Working Directory"
+          title="Working Directory (w)"
           focused={focusedPanel === 'status'}
           flexGrow={1}
           paddingX={theme.spacing.xs}
@@ -295,7 +295,7 @@ export function MainView({
         </Fieldset>
 
         <Fieldset
-          title="Branches / Remotes / Tags"
+          title="Branches / Remotes / Tags (b, [ ])"
           focused={focusedPanel === 'branches' || focusedPanel === 'remotes' || focusedPanel === 'tags'}
           height="30%"
           paddingX={theme.spacing.none}
@@ -406,7 +406,7 @@ export function MainView({
         </Fieldset>
 
         <Fieldset
-          title="Recent Commits"
+          title="Recent Commits (l)"
           focused={focusedPanel === 'log'}
           height="30%"
           paddingX={theme.spacing.none}
@@ -446,7 +446,7 @@ export function MainView({
 
         {stashes.length > 0 && (
           <Fieldset
-            title="Stashes"
+            title="Stashes (h)"
             focused={focusedPanel === 'stashes'}
             height={Math.min(stashes.length * 3 + 3, 12)}
             paddingX={theme.spacing.none}
@@ -481,7 +481,7 @@ export function MainView({
       {/* Right column: Diff and Command Log */}
       <box width="60%" flexDirection="column">
         <Fieldset
-          title="Diff"
+          title="Diff (v)"
           focused={focusedPanel === 'diff'}
           flexGrow={1}
           paddingX={theme.spacing.none}

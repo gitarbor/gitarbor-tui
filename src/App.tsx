@@ -1049,10 +1049,33 @@ export function App({ cwd }: { cwd: string }) {
       },
     },
     {
+      id: 'panel-working-dir',
+      label: 'Panel: Working Directory',
+      description: 'Focus working directory panel',
+      shortcut: 'w',
+      execute: () => {
+        setView('main')
+        setFocusedPanel('status')
+        setSelectedIndex(0)
+      },
+    },
+    {
+      id: 'panel-branches',
+      label: 'Panel: Branches',
+      description: 'Focus branches panel',
+      shortcut: 'b',
+      execute: () => {
+        setView('main')
+        setBranchRemoteTab('branches')
+        setFocusedPanel('branches')
+        setSelectedIndex(0)
+      },
+    },
+    {
       id: 'panel-log',
       label: 'Panel: Commits',
       description: 'Focus commits panel',
-      shortcut: '\\',
+      shortcut: 'l',
       execute: () => {
         setView('main')
         setFocusedPanel('log')
@@ -1063,10 +1086,21 @@ export function App({ cwd }: { cwd: string }) {
       id: 'panel-stashes',
       label: 'Panel: Stashes',
       description: 'Focus stashes panel',
-      shortcut: '|',
+      shortcut: 'h',
       execute: () => {
         setView('main')
         setFocusedPanel('stashes')
+        setSelectedIndex(0)
+      },
+    },
+    {
+      id: 'panel-diff',
+      label: 'Panel: Diff',
+      description: 'Focus diff panel',
+      shortcut: 'v',
+      execute: () => {
+        setView('main')
+        setFocusedPanel('diff')
         setSelectedIndex(0)
       },
     },
@@ -1714,11 +1748,22 @@ export function App({ cwd }: { cwd: string }) {
         }
       }
       
-      if (key.sequence === '\\') {
+      // Panel shortcuts
+      if (key.sequence === 'w') {
+        setFocusedPanel('status')
+        setSelectedIndex(0)
+      } else if (key.sequence === 'b') {
+        setBranchRemoteTab('branches')
+        setFocusedPanel('branches')
+        setSelectedIndex(0)
+      } else if (key.sequence === 'l') {
         setFocusedPanel('log')
         setSelectedIndex(0)
-      } else if (key.sequence === '|') {
+      } else if (key.sequence === 'h') {
         setFocusedPanel('stashes')
+        setSelectedIndex(0)
+      } else if (key.sequence === 'v') {
+        setFocusedPanel('diff')
         setSelectedIndex(0)
       }
       
