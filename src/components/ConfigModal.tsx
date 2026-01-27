@@ -8,7 +8,7 @@ import { Input } from './Input'
 
 const execAsync = promisify(exec)
 
-interface SettingsModalProps {
+interface ConfigModalProps {
   onClose: () => void
 }
 
@@ -19,7 +19,7 @@ interface GitConfig {
 
 type GitField = 'name' | 'email'
 
-export function SettingsModal({ onClose }: SettingsModalProps) {
+export function ConfigModal({ onClose }: ConfigModalProps) {
   const [gitConfig, setGitConfig] = useState<GitConfig>({ name: '', email: '' })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -105,7 +105,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
     <Modal
       width={60}
       height={14}
-      title="Git Settings"
+      title="Git Config"
     >
       <text fg={theme.colors.text.muted}>Git Global Configuration</text>
       <text> </text>

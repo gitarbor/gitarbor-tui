@@ -11,7 +11,7 @@ import { DiffView } from './components/DiffView'
 import { CommitModal } from './components/CommitModal'
 import { ExitModal } from './components/ExitModal'
 import { CommandPalette } from './components/CommandPalette'
-import { SettingsModal } from './components/SettingsModal'
+import { ConfigModal } from './components/ConfigModal'
 import { ThemesModal } from './components/ThemesModal'
 import { ProgressModal } from './components/ProgressModal'
 import { StashView } from './components/StashView'
@@ -60,7 +60,7 @@ export function App({ cwd }: { cwd: string }) {
   const [showStashModal, setShowStashModal] = useState(false)
   const [showExitModal, setShowExitModal] = useState(false)
   const [showCommandPalette, setShowCommandPalette] = useState(false)
-  const [showSettingsModal, setShowSettingsModal] = useState(false)
+  const [showConfigModal, setShowConfigModal] = useState(false)
   const [showThemesModal, setShowThemesModal] = useState(false)
   const [loading, setLoading] = useState(false)
   const [showProgressModal, setShowProgressModal] = useState(false)
@@ -923,11 +923,11 @@ export function App({ cwd }: { cwd: string }) {
   // Define available commands
   const commands: Command[] = [
     {
-      id: 'open-settings',
-      label: 'Open Settings',
+      id: 'edit-config',
+      label: 'Edit Config',
       description: 'Configure git global user name and email',
       shortcut: ',',
-      execute: () => setShowSettingsModal(true),
+      execute: () => setShowConfigModal(true),
     },
     {
       id: 'open-themes',
@@ -1650,7 +1650,7 @@ export function App({ cwd }: { cwd: string }) {
   ]
 
   useKeyboard((key) => {
-    if (showExitModal || showCommandPalette || showSettingsModal || showThemesModal || showProgressModal || showConfirmModal || showRenameModal || showBranchModal || showBranchRenameModal || showSetUpstreamModal || showMergeModal || showConflictModal || showResetModal || showTagModal || showRemoteModal) {
+    if (showExitModal || showCommandPalette || showConfigModal || showThemesModal || showProgressModal || showConfirmModal || showRenameModal || showBranchModal || showBranchRenameModal || showSetUpstreamModal || showMergeModal || showConflictModal || showResetModal || showTagModal || showRemoteModal) {
       // Modals handle their own keyboard input
       return
     }
@@ -1669,9 +1669,9 @@ export function App({ cwd }: { cwd: string }) {
       return
     }
 
-    // Settings with ',' key
+    // Config with ',' key
     if (key.sequence === ',') {
-      setShowSettingsModal(true)
+      setShowConfigModal(true)
       return
     }
 
@@ -2263,8 +2263,8 @@ export function App({ cwd }: { cwd: string }) {
         />
       )}
 
-      {showSettingsModal && (
-        <SettingsModal onClose={() => setShowSettingsModal(false)} />
+      {showConfigModal && (
+        <ConfigModal onClose={() => setShowConfigModal(false)} />
       )}
 
       {showThemesModal && (
