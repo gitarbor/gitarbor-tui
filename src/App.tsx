@@ -1303,15 +1303,22 @@ export function App({ cwd }: { cwd: string }) {
     {
       id: 'discard-changes',
       label: 'Discard Changes',
-      description: 'Discard changes to selected unstaged file',
+      description: 'Discard changes to selected unstaged file or delete untracked file',
       shortcut: 'd',
       execute: () => {
         if (view === 'main' && focusedPanel === 'status') {
-          const file = status.unstaged[selectedIndex]
+          const allFiles = [...status.staged, ...status.unstaged, ...status.untracked]
+          const file = allFiles[selectedIndex]
           if (file) {
-            handleDiscardWithConfirm(file.path)
+            // Check if the file is untracked - if so, delete it
+            const untrackedIndex = selectedIndex - status.staged.length - status.unstaged.length
+            if (untrackedIndex >= 0 && status.untracked[untrackedIndex]) {
+              handleDeleteWithConfirm(file.path)
+            } else {
+              handleDiscardWithConfirm(file.path)
+            }
           } else {
-            setMessage('No unstaged file selected')
+            setMessage('No file selected')
           }
         }
       },
@@ -2087,20 +2094,23 @@ export function App({ cwd }: { cwd: string }) {
       }
     }
 
-    // 'd' key to discard changes to unstaged files
+    // 'd' key to discard changes to unstaged files or delete untracked files
     if (key.sequence === 'd') {
       if (view === 'main' && focusedPanel === 'status') {
         const allFiles = [...status.staged, ...status.unstaged, ...status.untracked]
         const file = allFiles[selectedIndex]
-        // Only allow discarding unstaged (modified) files, not staged or untracked
-        if (file && !file.staged && file.status !== '??') {
-          handleDiscardWithConfirm(file.path)
+        if (file && !file.staged) {
+          // Check if the file is untracked - if so, delete it
+          const untrackedIndex = selectedIndex - status.staged.length - status.unstaged.length
+          if (untrackedIndex >= 0 && status.untracked[untrackedIndex]) {
+            handleDeleteWithConfirm(file.path)
+          } else {
+            handleDiscardWithConfirm(file.path)
+          }
         } else if (file?.staged) {
           setMessage('Cannot discard staged file (unstage it first)')
-        } else if (file?.status === '??') {
-          setMessage('Use Shift+D to delete untracked files')
         } else {
-          setMessage('No unstaged file selected')
+          setMessage('No file selected')
         }
       }
     }
