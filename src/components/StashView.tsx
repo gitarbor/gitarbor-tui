@@ -1,4 +1,5 @@
 import { theme } from '../theme'
+import { Fieldset } from './Fieldset'
 import type { GitStash } from '../types/git'
 
 interface StashViewProps {
@@ -9,15 +10,14 @@ interface StashViewProps {
 
 export function StashView({ stashes, selectedIndex, focused }: StashViewProps) {
   return (
-    <box
-      width="100%"
+    <Fieldset
+      title="Stash List"
+      focused={focused}
       flexGrow={1}
-      borderStyle={theme.borders.style}
-      borderColor={focused ? theme.colors.borderFocused : theme.colors.border}
-      padding={theme.spacing.none}
+      paddingX={theme.spacing.xs}
+      paddingY={theme.spacing.none}
     >
-      <box paddingLeft={theme.spacing.xs} paddingTop={theme.spacing.none} flexDirection="column">
-        <text fg={theme.colors.text.primary}>Stash List</text>
+      <box flexDirection="column">
         {stashes.length === 0 ? (
           <text fg={theme.colors.text.muted}>No stashes saved</text>
         ) : (
@@ -41,6 +41,6 @@ export function StashView({ stashes, selectedIndex, focused }: StashViewProps) {
           })
         )}
       </box>
-    </box>
+    </Fieldset>
   )
 }
