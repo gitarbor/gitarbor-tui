@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useKeyboard } from '@opentui/react'
 import { theme } from '../theme'
+import { Modal } from './Modal'
 
 interface RepoSwitchModalProps {
   repoName: string
@@ -20,41 +21,58 @@ export function RepoSwitchModal({
   onCancel,
 }: RepoSwitchModalProps) {
   const totalChanges = stagedCount + unstagedCount + untrackedCount
+  const [selectedOption, setSelectedOption] = useState<'confirm' | 'cancel'>('cancel')
 
-  useKeyboard((key) => {
-    if (key.sequence === 'y' || key.sequence === 'Y' || key.name === 'return') {
-      onConfirm()
-    } else if (key.sequence === 'n' || key.sequence === 'N' || key.name === 'escape') {
-      onCancel()
-    }
-  })
+  const handleKeyboard = useCallback(
+    (key: { name: string; sequence?: string }) => {
+      // Handle arrow keys for navigation
+      if (key.name === 'left') {
+        setSelectedOption('confirm')
+        return
+      }
+      if (key.name === 'right') {
+        setSelectedOption('cancel')
+        return
+      }
+
+      // Handle Enter to confirm selection
+      if (key.name === 'return') {
+        if (selectedOption === 'confirm') {
+          onConfirm()
+        } else {
+          onCancel()
+        }
+        return
+      }
+
+      // Handle Y/N keys directly
+      if (key.sequence === 'y' || key.sequence === 'Y') {
+        onConfirm()
+        return
+      }
+      if (key.sequence === 'n' || key.sequence === 'N' || key.name === 'escape') {
+        onCancel()
+        return
+      }
+    },
+    [selectedOption, onConfirm, onCancel],
+  )
+
+  useKeyboard(handleKeyboard)
 
   return (
-    <box
-      position="absolute"
-      top="50%"
-      left="50%"
-      marginTop={-8}
-      marginLeft={-30}
-      width={60}
+    <Modal
+      width={70}
       height={16}
-      flexDirection="column"
-      borderStyle={theme.borders.style}
+      title="⚠ Uncommitted Changes"
       borderColor={theme.colors.status.warning}
-      backgroundColor={theme.colors.background.primary}
-      padding={theme.spacing.xs}
     >
-      {/* Title */}
-      <box flexDirection="row" paddingBottom={theme.spacing.xs}>
-        <text fg={theme.colors.status.warning}>⚠ Uncommitted Changes</text>
-      </box>
-
       {/* Message */}
       <box flexDirection="column" paddingBottom={theme.spacing.sm}>
         <text fg={theme.colors.text.primary}>
           You have {totalChanges} uncommitted change{totalChanges === 1 ? '' : 's'}:
         </text>
-        <box paddingTop={theme.spacing.xs} paddingLeft={theme.spacing.sm}>
+        <box paddingTop={theme.spacing.xs} paddingLeft={theme.spacing.sm} flexDirection="column">
           {stagedCount > 0 && (
             <text fg={theme.colors.git.staged}>
               • {stagedCount} staged file{stagedCount === 1 ? '' : 's'}
@@ -84,23 +102,34 @@ export function RepoSwitchModal({
       </box>
 
       {/* Buttons */}
-      <box flexDirection="row" paddingTop={theme.spacing.sm}>
-        <box
-          borderStyle={theme.borders.style}
-          borderColor={theme.colors.status.warning}
-          padding={theme.spacing.xs}
-          marginRight={theme.spacing.sm}
+      <box style={{ justifyContent: 'center', flexDirection: 'row', gap: 3 }}>
+        <text
+          bg={selectedOption === 'confirm' ? theme.colors.status.warning : theme.colors.background.button}
+          fg={selectedOption === 'confirm' ? theme.colors.text.inverted : theme.colors.text.disabled}
         >
-          <text fg={theme.colors.status.warning}>[Y]es, Switch</text>
-        </box>
-        <box
-          borderStyle={theme.borders.style}
-          borderColor={theme.colors.border}
-          padding={theme.spacing.xs}
+          {selectedOption === 'confirm' ? '[✓ Yes, Switch]' : '  Yes, Switch  '}
+        </text>
+        <text
+          bg={selectedOption === 'cancel' ? theme.colors.status.info : theme.colors.background.button}
+          fg={selectedOption === 'cancel' ? theme.colors.text.primary : theme.colors.text.disabled}
         >
-          <text fg={theme.colors.text.muted}>[N]o, Cancel</text>
-        </box>
+          {selectedOption === 'cancel' ? '[✓ No, Cancel]' : '  No, Cancel  '}
+        </text>
       </box>
-    </box>
+      <box
+        style={{
+          marginTop: 1,
+          justifyContent: 'center',
+          border: true,
+          borderColor: theme.colors.background.buttonHover,
+          paddingLeft: theme.spacing.xs,
+          paddingRight: theme.spacing.xs,
+          flexDirection: 'row',
+          gap: 1,
+        }}
+      >
+        <text fg={theme.colors.text.disabled}>←→ select │ Enter confirm │ Y/N quick select</text>
+      </box>
+    </Modal>
   )
 }
