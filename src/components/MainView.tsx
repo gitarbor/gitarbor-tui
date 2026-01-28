@@ -5,6 +5,7 @@ import type { GitFile, GitBranch, GitCommit, GitMergeState, GitStash, GitRemote,
 import { Fieldset } from './Fieldset'
 import { CommandLogView } from './CommandLogView'
 import { WorkingDirectoryList } from './WorkingDirectoryList'
+import { StashSelector } from './StashSelector'
 
 interface MainViewProps {
   staged: GitFile[]
@@ -77,13 +78,11 @@ export function MainView({
   const remotesScrollRef = useRef<ScrollBoxRenderable>(null)
   const tagsScrollRef = useRef<ScrollBoxRenderable>(null)
   const commitsScrollRef = useRef<ScrollBoxRenderable>(null)
-  const stashesScrollRef = useRef<ScrollBoxRenderable>(null)
 
   // Auto-scroll to selected item when selection changes
   useEffect(() => {
     const lineHeight = 1 // Each item is roughly 1 line tall (single line items)
     const remoteLineHeight = 2 // Remotes take 2 lines (name + URL)
-    const stashLineHeight = 2 // Stashes take 2 lines (name + message)
     let scrollRef: typeof branchesScrollRef | null = null
     let itemHeight = lineHeight
     
@@ -100,9 +99,6 @@ export function MainView({
     } else if (focusedPanel === 'log') {
       scrollRef = commitsScrollRef
       itemHeight = lineHeight
-    } else if (focusedPanel === 'stashes') {
-      scrollRef = stashesScrollRef
-      itemHeight = stashLineHeight
     }
 
     if (scrollRef?.current) {
@@ -327,32 +323,14 @@ export function MainView({
           <Fieldset
             title="Stashes (h)"
             focused={focusedPanel === 'stashes'}
-            height={Math.min(stashes.length * 3 + 3, 12)}
+            height={5}
             paddingX={theme.spacing.none}
             paddingY={theme.spacing.none}
           >
-            <scrollbox ref={stashesScrollRef} width="100%" height="100%" flexDirection="column" viewportCulling={true}>
-              {stashes.map((stash, idx) => {
-                const isSelected = idx === selectedIndex && focusedPanel === 'stashes'
-                
-                return (
-                  <box key={stash.name} flexDirection="column" paddingLeft={theme.spacing.xs}>
-                    <box flexDirection="row">
-                      <text fg={isSelected ? theme.colors.primary : theme.colors.border}>
-                        {isSelected ? '>' : ' '}
-                      </text>
-                      <text fg={theme.colors.git.modified}> {stash.name} </text>
-                      <text fg={theme.colors.text.muted}>({stash.branch})</text>
-                    </box>
-                    <box flexDirection="row" paddingLeft={theme.spacing.md}>
-                      <text fg={isSelected ? theme.colors.text.primary : theme.colors.text.secondary}>
-                        {stash.message.length > 50 ? stash.message.substring(0, 47) + '...' : stash.message}
-                      </text>
-                    </box>
-                  </box>
-                )
-              })}
-            </scrollbox>
+            <StashSelector
+              stash={focusedPanel === 'stashes' && stashes[selectedIndex] ? stashes[selectedIndex]! : stashes[0]!}
+              focused={focusedPanel === 'stashes'}
+            />
           </Fieldset>
         )}
       </box>
