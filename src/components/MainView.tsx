@@ -1,9 +1,9 @@
 import { useMemo, useEffect, useRef } from 'react'
 import { SyntaxStyle, parseColor, ScrollBoxRenderable } from '@opentui/core'
 import { theme } from '../theme'
-import type { GitFile, GitBranch, GitCommit, GitMergeState, GitStash, GitRemote, GitTag, CommandLogEntry } from '../types/git'
+import type { GitFile, GitBranch, GitCommit, GitMergeState, GitStash, GitRemote, GitTag, ActivityLogEntry } from '../types/git'
 import { Fieldset } from './Fieldset'
-import { CommandLogView } from './CommandLogView'
+import { ActivityLog } from './ActivityLog'
 import { WorkingDirectoryList } from './WorkingDirectoryList'
 import { StashSelector } from './StashSelector'
 
@@ -27,7 +27,7 @@ interface MainViewProps {
   behind: number
   diff: string
   selectedFilePath?: string
-  commandLog: CommandLogEntry[]
+  commandLog: ActivityLogEntry[]
   showCommandLog: boolean
 }
 
@@ -369,9 +369,9 @@ export function MainView({
           )}
         </Fieldset>
 
-        {/* Command Log below Diff */}
+        {/* Activity Log below Diff */}
         {showCommandLog && (
-          <CommandLogView commandLog={commandLog} maxHeight={10} />
+          <ActivityLog activityLog={commandLog} maxHeight={10} />
         )}
       </box>
     </box>

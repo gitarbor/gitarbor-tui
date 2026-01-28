@@ -88,3 +88,9 @@ export interface CommandLogEntry {
   success: boolean
   error?: string
 }
+
+export type NotificationType = 'success' | 'error' | 'warning' | 'info'
+
+export type ActivityLogEntry = 
+  | { type: 'command'; timestamp: Date; command: string; duration: number; success: boolean; error?: string }
+  | { type: 'message'; timestamp: Date; message: string; level: NotificationType }

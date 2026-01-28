@@ -2,7 +2,6 @@ import { theme } from '../theme'
 import type { View } from '../types/git'
 
 interface FooterProps {
-  message: string
   view: View
   focusedPanel?: 'status' | 'branches' | 'log' | 'stashes' | 'remotes' | 'tags' | 'diff'
   hasStaged?: boolean
@@ -13,7 +12,6 @@ interface FooterProps {
 }
 
 export function Footer({ 
-  message, 
   view, 
   focusedPanel,
   hasStaged = false,
@@ -97,11 +95,6 @@ export function Footer({
       <box paddingLeft={theme.spacing.xs} paddingTop={theme.spacing.none}>
         <text fg={theme.colors.text.muted}>{line2}</text>
       </box>
-      {message && (
-        <box paddingLeft={theme.spacing.xs}>
-          <text fg={theme.colors.primary}>{message}</text>
-        </box>
-      )}
     </box>
   )
 }

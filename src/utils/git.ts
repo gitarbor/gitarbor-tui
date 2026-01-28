@@ -3,12 +3,13 @@ import { promisify } from 'util'
 import { readFile } from 'fs/promises'
 import { existsSync } from 'fs'
 import { join } from 'path'
-import type { GitStatus, GitFile, GitCommit, GitBranch, GitStash, GitRemote, GitTag, GitMergeState, GitConflict, MergeStrategy, ConflictMarker, CommandLogEntry } from '../types/git'
+import type { GitStatus, GitFile, GitCommit, GitBranch, GitStash, GitRemote, GitTag, GitMergeState, GitConflict, MergeStrategy, ConflictMarker, CommandLogEntry, ActivityLogEntry, NotificationType } from '../types/git'
 
 const execAsync = promisify(exec)
 
 export class GitClient {
   private commandLog: CommandLogEntry[] = []
+  private activityLog: ActivityLogEntry[] = []
   private readonly maxLogEntries = 100
   private diffCache: Map<string, { content: string; timestamp: number }> = new Map()
   private readonly diffCacheTTL = 5000 // 5 seconds cache
@@ -40,9 +41,22 @@ export class GitClient {
         error,
       })
 
+      // Also add to activity log
+      this.activityLog.unshift({
+        type: 'command',
+        timestamp,
+        command,
+        duration,
+        success,
+        error,
+      })
+
       // Keep only the most recent entries
       if (this.commandLog.length > this.maxLogEntries) {
         this.commandLog = this.commandLog.slice(0, this.maxLogEntries)
+      }
+      if (this.activityLog.length > this.maxLogEntries) {
+        this.activityLog = this.activityLog.slice(0, this.maxLogEntries)
       }
     }
   }
@@ -51,8 +65,30 @@ export class GitClient {
     return [...this.commandLog]
   }
 
+  getActivityLog(): ActivityLogEntry[] {
+    return [...this.activityLog]
+  }
+
+  addActivityMessage(message: string, level: NotificationType): void {
+    this.activityLog.unshift({
+      type: 'message',
+      timestamp: new Date(),
+      message,
+      level,
+    })
+
+    // Keep only the most recent entries
+    if (this.activityLog.length > this.maxLogEntries) {
+      this.activityLog = this.activityLog.slice(0, this.maxLogEntries)
+    }
+  }
+
   clearCommandLog(): void {
     this.commandLog = []
+  }
+
+  clearActivityLog(): void {
+    this.activityLog = []
   }
 
   private invalidateDiffCache(): void {

@@ -28,12 +28,12 @@ import { TagModal } from './components/TagModal'
 import { RemoteModal } from './components/RemoteModal'
 import { RemotesView } from './components/RemotesView'
 import { TagDetailsView } from './components/TagDetailsView'
-import { CommandLogView } from './components/CommandLogView'
+import { ActivityLog } from './components/ActivityLog'
 import { ReposView } from './components/ReposView'
 import { RepoSwitchModal } from './components/RepoSwitchModal'
 import { WorkspaceManager } from './utils/workspace'
 import type { Repository } from './types/workspace'
-import type { GitStatus, GitCommit, GitBranch, GitStash, GitRemote, GitTag, GitMergeState, MergeStrategy, View, CommandLogEntry } from './types/git'
+import type { GitStatus, GitCommit, GitBranch, GitStash, GitRemote, GitTag, GitMergeState, MergeStrategy, View, ActivityLogEntry, NotificationType } from './types/git'
 import type { Command } from './types/commands'
 
 export function App({ cwd }: { cwd: string }) {
@@ -106,7 +106,7 @@ export function App({ cwd }: { cwd: string }) {
   const [remoteModalMode, setRemoteModalMode] = useState<'add' | 'edit'>('add')
   const [remoteToEdit, setRemoteToEdit] = useState<GitRemote | undefined>(undefined)
   const [selectedCommitForAction, setSelectedCommitForAction] = useState<GitCommit | null>(null)
-  const [commandLog, setCommandLog] = useState<CommandLogEntry[]>([])
+  const [commandLog, setCommandLog] = useState<ActivityLogEntry[]>([])
   const [showCommandLog, setShowCommandLog] = useState(true)
   const [, forceUpdate] = useState({})
 
@@ -144,7 +144,7 @@ export function App({ cwd }: { cwd: string }) {
         await workspaceManager.addRepository(currentRepoPath)
         setRepos(workspaceManager.getConfig().recentRepositories)
       } catch (error) {
-        setMessage(`Failed to load workspace: ${error}`)
+        notify(`Failed to load workspace: ${error}`)
       }
     })()
   }, [workspaceManager, currentRepoPath])
@@ -161,11 +161,72 @@ export function App({ cwd }: { cwd: string }) {
     }
   }, [renderer])
 
+  // Smart notification that infers type from message and logs to activity
+  const notify = useCallback((message: string) => {
+    const lowerMessage = message.toLowerCase()
+    let type: NotificationType = 'info'
+    
+    if (lowerMessage.includes('error') || lowerMessage.startsWith('failed')) {
+      type = 'error'
+    } else if (
+      lowerMessage.includes('success') ||
+      lowerMessage.startsWith('staged') ||
+      lowerMessage.startsWith('unstaged') ||
+      lowerMessage.startsWith('committed') ||
+      lowerMessage.startsWith('push completed') ||
+      lowerMessage.startsWith('pull completed') ||
+      lowerMessage.startsWith('fetch completed') ||
+      lowerMessage.startsWith('applied') ||
+      lowerMessage.startsWith('popped') ||
+      lowerMessage.startsWith('dropped') ||
+      lowerMessage.startsWith('discarded') ||
+      lowerMessage.startsWith('deleted') ||
+      lowerMessage.startsWith('renamed') ||
+      lowerMessage.startsWith('created') ||
+      lowerMessage.startsWith('switched') ||
+      lowerMessage.startsWith('merged') ||
+      lowerMessage.startsWith('cherry-picked') ||
+      lowerMessage.startsWith('reverted') ||
+      lowerMessage.startsWith('amended') ||
+      lowerMessage.startsWith('reset') ||
+      lowerMessage.startsWith('copied') ||
+      lowerMessage.startsWith('added') ||
+      lowerMessage.startsWith('updated') ||
+      lowerMessage.startsWith('removed') ||
+      lowerMessage.startsWith('resolved') ||
+      lowerMessage.startsWith('edited') ||
+      lowerMessage.startsWith('merge completed') ||
+      lowerMessage.startsWith('merge aborted') ||
+      lowerMessage.startsWith('set upstream') ||
+      lowerMessage.startsWith('unset upstream') ||
+      lowerMessage.includes('stashed')
+    ) {
+      type = 'success'
+    } else if (
+      lowerMessage.startsWith('loading') ||
+      lowerMessage.startsWith('pushing') ||
+      lowerMessage.startsWith('pulling') ||
+      lowerMessage.startsWith('fetching') ||
+      lowerMessage.startsWith('switching') ||
+      lowerMessage.startsWith('merging') ||
+      lowerMessage.startsWith('viewing')
+    ) {
+      type = 'info'
+    } else if (lowerMessage.includes('no files') || lowerMessage.includes('conflict')) {
+      type = 'warning'
+    }
+    
+    // Only log errors and warnings to activity log
+    if (type === 'error' || type === 'warning') {
+      git.addActivityMessage(message, type)
+    }
+  }, [git])
+
   // Perform the actual repository switch
   const performRepoSwitch = useCallback(async (repoPath: string) => {
     try {
       setLoading(true)
-      setMessage(`Switching to ${repoPath}...`)
+      notify(`Switching to ${repoPath}...`)
       
       // Update the current repo path (this will trigger useEffect to reinitialize git & watcher)
       setCurrentRepoPath(repoPath)
@@ -194,9 +255,9 @@ export function App({ cwd }: { cwd: string }) {
       await workspaceManager.addRepository(repoPath)
       setRepos(workspaceManager.getConfig().recentRepositories)
       
-      setMessage(`Switched to ${repoPath}`)
+      notify(`Switched to ${repoPath}`)
     } catch (error) {
-      setMessage(`Failed to switch repository: ${error}`)
+      notify(`Failed to switch repository: ${error}`)
     } finally {
       setLoading(false)
     }
@@ -251,10 +312,10 @@ export function App({ cwd }: { cwd: string }) {
       }
       
       if (!silent) {
-        setMessage('Data loaded')
+        notify('Data loaded')
       }
     } catch (error) {
-      setMessage(`Error: ${error}`)
+      notify(`Error: ${error}`)
     } finally {
       if (!silent) {
         setLoading(false)
@@ -294,7 +355,7 @@ export function App({ cwd }: { cwd: string }) {
         setSelectedFilePath(undefined)
       }
     } catch (error) {
-      setMessage(`Error loading diff: ${error}`)
+      notify(`Error loading diff: ${error}`)
     }
   }, [git, status, selectedIndex, view, focusedPanel])
 
@@ -313,17 +374,17 @@ export function App({ cwd }: { cwd: string }) {
     return () => watcher.stop()
   }, [watcher])
 
-  // Update command log periodically
+  // Update activity log periodically
   useEffect(() => {
-    const updateCommandLog = () => {
-      setCommandLog(git.getCommandLog())
+    const updateActivityLog = () => {
+      setCommandLog(git.getActivityLog())
     }
     
     // Update immediately
-    updateCommandLog()
+    updateActivityLog()
     
-    // Update every 2 seconds instead of 500ms to reduce overhead
-    const interval = setInterval(updateCommandLog, 2000)
+    // Update every 2 seconds to reduce overhead
+    const interval = setInterval(updateActivityLog, 2000)
     
     return () => clearInterval(interval)
   }, [git])
@@ -343,9 +404,9 @@ export function App({ cwd }: { cwd: string }) {
     try {
       await git.stageFile(path)
       await loadData(true)
-      setMessage(`Staged: ${path}`)
+      notify(`Staged: ${path}`)
     } catch (error) {
-      setMessage(`Error staging: ${error}`)
+      notify(`Error staging: ${error}`)
     }
   }, [git, loadData])
 
@@ -353,14 +414,14 @@ export function App({ cwd }: { cwd: string }) {
     try {
       const totalFiles = status.unstaged.length + status.untracked.length
       if (totalFiles === 0) {
-        setMessage('No files to stage')
+        notify('No files to stage')
         return
       }
       await git.stageAll()
       await loadData(true)
-      setMessage(`Staged all files (${totalFiles})`)
+      notify(`Staged all files (${totalFiles})`)
     } catch (error) {
-      setMessage(`Error staging all: ${error}`)
+      notify(`Error staging all: ${error}`)
     }
   }, [git, loadData, status])
 
@@ -368,9 +429,9 @@ export function App({ cwd }: { cwd: string }) {
     try {
       await git.unstageFile(path)
       await loadData(true)
-      setMessage(`Unstaged: ${path}`)
+      notify(`Unstaged: ${path}`)
     } catch (error) {
-      setMessage(`Error unstaging: ${error}`)
+      notify(`Error unstaging: ${error}`)
     }
   }, [git, loadData])
 
@@ -378,10 +439,10 @@ export function App({ cwd }: { cwd: string }) {
     try {
       await git.commit(commitMessage)
       await loadData(true)
-      setMessage(`Committed: ${commitMessage}`)
+      notify(`Committed: ${commitMessage}`)
       setShowCommitModal(false)
     } catch (error) {
-      setMessage(`Error committing: ${error}`)
+      notify(`Error committing: ${error}`)
       setShowCommitModal(false)
     }
   }, [git, loadData])
@@ -390,22 +451,22 @@ export function App({ cwd }: { cwd: string }) {
     try {
       await git.checkout(branch)
       await loadData(true)
-      setMessage(`Switched to branch: ${branch}`)
+      notify(`Switched to branch: ${branch}`)
     } catch (error) {
-      setMessage(`Error checking out: ${error}`)
+      notify(`Error checking out: ${error}`)
     }
   }, [git, loadData])
 
   const handlePush = useCallback(async () => {
     try {
-      setMessage('Pushing changes...')
+      notify('Pushing changes...')
 
       await git.push()
 
       await loadData(true)
-      setMessage('Push completed successfully')
+      notify('Push completed successfully')
     } catch (error) {
-      setMessage(`Push failed: ${error}`)
+      notify(`Push failed: ${error}`)
     }
   }, [git, loadData])
 
@@ -423,24 +484,24 @@ export function App({ cwd }: { cwd: string }) {
 
       setProgressComplete(true)
       await loadData(true)
-      setMessage('Pull completed successfully')
+      notify('Pull completed successfully')
     } catch (error) {
       setProgressComplete(true)
       setProgressError(String(error))
-      setMessage(`Pull failed: ${error}`)
+      notify(`Pull failed: ${error}`)
     }
   }, [git, loadData])
 
   const handleFetch = useCallback(async () => {
     try {
-      setMessage('Fetching from remotes...')
+      notify('Fetching from remotes...')
 
       await git.fetch()
 
       await loadData(true)
-      setMessage('Fetch completed successfully')
+      notify('Fetch completed successfully')
     } catch (error) {
-      setMessage(`Fetch failed: ${error}`)
+      notify(`Fetch failed: ${error}`)
     }
   }, [git, loadData])
 
@@ -448,10 +509,10 @@ export function App({ cwd }: { cwd: string }) {
     try {
       await git.createStash(stashMessage || undefined)
       await loadData(true)
-      setMessage(stashMessage ? `Stashed: ${stashMessage}` : 'Changes stashed')
+      notify(stashMessage ? `Stashed: ${stashMessage}` : 'Changes stashed')
       setShowStashModal(false)
     } catch (error) {
-      setMessage(`Error creating stash: ${error}`)
+      notify(`Error creating stash: ${error}`)
       setShowStashModal(false)
     }
   }, [git, loadData])
@@ -460,9 +521,9 @@ export function App({ cwd }: { cwd: string }) {
     try {
       await git.applyStash(index)
       await loadData(true)
-      setMessage(`Applied stash@{${index}}`)
+      notify(`Applied stash@{${index}}`)
     } catch (error) {
-      setMessage(`Error applying stash: ${error}`)
+      notify(`Error applying stash: ${error}`)
     }
   }, [git, loadData])
 
@@ -470,9 +531,9 @@ export function App({ cwd }: { cwd: string }) {
     try {
       await git.popStash(index)
       await loadData(true)
-      setMessage(`Popped stash@{${index}}`)
+      notify(`Popped stash@{${index}}`)
     } catch (error) {
-      setMessage(`Error popping stash: ${error}`)
+      notify(`Error popping stash: ${error}`)
     }
   }, [git, loadData])
 
@@ -480,9 +541,9 @@ export function App({ cwd }: { cwd: string }) {
     try {
       await git.dropStash(index)
       await loadData(true)
-      setMessage(`Dropped stash@{${index}}`)
+      notify(`Dropped stash@{${index}}`)
     } catch (error) {
-      setMessage(`Error dropping stash: ${error}`)
+      notify(`Error dropping stash: ${error}`)
     }
   }, [git, loadData])
 
@@ -504,23 +565,23 @@ export function App({ cwd }: { cwd: string }) {
       const stashDiff = await git.getStashDiff(index)
       setDiff(stashDiff)
       setView('diff')
-      setMessage(`Viewing diff for stash@{${index}}`)
+      notify(`Viewing diff for stash@{${index}}`)
     } catch (error) {
-      setMessage(`Error loading stash diff: ${error}`)
+      notify(`Error loading stash diff: ${error}`)
     }
   }, [git])
 
   const handleUnstageAll = useCallback(async () => {
     try {
       if (status.staged.length === 0) {
-        setMessage('No staged files to unstage')
+        notify('No staged files to unstage')
         return
       }
       await git.unstageAll()
       await loadData(true)
-      setMessage(`Unstaged all files (${status.staged.length})`)
+      notify(`Unstaged all files (${status.staged.length})`)
     } catch (error) {
-      setMessage(`Error unstaging all: ${error}`)
+      notify(`Error unstaging all: ${error}`)
     }
   }, [git, loadData, status])
 
@@ -528,9 +589,9 @@ export function App({ cwd }: { cwd: string }) {
     try {
       await git.discardChanges(path)
       await loadData(true)
-      setMessage(`Discarded changes: ${path}`)
+      notify(`Discarded changes: ${path}`)
     } catch (error) {
-      setMessage(`Error discarding changes: ${error}`)
+      notify(`Error discarding changes: ${error}`)
     }
   }, [git, loadData])
 
@@ -538,9 +599,9 @@ export function App({ cwd }: { cwd: string }) {
     try {
       await git.deleteUntrackedFile(path)
       await loadData(true)
-      setMessage(`Deleted untracked file: ${path}`)
+      notify(`Deleted untracked file: ${path}`)
     } catch (error) {
-      setMessage(`Error deleting file: ${error}`)
+      notify(`Error deleting file: ${error}`)
     }
   }, [git, loadData])
 
@@ -548,10 +609,10 @@ export function App({ cwd }: { cwd: string }) {
     try {
       await git.renameFile(oldPath, newPath)
       await loadData(true)
-      setMessage(`Renamed: ${oldPath} → ${newPath}`)
+      notify(`Renamed: ${oldPath} → ${newPath}`)
       setShowRenameModal(false)
     } catch (error) {
-      setMessage(`Error renaming file: ${error}`)
+      notify(`Error renaming file: ${error}`)
       setShowRenameModal(false)
     }
   }, [git, loadData])
@@ -584,7 +645,7 @@ export function App({ cwd }: { cwd: string }) {
 
   const handleUnstageAllWithConfirm = useCallback(() => {
     if (status.staged.length === 0) {
-      setMessage('No staged files to unstage')
+      notify('No staged files to unstage')
       return
     }
     setConfirmModalProps({
@@ -608,10 +669,10 @@ export function App({ cwd }: { cwd: string }) {
     try {
       await git.createBranch(name, startPoint)
       await loadData(true)
-      setMessage(`Created branch: ${name}`)
+      notify(`Created branch: ${name}`)
       setShowBranchModal(false)
     } catch (error) {
-      setMessage(`Error creating branch: ${error}`)
+      notify(`Error creating branch: ${error}`)
       setShowBranchModal(false)
     }
   }, [git, loadData])
@@ -625,7 +686,7 @@ export function App({ cwd }: { cwd: string }) {
         try {
           await git.deleteBranch(branch, false)
           await loadData(true)
-          setMessage(`Deleted branch: ${branch}`)
+          notify(`Deleted branch: ${branch}`)
         } catch (error) {
           // Try to get merge status to provide better error message
           const errorMsg = String(error)
@@ -638,16 +699,16 @@ export function App({ cwd }: { cwd: string }) {
                 try {
                   await git.deleteBranch(branch, true)
                   await loadData(true)
-                  setMessage(`Force deleted branch: ${branch}`)
+                  notify(`Force deleted branch: ${branch}`)
                 } catch (err) {
-                  setMessage(`Error force deleting branch: ${err}`)
+                  notify(`Error force deleting branch: ${err}`)
                 }
               },
               danger: true,
             })
             setShowConfirmModal(true)
           } else {
-            setMessage(`Error deleting branch: ${error}`)
+            notify(`Error deleting branch: ${error}`)
           }
         }
       },
@@ -663,7 +724,7 @@ export function App({ cwd }: { cwd: string }) {
     const branch = parts.slice(1).join('/')
     
     if (!remote || !branch) {
-      setMessage('Invalid remote branch format')
+      notify('Invalid remote branch format')
       return
     }
 
@@ -675,9 +736,9 @@ export function App({ cwd }: { cwd: string }) {
         try {
           await git.deleteRemoteBranch(remote, branch)
           await loadData(true)
-          setMessage(`Deleted remote branch: ${remote}/${branch}`)
+          notify(`Deleted remote branch: ${remote}/${branch}`)
         } catch (error) {
-          setMessage(`Error deleting remote branch: ${error}`)
+          notify(`Error deleting remote branch: ${error}`)
         }
       },
       danger: true,
@@ -689,10 +750,10 @@ export function App({ cwd }: { cwd: string }) {
     try {
       await git.renameBranch(oldName, newName)
       await loadData(true)
-      setMessage(`Renamed branch: ${oldName} → ${newName}`)
+      notify(`Renamed branch: ${oldName} → ${newName}`)
       setShowBranchRenameModal(false)
     } catch (error) {
-      setMessage(`Error renaming branch: ${error}`)
+      notify(`Error renaming branch: ${error}`)
       setShowBranchRenameModal(false)
     }
   }, [git, loadData])
@@ -701,10 +762,10 @@ export function App({ cwd }: { cwd: string }) {
     try {
       await git.setUpstream(branch, upstream)
       await loadData(true)
-      setMessage(`Set upstream for ${branch}: ${upstream}`)
+      notify(`Set upstream for ${branch}: ${upstream}`)
       setShowSetUpstreamModal(false)
     } catch (error) {
-      setMessage(`Error setting upstream: ${error}`)
+      notify(`Error setting upstream: ${error}`)
       setShowSetUpstreamModal(false)
     }
   }, [git, loadData])
@@ -713,16 +774,16 @@ export function App({ cwd }: { cwd: string }) {
     try {
       await git.unsetUpstream(branch)
       await loadData(true)
-      setMessage(`Unset upstream for ${branch}`)
+      notify(`Unset upstream for ${branch}`)
     } catch (error) {
-      setMessage(`Error unsetting upstream: ${error}`)
+      notify(`Error unsetting upstream: ${error}`)
     }
   }, [git, loadData])
 
   const handleMerge = useCallback(async (branch: string, strategy: MergeStrategy) => {
     try {
       setShowMergeModal(false)
-      setMessage(`Merging ${branch}...`)
+      notify(`Merging ${branch}...`)
       await git.merge(branch, strategy)
       await loadData(true)
       
@@ -731,12 +792,12 @@ export function App({ cwd }: { cwd: string }) {
       if (newMergeState.inProgress && newMergeState.conflicts.length > 0) {
         setMergeState(newMergeState)
         setShowConflictModal(true)
-        setMessage(`Merge conflicts detected (${newMergeState.conflicts.length} files)`)
+        notify(`Merge conflicts detected (${newMergeState.conflicts.length} files)`)
       } else {
-        setMessage(`Successfully merged ${branch}`)
+        notify(`Successfully merged ${branch}`)
       }
     } catch (error) {
-      setMessage(`Merge failed: ${error}`)
+      notify(`Merge failed: ${error}`)
     }
   }, [git, loadData])
 
@@ -745,9 +806,9 @@ export function App({ cwd }: { cwd: string }) {
       await git.abortMerge()
       await loadData(true)
       setShowConflictModal(false)
-      setMessage('Merge aborted')
+      notify('Merge aborted')
     } catch (error) {
-      setMessage(`Error aborting merge: ${error}`)
+      notify(`Error aborting merge: ${error}`)
     }
   }, [git, loadData])
 
@@ -755,18 +816,18 @@ export function App({ cwd }: { cwd: string }) {
     try {
       await git.resolveConflict(path, resolution)
       await loadData(true)
-      setMessage(`Resolved ${path} using ${resolution}`)
+      notify(`Resolved ${path} using ${resolution}`)
     } catch (error) {
-      setMessage(`Error resolving conflict: ${error}`)
+      notify(`Error resolving conflict: ${error}`)
     }
   }, [git, loadData])
 
   const handleEditConflict = useCallback(async (path: string, content: string) => {
     try {
       await git.writeConflictedFileContent(path, content)
-      setMessage(`Edited ${path}`)
+      notify(`Edited ${path}`)
     } catch (error) {
-      setMessage(`Error editing conflict: ${error}`)
+      notify(`Error editing conflict: ${error}`)
     }
   }, [git])
 
@@ -774,9 +835,9 @@ export function App({ cwd }: { cwd: string }) {
     try {
       await git.stageFile(path)
       await loadData(true)
-      setMessage(`Staged resolved file: ${path}`)
+      notify(`Staged resolved file: ${path}`)
     } catch (error) {
-      setMessage(`Error staging file: ${error}`)
+      notify(`Error staging file: ${error}`)
     }
   }, [git, loadData])
 
@@ -785,9 +846,9 @@ export function App({ cwd }: { cwd: string }) {
       await git.continueMerge(commitMessage)
       await loadData(true)
       setShowConflictModal(false)
-      setMessage('Merge completed successfully')
+      notify('Merge completed successfully')
     } catch (error) {
-      setMessage(`Error completing merge: ${error}`)
+      notify(`Error completing merge: ${error}`)
     }
   }, [git, loadData])
 
@@ -795,9 +856,9 @@ export function App({ cwd }: { cwd: string }) {
     try {
       await git.cherryPick(commitHash)
       await loadData(true)
-      setMessage(`Cherry-picked commit ${commitHash}`)
+      notify(`Cherry-picked commit ${commitHash}`)
     } catch (error) {
-      setMessage(`Error cherry-picking: ${error}`)
+      notify(`Error cherry-picking: ${error}`)
     }
   }, [git, loadData])
 
@@ -805,9 +866,9 @@ export function App({ cwd }: { cwd: string }) {
     try {
       await git.revertCommit(commitHash)
       await loadData(true)
-      setMessage(`Reverted commit ${commitHash}`)
+      notify(`Reverted commit ${commitHash}`)
     } catch (error) {
-      setMessage(`Error reverting: ${error}`)
+      notify(`Error reverting: ${error}`)
     }
   }, [git, loadData])
 
@@ -815,9 +876,9 @@ export function App({ cwd }: { cwd: string }) {
     try {
       await git.amendCommit(commitMessage)
       await loadData(true)
-      setMessage('Amended last commit')
+      notify('Amended last commit')
     } catch (error) {
-      setMessage(`Error amending commit: ${error}`)
+      notify(`Error amending commit: ${error}`)
     }
   }, [git, loadData])
 
@@ -826,9 +887,9 @@ export function App({ cwd }: { cwd: string }) {
       await git.resetToCommit(commitHash, mode)
       await loadData(true)
       setShowResetModal(false)
-      setMessage(`Reset to ${commitHash} (${mode})`)
+      notify(`Reset to ${commitHash} (${mode})`)
     } catch (error) {
-      setMessage(`Error resetting: ${error}`)
+      notify(`Error resetting: ${error}`)
       setShowResetModal(false)
     }
   }, [git, loadData])
@@ -838,18 +899,18 @@ export function App({ cwd }: { cwd: string }) {
       const commitDiff = await git.getCommitDiff(commitHash)
       setDiff(commitDiff)
       setView('diff')
-      setMessage(`Viewing commit ${commitHash}`)
+      notify(`Viewing commit ${commitHash}`)
     } catch (error) {
-      setMessage(`Error loading commit diff: ${error}`)
+      notify(`Error loading commit diff: ${error}`)
     }
   }, [git])
 
   const handleCopyCommitHash = useCallback(async (commitHash: string) => {
     try {
       await git.copyToClipboard(commitHash)
-      setMessage(`Copied ${commitHash} to clipboard`)
+      notify(`Copied ${commitHash} to clipboard`)
     } catch (error) {
-      setMessage(`Error copying to clipboard: ${error}`)
+      notify(`Error copying to clipboard: ${error}`)
     }
   }, [git])
 
@@ -858,9 +919,9 @@ export function App({ cwd }: { cwd: string }) {
       await git.createTag(tagName, commitHash, message)
       await loadData(true)
       setShowTagModal(false)
-      setMessage(`Created tag ${tagName} at ${commitHash}`)
+      notify(`Created tag ${tagName} at ${commitHash}`)
     } catch (error) {
-      setMessage(`Error creating tag: ${error}`)
+      notify(`Error creating tag: ${error}`)
       setShowTagModal(false)
     }
   }, [git, loadData])
@@ -873,9 +934,9 @@ export function App({ cwd }: { cwd: string }) {
       }
       await loadData(true)
       setShowRemoteModal(false)
-      setMessage(`Added remote: ${name}`)
+      notify(`Added remote: ${name}`)
     } catch (error) {
-      setMessage(`Error adding remote: ${error}`)
+      notify(`Error adding remote: ${error}`)
       setShowRemoteModal(false)
     }
   }, [git, loadData])
@@ -885,9 +946,9 @@ export function App({ cwd }: { cwd: string }) {
       await git.setRemoteUrl(name, fetchUrl, pushUrl)
       await loadData(true)
       setShowRemoteModal(false)
-      setMessage(`Updated remote: ${name}`)
+      notify(`Updated remote: ${name}`)
     } catch (error) {
-      setMessage(`Error updating remote: ${error}`)
+      notify(`Error updating remote: ${error}`)
       setShowRemoteModal(false)
     }
   }, [git, loadData])
@@ -896,9 +957,9 @@ export function App({ cwd }: { cwd: string }) {
     try {
       await git.removeRemote(name)
       await loadData(true)
-      setMessage(`Removed remote: ${name}`)
+      notify(`Removed remote: ${name}`)
     } catch (error) {
-      setMessage(`Error removing remote: ${error}`)
+      notify(`Error removing remote: ${error}`)
     }
   }, [git, loadData])
 
@@ -917,12 +978,12 @@ export function App({ cwd }: { cwd: string }) {
 
   const handleFetchRemote = useCallback(async (name: string) => {
     try {
-      setMessage(`Fetching from ${name}...`)
+      notify(`Fetching from ${name}...`)
       await git.fetch()
       await loadData(true)
-      setMessage(`Fetch from ${name} completed`)
+      notify(`Fetch from ${name} completed`)
     } catch (error) {
-      setMessage(`Error fetching from ${name}: ${error}`)
+      notify(`Error fetching from ${name}: ${error}`)
     }
   }, [git, loadData])
 
@@ -930,9 +991,9 @@ export function App({ cwd }: { cwd: string }) {
     try {
       await git.deleteTag(tagName)
       await loadData(true)
-      setMessage(`Deleted tag: ${tagName}`)
+      notify(`Deleted tag: ${tagName}`)
     } catch (error) {
-      setMessage(`Error deleting tag: ${error}`)
+      notify(`Error deleting tag: ${error}`)
     }
   }, [git, loadData])
 
@@ -951,23 +1012,23 @@ export function App({ cwd }: { cwd: string }) {
 
   const handlePushTag = useCallback(async (tagName: string, remote: string = 'origin') => {
     try {
-      setMessage(`Pushing tag ${tagName} to ${remote}...`)
+      notify(`Pushing tag ${tagName} to ${remote}...`)
       await git.pushTag(tagName, remote)
       await loadData(true)
-      setMessage(`Pushed tag ${tagName} to ${remote}`)
+      notify(`Pushed tag ${tagName} to ${remote}`)
     } catch (error) {
-      setMessage(`Error pushing tag: ${error}`)
+      notify(`Error pushing tag: ${error}`)
     }
   }, [git, loadData])
 
   const handlePushAllTags = useCallback(async (remote: string = 'origin') => {
     try {
-      setMessage(`Pushing all tags to ${remote}...`)
+      notify(`Pushing all tags to ${remote}...`)
       await git.pushAllTags(remote)
       await loadData(true)
-      setMessage(`Pushed all tags to ${remote}`)
+      notify(`Pushed all tags to ${remote}`)
     } catch (error) {
-      setMessage(`Error pushing tags: ${error}`)
+      notify(`Error pushing tags: ${error}`)
     }
   }, [git, loadData])
 
@@ -975,9 +1036,9 @@ export function App({ cwd }: { cwd: string }) {
     try {
       await git.checkoutTag(tagName)
       await loadData(true)
-      setMessage(`Checked out tag: ${tagName}`)
+      notify(`Checked out tag: ${tagName}`)
     } catch (error) {
-      setMessage(`Error checking out tag: ${error}`)
+      notify(`Error checking out tag: ${error}`)
     }
   }, [git, loadData])
 
@@ -990,9 +1051,9 @@ export function App({ cwd }: { cwd: string }) {
         try {
           await git.deleteRemoteTag(remote, tagName)
           await loadData(true)
-          setMessage(`Deleted remote tag: ${tagName} from ${remote}`)
+          notify(`Deleted remote tag: ${tagName} from ${remote}`)
         } catch (error) {
-          setMessage(`Error deleting remote tag: ${error}`)
+          notify(`Error deleting remote tag: ${error}`)
         }
       },
       danger: true,
@@ -1053,8 +1114,8 @@ export function App({ cwd }: { cwd: string }) {
     },
     {
       id: 'toggle-command-log',
-      label: 'Toggle Command Log',
-      description: 'Show/hide git command history panel',
+      label: 'Toggle Activity Log',
+      description: 'Show/hide activity log (git commands, errors, warnings)',
       shortcut: '`',
       execute: () => setShowCommandLog((prev) => !prev),
     },
@@ -1268,7 +1329,7 @@ export function App({ cwd }: { cwd: string }) {
         if (status.staged.length > 0) {
           setShowCommitModal(true)
         } else {
-          setMessage('No staged files to commit')
+          notify('No staged files to commit')
         }
       },
     },
@@ -1324,7 +1385,7 @@ export function App({ cwd }: { cwd: string }) {
               handleDiscardWithConfirm(file.path)
             }
           } else {
-            setMessage('No file selected')
+            notify('No file selected')
           }
         }
       },
@@ -1341,7 +1402,7 @@ export function App({ cwd }: { cwd: string }) {
           if (file && untrackedIndex >= 0) {
             handleDeleteWithConfirm(file.path)
           } else {
-            setMessage('No untracked file selected')
+            notify('No untracked file selected')
           }
         }
       },
@@ -1358,7 +1419,7 @@ export function App({ cwd }: { cwd: string }) {
           if (file) {
             handleRenameWithModal(file.path)
           } else {
-            setMessage('No file selected')
+            notify('No file selected')
           }
         }
       },
@@ -1382,9 +1443,9 @@ export function App({ cwd }: { cwd: string }) {
           if (branch && !branch.current) {
             handleDeleteBranch(branch.name)
           } else if (branch?.current) {
-            setMessage('Cannot delete current branch')
+            notify('Cannot delete current branch')
           } else {
-            setMessage('No branch selected')
+            notify('No branch selected')
           }
         }
       },
@@ -1402,7 +1463,7 @@ export function App({ cwd }: { cwd: string }) {
             setBranchToRename(branch.name)
             setShowBranchRenameModal(true)
           } else {
-            setMessage('No branch selected')
+            notify('No branch selected')
           }
         }
       },
@@ -1420,7 +1481,7 @@ export function App({ cwd }: { cwd: string }) {
             setBranchForUpstream(branch.name)
             setShowSetUpstreamModal(true)
           } else {
-            setMessage('No branch selected')
+            notify('No branch selected')
           }
         }
       },
@@ -1437,9 +1498,9 @@ export function App({ cwd }: { cwd: string }) {
           if (branch && branch.upstream) {
             void handleUnsetUpstream(branch.name)
           } else if (branch && !branch.upstream) {
-            setMessage('Branch has no upstream set')
+            notify('Branch has no upstream set')
           } else {
-            setMessage('No branch selected')
+            notify('No branch selected')
           }
         }
       },
@@ -1451,7 +1512,7 @@ export function App({ cwd }: { cwd: string }) {
       shortcut: 'm',
       execute: () => {
         if (mergeState.inProgress) {
-          setMessage('Merge already in progress - resolve conflicts first')
+          notify('Merge already in progress - resolve conflicts first')
         } else {
           setShowMergeModal(true)
         }
@@ -1466,7 +1527,7 @@ export function App({ cwd }: { cwd: string }) {
         if (mergeState.inProgress) {
           setShowConflictModal(true)
         } else {
-          setMessage('No merge in progress')
+          notify('No merge in progress')
         }
       },
     },
@@ -1487,7 +1548,7 @@ export function App({ cwd }: { cwd: string }) {
           })
           setShowConfirmModal(true)
         } else {
-          setMessage('No merge in progress')
+          notify('No merge in progress')
         }
       },
     },
@@ -1558,7 +1619,7 @@ export function App({ cwd }: { cwd: string }) {
           })
           setShowConfirmModal(true)
         } else {
-          setMessage('No staged changes to amend')
+          notify('No staged changes to amend')
         }
       },
     },
@@ -1668,9 +1729,9 @@ export function App({ cwd }: { cwd: string }) {
       execute: async () => {
         try {
           const version = await git.getVersion()
-          setMessage(version)
+          notify(version)
         } catch (error) {
-          setMessage(`Error getting git version: ${error}`)
+          notify(`Error getting git version: ${error}`)
         }
       },
     },
@@ -1692,7 +1753,7 @@ export function App({ cwd }: { cwd: string }) {
           if (tag) {
             handleDeleteTagWithConfirm(tag.name)
           } else {
-            setMessage('No tag selected')
+            notify('No tag selected')
           }
         }
       },
@@ -1708,7 +1769,7 @@ export function App({ cwd }: { cwd: string }) {
           if (tag) {
             void handlePushTag(tag.name)
           } else {
-            setMessage('No tag selected')
+            notify('No tag selected')
           }
         }
       },
@@ -1738,7 +1799,7 @@ export function App({ cwd }: { cwd: string }) {
             })
             setShowConfirmModal(true)
           } else {
-            setMessage('No tag selected')
+            notify('No tag selected')
           }
         }
       },
@@ -1754,7 +1815,7 @@ export function App({ cwd }: { cwd: string }) {
           if (tag) {
             void handleCheckoutTag(tag.name)
           } else {
-            setMessage('No tag selected')
+            notify('No tag selected')
           }
         }
       },
@@ -1770,7 +1831,7 @@ export function App({ cwd }: { cwd: string }) {
           if (tag) {
             setView('tagDetails')
           } else {
-            setMessage('No tag selected')
+            notify('No tag selected')
           }
         }
       },
@@ -2114,9 +2175,9 @@ export function App({ cwd }: { cwd: string }) {
             handleDiscardWithConfirm(file.path)
           }
         } else if (file?.staged) {
-          setMessage('Cannot discard staged file (unstage it first)')
+          notify('Cannot discard staged file (unstage it first)')
         } else {
-          setMessage('No file selected')
+          notify('No file selected')
         }
       }
     }
@@ -2161,7 +2222,7 @@ export function App({ cwd }: { cwd: string }) {
       if (status.staged.length > 0) {
         setShowCommitModal(true)
       } else {
-        setMessage('No staged files to commit')
+        notify('No staged files to commit')
       }
     }
 
@@ -2180,7 +2241,7 @@ export function App({ cwd }: { cwd: string }) {
     // Merge operations
     if (key.sequence === 'm') {
       if (mergeState.inProgress) {
-        setMessage('Merge already in progress - resolve conflicts first')
+        notify('Merge already in progress - resolve conflicts first')
       } else {
         setShowMergeModal(true)
       }
@@ -2190,7 +2251,7 @@ export function App({ cwd }: { cwd: string }) {
       if (mergeState.inProgress) {
         setShowConflictModal(true)
       } else {
-        setMessage('No merge in progress')
+        notify('No merge in progress')
       }
     }
 
@@ -2367,7 +2428,7 @@ export function App({ cwd }: { cwd: string }) {
         if (selectedRepo) {
           // Prevent deleting the currently active repository
           if (selectedRepo.path === currentRepoPath) {
-            setMessage('Cannot remove the currently active repository from history')
+            notify('Cannot remove the currently active repository from history')
             return
           }
 
@@ -2381,7 +2442,7 @@ export function App({ cwd }: { cwd: string }) {
               config.recentRepositories = config.recentRepositories.filter(r => r.path !== selectedRepo.path)
               void workspaceManager.save().then(() => {
                 setRepos(workspaceManager.getConfig().recentRepositories)
-                setMessage(`Removed ${selectedRepo.name} from history`)
+                notify(`Removed ${selectedRepo.name} from history`)
                 // Adjust selected index if needed
                 if (selectedIndex >= filteredRepos.length - 1) {
                   setSelectedIndex(Math.max(0, filteredRepos.length - 2))
@@ -2484,7 +2545,6 @@ export function App({ cwd }: { cwd: string }) {
       )}
 
       <Footer 
-        message={loading ? 'Loading...' : message}
         view={view}
         focusedPanel={focusedPanel}
         hasStaged={status.staged.length > 0}
