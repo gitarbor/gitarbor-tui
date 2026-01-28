@@ -85,7 +85,7 @@ export function Footer({
   return (
     <box
       width="100%"
-      height={6}
+      height={4}
       borderStyle={theme.borders.style}
       borderColor={theme.colors.border}
       padding={theme.spacing.none}
