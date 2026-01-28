@@ -319,20 +319,11 @@ export function MainView({
           )}
         </Fieldset>
 
-        {stashes.length > 0 && (
-          <Fieldset
-            title="Stashes (h)"
-            focused={focusedPanel === 'stashes'}
-            height={5}
-            paddingX={theme.spacing.none}
-            paddingY={theme.spacing.none}
-          >
-            <StashSelector
-              stash={focusedPanel === 'stashes' && stashes[selectedIndex] ? stashes[selectedIndex]! : stashes[0]!}
-              focused={focusedPanel === 'stashes'}
-            />
-          </Fieldset>
-        )}
+        <StashSelector
+          stashes={stashes}
+          selectedIndex={selectedIndex}
+          focused={focusedPanel === 'stashes'}
+        />
       </box>
 
       {/* Right column: Diff and Command Log */}
