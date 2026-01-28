@@ -135,7 +135,7 @@ export function KeyboardShortcutsModal({ onClose }: KeyboardShortcutsModalProps)
 
   return (
     <Modal
-      width={90}
+      width={65}
       height={30}
       title="Keyboard Shortcuts"
     >
