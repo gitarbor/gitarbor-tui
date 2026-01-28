@@ -1103,7 +1103,6 @@ export function App({ cwd }: { cwd: string }) {
       id: 'edit-config',
       label: 'Edit Config',
       description: 'Configure git global user name and email',
-      shortcut: ',',
       execute: () => setShowConfigModal(true),
     },
     {
@@ -1898,12 +1897,6 @@ export function App({ cwd }: { cwd: string }) {
     // Command palette with '/' key
     if (key.sequence === '/') {
       setShowCommandPalette(true)
-      return
-    }
-
-    // Config with ',' key
-    if (key.sequence === ',') {
-      setShowConfigModal(true)
       return
     }
 
