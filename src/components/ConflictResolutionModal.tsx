@@ -1,18 +1,18 @@
-import { useState, useCallback } from 'react'
-import { useKeyboard } from '@opentui/react'
-import { theme } from '../theme'
-import type { GitConflict } from '../types/git'
+import { useState, useCallback } from 'react';
+import { useKeyboard } from '@opentui/react';
+import { theme } from '../theme';
+import type { GitConflict } from '../types/git';
 
 interface ConflictResolutionModalProps {
-  conflicts: GitConflict[]
-  currentBranch: string
-  mergingBranch: string
-  onResolve: (path: string, resolution: 'ours' | 'theirs' | 'manual') => Promise<void>
-  onEditConflict: (path: string, content: string) => Promise<void>
-  onStageResolved: (path: string) => Promise<void>
-  onAbort: () => void
-  onContinue: (message: string) => void
-  onClose: () => void
+  conflicts: GitConflict[];
+  currentBranch: string;
+  mergingBranch: string;
+  onResolve: (path: string, resolution: 'ours' | 'theirs' | 'manual') => Promise<void>;
+  onEditConflict: (path: string, content: string) => Promise<void>;
+  onStageResolved: (path: string) => Promise<void>;
+  onAbort: () => void;
+  onContinue: (message: string) => void;
+  onClose: () => void;
 }
 
 export function ConflictResolutionModal({
@@ -26,76 +26,81 @@ export function ConflictResolutionModal({
   onContinue,
   onClose,
 }: ConflictResolutionModalProps) {
-  const [selectedIndex, setSelectedIndex] = useState(0)
-  const [viewMode, setViewMode] = useState<'list' | 'detail'>('list')
-  const [commitMessage, setCommitMessage] = useState(`Merge branch '${mergingBranch}' into ${currentBranch}`)
-  const [editingMessage, setEditingMessage] = useState(false)
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [viewMode, setViewMode] = useState<'list' | 'detail'>('list');
+  const [commitMessage, setCommitMessage] = useState(
+    `Merge branch '${mergingBranch}' into ${currentBranch}`,
+  );
+  const [editingMessage, setEditingMessage] = useState(false);
 
-  const selectedConflict = conflicts[selectedIndex]
+  const selectedConflict = conflicts[selectedIndex];
 
-  const handleResolve = useCallback(async (resolution: 'ours' | 'theirs') => {
-    if (selectedConflict) {
-      await onResolve(selectedConflict.path, resolution)
-    }
-  }, [selectedConflict, onResolve])
+  const handleResolve = useCallback(
+    async (resolution: 'ours' | 'theirs') => {
+      if (selectedConflict) {
+        await onResolve(selectedConflict.path, resolution);
+      }
+    },
+    [selectedConflict, onResolve],
+  );
 
   const handleStage = useCallback(async () => {
     if (selectedConflict) {
-      await onStageResolved(selectedConflict.path)
+      await onStageResolved(selectedConflict.path);
     }
-  }, [selectedConflict, onStageResolved])
+  }, [selectedConflict, onStageResolved]);
 
   useKeyboard((key) => {
     if (editingMessage) {
       if (key.name === 'escape') {
-        setEditingMessage(false)
+        setEditingMessage(false);
       } else if (key.name === 'return') {
-        setEditingMessage(false)
+        setEditingMessage(false);
         if (conflicts.length === 0) {
-          onContinue(commitMessage)
+          onContinue(commitMessage);
         }
       } else if (key.name === 'backspace') {
-        setCommitMessage((prev) => prev.slice(0, -1))
+        setCommitMessage((prev) => prev.slice(0, -1));
       } else if (key.sequence && key.sequence.length === 1) {
-        setCommitMessage((prev) => prev + key.sequence)
+        setCommitMessage((prev) => prev + key.sequence);
       }
-      return
+      return;
     }
 
     if (key.name === 'escape') {
       if (viewMode === 'detail') {
-        setViewMode('list')
+        setViewMode('list');
       } else {
-        onClose()
+        onClose();
       }
     } else if (key.name === 'up') {
-      setSelectedIndex((prev) => Math.max(0, prev - 1))
+      setSelectedIndex((prev) => Math.max(0, prev - 1));
     } else if (key.name === 'down') {
-      setSelectedIndex((prev) => Math.min(conflicts.length - 1, prev + 1))
+      setSelectedIndex((prev) => Math.min(conflicts.length - 1, prev + 1));
     } else if (key.name === 'return') {
       if (viewMode === 'list') {
-        setViewMode('detail')
+        setViewMode('detail');
       }
     } else if (key.sequence === 'o') {
-      void handleResolve('ours')
+      void handleResolve('ours');
     } else if (key.sequence === 't') {
-      void handleResolve('theirs')
+      void handleResolve('theirs');
     } else if (key.sequence === 's') {
-      void handleStage()
+      void handleStage();
     } else if (key.sequence === 'a') {
-      onAbort()
+      onAbort();
     } else if (key.sequence === 'c') {
       if (conflicts.length === 0) {
-        setEditingMessage(true)
+        setEditingMessage(true);
       }
     } else if (key.sequence === 'v') {
       if (viewMode === 'list') {
-        setViewMode('detail')
+        setViewMode('detail');
       } else {
-        setViewMode('list')
+        setViewMode('list');
       }
     }
-  })
+  });
 
   if (conflicts.length === 0) {
     return (
@@ -119,7 +124,7 @@ export function ConflictResolutionModal({
           All merge conflicts have been resolved. Ready to commit.
         </text>
         <box height={1} />
-        
+
         <text fg={theme.colors.text.secondary}>Commit message:</text>
         <box
           borderStyle={theme.borders.style}
@@ -128,20 +133,20 @@ export function ConflictResolutionModal({
         >
           <text fg={theme.colors.text.primary}>{commitMessage || '(enter message)'}</text>
         </box>
-        
+
         <box height={1} />
         <text fg={theme.colors.text.muted}>
-          {editingMessage 
-            ? 'Type message, Enter: Save | ESC: Cancel' 
+          {editingMessage
+            ? 'Type message, Enter: Save | ESC: Cancel'
             : 'c: Edit message | Enter: Commit merge | a: Abort | ESC: Close'}
         </text>
       </box>
-    )
+    );
   }
 
   if (viewMode === 'detail' && selectedConflict) {
-    const previewLines = selectedConflict.ours.split('\n').slice(0, 10)
-    const theirsLines = selectedConflict.theirs.split('\n').slice(0, 10)
+    const previewLines = selectedConflict.ours.split('\n').slice(0, 10);
+    const theirsLines = selectedConflict.theirs.split('\n').slice(0, 10);
 
     return (
       <box
@@ -158,9 +163,7 @@ export function ConflictResolutionModal({
         padding={theme.spacing.xs}
         flexDirection="column"
       >
-        <text fg={theme.colors.primary}>
-          Conflict Details: {selectedConflict.path}
-        </text>
+        <text fg={theme.colors.primary}>Conflict Details: {selectedConflict.path}</text>
         <box height={1} />
 
         <box flexDirection="row" flexGrow={1}>
@@ -214,7 +217,7 @@ export function ConflictResolutionModal({
           o: Use ours | t: Use theirs | s: Stage (manual edit) | ESC: Back
         </text>
       </box>
-    )
+    );
   }
 
   return (
@@ -232,9 +235,7 @@ export function ConflictResolutionModal({
       padding={theme.spacing.xs}
       flexDirection="column"
     >
-      <text fg={theme.colors.status.warning}>
-        Merge Conflicts ({conflicts.length})
-      </text>
+      <text fg={theme.colors.status.warning}>Merge Conflicts ({conflicts.length})</text>
       <box height={1} />
       <text fg={theme.colors.text.secondary}>
         Merging '{mergingBranch}' into '{currentBranch}'
@@ -253,7 +254,9 @@ export function ConflictResolutionModal({
               {idx === selectedIndex ? '>' : ' '}
             </text>
             <text fg={theme.colors.status.error}> ⚠ </text>
-            <text fg={idx === selectedIndex ? theme.colors.text.primary : theme.colors.text.secondary}>
+            <text
+              fg={idx === selectedIndex ? theme.colors.text.primary : theme.colors.text.secondary}
+            >
               {conflict.path}
             </text>
             <text fg={theme.colors.text.muted}>
@@ -270,5 +273,5 @@ export function ConflictResolutionModal({
         Enter/v: View details | o: Use ours | t: Use theirs | s: Stage | a: Abort | ESC: Close
       </text>
     </box>
-  )
+  );
 }

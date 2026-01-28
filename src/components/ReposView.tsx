@@ -1,23 +1,24 @@
-import { theme } from '../theme'
-import { Fieldset } from './Fieldset'
-import type { Repository } from '../types/workspace'
+import { theme } from '../theme';
+import { Fieldset } from './Fieldset';
+import type { Repository } from '../types/workspace';
 
 interface ReposViewProps {
-  repos: Repository[]
-  selectedIndex: number
-  focusedPanel: 'filter' | 'repos'
-  filterQuery: string
-  onFilterChange: (query: string) => void
+  repos: Repository[];
+  selectedIndex: number;
+  focusedPanel: 'filter' | 'repos';
+  filterQuery: string;
+  onFilterChange: (query: string) => void;
 }
 
 export function ReposView({ repos, selectedIndex, focusedPanel, filterQuery }: ReposViewProps) {
   // Filter repos based on query
   const filteredRepos = filterQuery
-    ? repos.filter(repo => 
-        repo.name.toLowerCase().includes(filterQuery.toLowerCase()) ||
-        repo.path.toLowerCase().includes(filterQuery.toLowerCase())
+    ? repos.filter(
+        (repo) =>
+          repo.name.toLowerCase().includes(filterQuery.toLowerCase()) ||
+          repo.path.toLowerCase().includes(filterQuery.toLowerCase()),
       )
-    : repos
+    : repos;
 
   return (
     <box width="100%" height="100%" flexDirection="column">
@@ -47,46 +48,45 @@ export function ReposView({ repos, selectedIndex, focusedPanel, filterQuery }: R
         <box flexDirection="column">
           {filteredRepos.length === 0 ? (
             <text fg={theme.colors.text.muted}>
-              {filterQuery 
-                ? 'No repositories match your filter' 
+              {filterQuery
+                ? 'No repositories match your filter'
                 : 'No repositories in history. Open a repository to add it.'}
             </text>
           ) : (
             filteredRepos.map((repo, idx) => {
-              const isSelected = idx === selectedIndex
-              const lastAccessedDate = new Date(repo.lastAccessed)
-              const now = new Date()
-              const diffMs = now.getTime() - lastAccessedDate.getTime()
-              const diffMins = Math.floor(diffMs / 60000)
-              const diffHours = Math.floor(diffMs / 3600000)
-              const diffDays = Math.floor(diffMs / 86400000)
-              
-              let timeAgo = ''
+              const isSelected = idx === selectedIndex;
+              const lastAccessedDate = new Date(repo.lastAccessed);
+              const now = new Date();
+              const diffMs = now.getTime() - lastAccessedDate.getTime();
+              const diffMins = Math.floor(diffMs / 60000);
+              const diffHours = Math.floor(diffMs / 3600000);
+              const diffDays = Math.floor(diffMs / 86400000);
+
+              let timeAgo = '';
               if (diffMins < 1) {
-                timeAgo = 'just now'
+                timeAgo = 'just now';
               } else if (diffMins < 60) {
-                timeAgo = `${diffMins}m ago`
+                timeAgo = `${diffMins}m ago`;
               } else if (diffHours < 24) {
-                timeAgo = `${diffHours}h ago`
+                timeAgo = `${diffHours}h ago`;
               } else if (diffDays < 30) {
-                timeAgo = `${diffDays}d ago`
+                timeAgo = `${diffDays}d ago`;
               } else {
-                timeAgo = lastAccessedDate.toLocaleDateString()
+                timeAgo = lastAccessedDate.toLocaleDateString();
               }
-              
+
               return (
                 <box key={repo.path} flexDirection="row" paddingBottom={theme.spacing.none}>
                   <text fg={isSelected ? theme.colors.primary : theme.colors.border}>
                     {isSelected ? '>' : ' '}
                   </text>
                   <text fg={isSelected ? theme.colors.primary : theme.colors.text.primary}>
-                    {' '}{repo.name}{' '}
+                    {' '}
+                    {repo.name}{' '}
                   </text>
-                  <text fg={theme.colors.text.muted}>
-                    ({timeAgo})
-                  </text>
+                  <text fg={theme.colors.text.muted}>({timeAgo})</text>
                 </box>
-              )
+              );
             })
           )}
 
@@ -101,5 +101,5 @@ export function ReposView({ repos, selectedIndex, focusedPanel, filterQuery }: R
         </box>
       </Fieldset>
     </box>
-  )
+  );
 }

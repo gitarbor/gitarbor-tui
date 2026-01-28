@@ -1,57 +1,73 @@
-import { useState, useEffect, useCallback } from 'react'
-import { useKeyboard, useRenderer } from '@opentui/react'
-import { theme, onThemeChange } from './theme'
-import { GitClient } from './utils/git'
-import { FileSystemWatcher } from './utils/watcher'
-import { Header } from './components/Header'
-import { Footer } from './components/Footer'
-import { MainView } from './components/MainView'
-import { HistoryView } from './components/HistoryView'
-import { DiffView } from './components/DiffView'
-import { CommitModal } from './components/CommitModal'
-import { ExitModal } from './components/ExitModal'
-import { CommandPalette } from './components/CommandPalette'
-import { ConfigModal } from './components/ConfigModal'
-import { ThemesModal } from './components/ThemesModal'
-import { ProgressModal } from './components/ProgressModal'
-import { StashView } from './components/StashView'
-import { StashModal } from './components/StashModal'
-import { ConfirmModal } from './components/ConfirmModal'
-import { RenameModal } from './components/RenameModal'
-import { BranchModal } from './components/BranchModal'
-import { BranchRenameModal } from './components/BranchRenameModal'
-import { SetUpstreamModal } from './components/SetUpstreamModal'
-import { MergeModal } from './components/MergeModal'
-import { ConflictResolutionModal } from './components/ConflictResolutionModal'
-import { ResetModal } from './components/ResetModal'
-import { TagModal } from './components/TagModal'
-import { RemoteModal } from './components/RemoteModal'
-import { RemotesView } from './components/RemotesView'
-import { TagDetailsView } from './components/TagDetailsView'
-import { ActivityLog } from './components/ActivityLog'
-import { ReposView } from './components/ReposView'
-import { RepoSwitchModal } from './components/RepoSwitchModal'
-import { KeyboardShortcutsModal } from './components/KeyboardShortcutsModal'
-import { WorkspaceManager } from './utils/workspace'
-import type { Repository } from './types/workspace'
-import type { GitStatus, GitCommit, GitBranch, GitStash, GitRemote, GitTag, GitMergeState, MergeStrategy, View, ActivityLogEntry, NotificationType } from './types/git'
-import type { Command } from './types/commands'
+import { useState, useEffect, useCallback } from 'react';
+import { useKeyboard, useRenderer } from '@opentui/react';
+import { theme, onThemeChange } from './theme';
+import { GitClient } from './utils/git';
+import { FileSystemWatcher } from './utils/watcher';
+import { Header } from './components/Header';
+import { Footer } from './components/Footer';
+import { MainView } from './components/MainView';
+import { HistoryView } from './components/HistoryView';
+import { DiffView } from './components/DiffView';
+import { CommitModal } from './components/CommitModal';
+import { ExitModal } from './components/ExitModal';
+import { CommandPalette } from './components/CommandPalette';
+import { ConfigModal } from './components/ConfigModal';
+import { ThemesModal } from './components/ThemesModal';
+import { ProgressModal } from './components/ProgressModal';
+import { StashView } from './components/StashView';
+import { StashModal } from './components/StashModal';
+import { ConfirmModal } from './components/ConfirmModal';
+import { RenameModal } from './components/RenameModal';
+import { BranchModal } from './components/BranchModal';
+import { BranchRenameModal } from './components/BranchRenameModal';
+import { SetUpstreamModal } from './components/SetUpstreamModal';
+import { MergeModal } from './components/MergeModal';
+import { ConflictResolutionModal } from './components/ConflictResolutionModal';
+import { ResetModal } from './components/ResetModal';
+import { TagModal } from './components/TagModal';
+import { RemoteModal } from './components/RemoteModal';
+import { RemotesView } from './components/RemotesView';
+import { TagDetailsView } from './components/TagDetailsView';
+import { ActivityLog } from './components/ActivityLog';
+import { ReposView } from './components/ReposView';
+import { RepoSwitchModal } from './components/RepoSwitchModal';
+import { KeyboardShortcutsModal } from './components/KeyboardShortcutsModal';
+import { WorkspaceManager } from './utils/workspace';
+import type { Repository } from './types/workspace';
+import type {
+  GitStatus,
+  GitCommit,
+  GitBranch,
+  GitStash,
+  GitRemote,
+  GitTag,
+  GitMergeState,
+  MergeStrategy,
+  View,
+  ActivityLogEntry,
+  NotificationType,
+} from './types/git';
+import type { Command } from './types/commands';
 
 export function App({ cwd }: { cwd: string }) {
-  const renderer = useRenderer()
-  const [currentRepoPath, setCurrentRepoPath] = useState(cwd)
-  const [git, setGit] = useState(() => new GitClient(cwd))
-  const [watcher, setWatcher] = useState(() => new FileSystemWatcher(cwd, () => {}))
-  const [workspaceManager] = useState(() => new WorkspaceManager())
-  const [repos, setRepos] = useState<Repository[]>([])
-  const [repoFilterQuery, setRepoFilterQuery] = useState('')
-  const [repoFocusedPanel, setRepoFocusedPanel] = useState<'filter' | 'repos'>('repos')
-  const [showRepoSwitchModal, setShowRepoSwitchModal] = useState(false)
-  const [showKeyboardShortcutsModal, setShowKeyboardShortcutsModal] = useState(false)
-  const [pendingRepoSwitch, setPendingRepoSwitch] = useState<string | null>(null)
-  const [view, setView] = useState<View>('main')
-  const [focusedPanel, setFocusedPanel] = useState<'status' | 'branches' | 'log' | 'stashes' | 'remotes' | 'tags' | 'diff'>('status')
-  const [branchRemoteTab, setBranchRemoteTab] = useState<'branches' | 'remotes' | 'tags'>('branches')
+  const renderer = useRenderer();
+  const [currentRepoPath, setCurrentRepoPath] = useState(cwd);
+  const [git, setGit] = useState(() => new GitClient(cwd));
+  const [watcher, setWatcher] = useState(() => new FileSystemWatcher(cwd, () => {}));
+  const [workspaceManager] = useState(() => new WorkspaceManager());
+  const [repos, setRepos] = useState<Repository[]>([]);
+  const [repoFilterQuery, setRepoFilterQuery] = useState('');
+  const [repoFocusedPanel, setRepoFocusedPanel] = useState<'filter' | 'repos'>('repos');
+  const [showRepoSwitchModal, setShowRepoSwitchModal] = useState(false);
+  const [showKeyboardShortcutsModal, setShowKeyboardShortcutsModal] = useState(false);
+  const [pendingRepoSwitch, setPendingRepoSwitch] = useState<string | null>(null);
+  const [view, setView] = useState<View>('main');
+  const [focusedPanel, setFocusedPanel] = useState<
+    'status' | 'branches' | 'log' | 'stashes' | 'remotes' | 'tags' | 'diff'
+  >('status');
+  const [branchRemoteTab, setBranchRemoteTab] = useState<'branches' | 'remotes' | 'tags'>(
+    'branches',
+  );
   const [status, setStatus] = useState<GitStatus>({
     branch: '',
     ahead: 0,
@@ -59,1045 +75,1224 @@ export function App({ cwd }: { cwd: string }) {
     staged: [],
     unstaged: [],
     untracked: [],
-  })
-  const [commits, setCommits] = useState<GitCommit[]>([])
-  const [branches, setBranches] = useState<GitBranch[]>([])
-  const [stashes, setStashes] = useState<GitStash[]>([])
-  const [remotes, setRemotes] = useState<GitRemote[]>([])
-  const [tags, setTags] = useState<GitTag[]>([])
-  const [diff, setDiff] = useState<string>('')
-  const [selectedFilePath, setSelectedFilePath] = useState<string | undefined>(undefined)
-  const [selectedIndex, setSelectedIndex] = useState(0)
-  const [message, setMessage] = useState('')
-  const [showCommitModal, setShowCommitModal] = useState(false)
-  const [showStashModal, setShowStashModal] = useState(false)
-  const [showExitModal, setShowExitModal] = useState(false)
-  const [showCommandPalette, setShowCommandPalette] = useState(false)
-  const [showConfigModal, setShowConfigModal] = useState(false)
-  const [showThemesModal, setShowThemesModal] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [showProgressModal, setShowProgressModal] = useState(false)
-  const [progressTitle, setProgressTitle] = useState('')
-  const [progressMessages, setProgressMessages] = useState<string[]>([])
-  const [progressComplete, setProgressComplete] = useState(false)
-  const [progressError, setProgressError] = useState<string | undefined>(undefined)
-  const [showConfirmModal, setShowConfirmModal] = useState(false)
+  });
+  const [commits, setCommits] = useState<GitCommit[]>([]);
+  const [branches, setBranches] = useState<GitBranch[]>([]);
+  const [stashes, setStashes] = useState<GitStash[]>([]);
+  const [remotes, setRemotes] = useState<GitRemote[]>([]);
+  const [tags, setTags] = useState<GitTag[]>([]);
+  const [diff, setDiff] = useState<string>('');
+  const [selectedFilePath, setSelectedFilePath] = useState<string | undefined>(undefined);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [message, setMessage] = useState('');
+  const [showCommitModal, setShowCommitModal] = useState(false);
+  const [showStashModal, setShowStashModal] = useState(false);
+  const [showExitModal, setShowExitModal] = useState(false);
+  const [showCommandPalette, setShowCommandPalette] = useState(false);
+  const [showConfigModal, setShowConfigModal] = useState(false);
+  const [showThemesModal, setShowThemesModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [showProgressModal, setShowProgressModal] = useState(false);
+  const [progressTitle, setProgressTitle] = useState('');
+  const [progressMessages, setProgressMessages] = useState<string[]>([]);
+  const [progressComplete, setProgressComplete] = useState(false);
+  const [progressError, setProgressError] = useState<string | undefined>(undefined);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [confirmModalProps, setConfirmModalProps] = useState<{
-    title: string
-    message: string
-    onConfirm: () => void
-    danger?: boolean
-  }>({ title: '', message: '', onConfirm: () => {} })
-  const [showRenameModal, setShowRenameModal] = useState(false)
-  const [renameFilePath, setRenameFilePath] = useState('')
-  const [showBranchModal, setShowBranchModal] = useState(false)
-  const [showBranchRenameModal, setShowBranchRenameModal] = useState(false)
-  const [branchToRename, setBranchToRename] = useState('')
-  const [showSetUpstreamModal, setShowSetUpstreamModal] = useState(false)
-  const [branchForUpstream, setBranchForUpstream] = useState('')
-  const [showMergeModal, setShowMergeModal] = useState(false)
-  const [showConflictModal, setShowConflictModal] = useState(false)
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    danger?: boolean;
+  }>({ title: '', message: '', onConfirm: () => {} });
+  const [showRenameModal, setShowRenameModal] = useState(false);
+  const [renameFilePath, setRenameFilePath] = useState('');
+  const [showBranchModal, setShowBranchModal] = useState(false);
+  const [showBranchRenameModal, setShowBranchRenameModal] = useState(false);
+  const [branchToRename, setBranchToRename] = useState('');
+  const [showSetUpstreamModal, setShowSetUpstreamModal] = useState(false);
+  const [branchForUpstream, setBranchForUpstream] = useState('');
+  const [showMergeModal, setShowMergeModal] = useState(false);
+  const [showConflictModal, setShowConflictModal] = useState(false);
   const [mergeState, setMergeState] = useState<GitMergeState>({
     inProgress: false,
     currentBranch: '',
     conflicts: [],
-  })
-  const [showResetModal, setShowResetModal] = useState(false)
-  const [showTagModal, setShowTagModal] = useState(false)
-  const [showRemoteModal, setShowRemoteModal] = useState(false)
-  const [remoteModalMode, setRemoteModalMode] = useState<'add' | 'edit'>('add')
-  const [remoteToEdit, setRemoteToEdit] = useState<GitRemote | undefined>(undefined)
-  const [selectedCommitForAction, setSelectedCommitForAction] = useState<GitCommit | null>(null)
-  const [commandLog, setCommandLog] = useState<ActivityLogEntry[]>([])
-  const [showCommandLog, setShowCommandLog] = useState(true)
-  const [, forceUpdate] = useState({})
+  });
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [showTagModal, setShowTagModal] = useState(false);
+  const [showRemoteModal, setShowRemoteModal] = useState(false);
+  const [remoteModalMode, setRemoteModalMode] = useState<'add' | 'edit'>('add');
+  const [remoteToEdit, setRemoteToEdit] = useState<GitRemote | undefined>(undefined);
+  const [selectedCommitForAction, setSelectedCommitForAction] = useState<GitCommit | null>(null);
+  const [commandLog, setCommandLog] = useState<ActivityLogEntry[]>([]);
+  const [showCommandLog, setShowCommandLog] = useState(true);
+  const [, forceUpdate] = useState({});
+  const [isLoadingDiff, setIsLoadingDiff] = useState(false);
 
   // Listen for theme changes and force re-render
   useEffect(() => {
     const unsubscribe = onThemeChange(() => {
-      forceUpdate({}) // Trigger re-render when theme changes
-    })
-    return unsubscribe
-  }, [])
+      forceUpdate({}); // Trigger re-render when theme changes
+    });
+    return unsubscribe;
+  }, []);
 
   // Reinitialize git client and watcher when repo path changes
   useEffect(() => {
     // Stop old watcher
-    watcher.stop()
-    
+    watcher.stop();
+
     // Create new instances for the new repo path
-    const newGit = new GitClient(currentRepoPath)
-    const newWatcher = new FileSystemWatcher(currentRepoPath, () => {})
-    
-    setGit(newGit)
-    setWatcher(newWatcher)
-    
+    const newGit = new GitClient(currentRepoPath);
+    const newWatcher = new FileSystemWatcher(currentRepoPath, () => {});
+
+    setGit(newGit);
+    setWatcher(newWatcher);
+
     // Cleanup on unmount or when changing repos
     return () => {
-      newWatcher.stop()
-    }
-  }, [currentRepoPath])
+      newWatcher.stop();
+    };
+  }, [currentRepoPath]);
 
   // Track current repo in history and load repo list
   useEffect(() => {
     void (async () => {
       try {
-        await workspaceManager.initialize()
-        await workspaceManager.addRepository(currentRepoPath)
-        setRepos(workspaceManager.getConfig().recentRepositories)
+        await workspaceManager.initialize();
+        await workspaceManager.addRepository(currentRepoPath);
+        setRepos(workspaceManager.getConfig().recentRepositories);
       } catch (error) {
-        notify(`Failed to load workspace: ${error}`)
+        notify(`Failed to load workspace: ${error}`);
       }
-    })()
-  }, [workspaceManager, currentRepoPath])
+    })();
+  }, [workspaceManager, currentRepoPath]);
 
   // Clean exit handler
   const handleExit = useCallback(() => {
-    const cleanExit = (globalThis as any).__gitarborCleanExit
+    const cleanExit = (globalThis as any).__gitarborCleanExit;
     if (cleanExit) {
-      cleanExit()
+      cleanExit();
     } else {
       // Fallback if global not available
-      renderer.destroy()
-      process.exit(0)
+      renderer.destroy();
+      process.exit(0);
     }
-  }, [renderer])
+  }, [renderer]);
 
   // Smart notification that infers type from message and logs to activity
-  const notify = useCallback((message: string) => {
-    const lowerMessage = message.toLowerCase()
-    let type: NotificationType = 'info'
-    
-    if (lowerMessage.includes('error') || lowerMessage.startsWith('failed')) {
-      type = 'error'
-    } else if (
-      lowerMessage.includes('success') ||
-      lowerMessage.startsWith('staged') ||
-      lowerMessage.startsWith('unstaged') ||
-      lowerMessage.startsWith('committed') ||
-      lowerMessage.startsWith('push completed') ||
-      lowerMessage.startsWith('pull completed') ||
-      lowerMessage.startsWith('fetch completed') ||
-      lowerMessage.startsWith('applied') ||
-      lowerMessage.startsWith('popped') ||
-      lowerMessage.startsWith('dropped') ||
-      lowerMessage.startsWith('discarded') ||
-      lowerMessage.startsWith('deleted') ||
-      lowerMessage.startsWith('renamed') ||
-      lowerMessage.startsWith('created') ||
-      lowerMessage.startsWith('switched') ||
-      lowerMessage.startsWith('merged') ||
-      lowerMessage.startsWith('cherry-picked') ||
-      lowerMessage.startsWith('reverted') ||
-      lowerMessage.startsWith('amended') ||
-      lowerMessage.startsWith('reset') ||
-      lowerMessage.startsWith('copied') ||
-      lowerMessage.startsWith('added') ||
-      lowerMessage.startsWith('updated') ||
-      lowerMessage.startsWith('removed') ||
-      lowerMessage.startsWith('resolved') ||
-      lowerMessage.startsWith('edited') ||
-      lowerMessage.startsWith('merge completed') ||
-      lowerMessage.startsWith('merge aborted') ||
-      lowerMessage.startsWith('set upstream') ||
-      lowerMessage.startsWith('unset upstream') ||
-      lowerMessage.includes('stashed')
-    ) {
-      type = 'success'
-    } else if (
-      lowerMessage.startsWith('loading') ||
-      lowerMessage.startsWith('pushing') ||
-      lowerMessage.startsWith('pulling') ||
-      lowerMessage.startsWith('fetching') ||
-      lowerMessage.startsWith('switching') ||
-      lowerMessage.startsWith('merging') ||
-      lowerMessage.startsWith('viewing')
-    ) {
-      type = 'info'
-    } else if (lowerMessage.includes('no files') || lowerMessage.includes('conflict')) {
-      type = 'warning'
-    }
-    
-    // Only log errors and warnings to activity log
-    if (type === 'error' || type === 'warning') {
-      git.addActivityMessage(message, type)
-    }
-  }, [git])
+  const notify = useCallback(
+    (message: string) => {
+      const lowerMessage = message.toLowerCase();
+      let type: NotificationType = 'info';
+
+      if (lowerMessage.includes('error') || lowerMessage.startsWith('failed')) {
+        type = 'error';
+      } else if (
+        lowerMessage.includes('success') ||
+        lowerMessage.startsWith('staged') ||
+        lowerMessage.startsWith('unstaged') ||
+        lowerMessage.startsWith('committed') ||
+        lowerMessage.startsWith('push completed') ||
+        lowerMessage.startsWith('pull completed') ||
+        lowerMessage.startsWith('fetch completed') ||
+        lowerMessage.startsWith('applied') ||
+        lowerMessage.startsWith('popped') ||
+        lowerMessage.startsWith('dropped') ||
+        lowerMessage.startsWith('discarded') ||
+        lowerMessage.startsWith('deleted') ||
+        lowerMessage.startsWith('renamed') ||
+        lowerMessage.startsWith('created') ||
+        lowerMessage.startsWith('switched') ||
+        lowerMessage.startsWith('merged') ||
+        lowerMessage.startsWith('cherry-picked') ||
+        lowerMessage.startsWith('reverted') ||
+        lowerMessage.startsWith('amended') ||
+        lowerMessage.startsWith('reset') ||
+        lowerMessage.startsWith('copied') ||
+        lowerMessage.startsWith('added') ||
+        lowerMessage.startsWith('updated') ||
+        lowerMessage.startsWith('removed') ||
+        lowerMessage.startsWith('resolved') ||
+        lowerMessage.startsWith('edited') ||
+        lowerMessage.startsWith('merge completed') ||
+        lowerMessage.startsWith('merge aborted') ||
+        lowerMessage.startsWith('set upstream') ||
+        lowerMessage.startsWith('unset upstream') ||
+        lowerMessage.includes('stashed')
+      ) {
+        type = 'success';
+      } else if (
+        lowerMessage.startsWith('loading') ||
+        lowerMessage.startsWith('pushing') ||
+        lowerMessage.startsWith('pulling') ||
+        lowerMessage.startsWith('fetching') ||
+        lowerMessage.startsWith('switching') ||
+        lowerMessage.startsWith('merging') ||
+        lowerMessage.startsWith('viewing')
+      ) {
+        type = 'info';
+      } else if (lowerMessage.includes('no files') || lowerMessage.includes('conflict')) {
+        type = 'warning';
+      }
+
+      // Only log errors and warnings to activity log
+      if (type === 'error' || type === 'warning') {
+        git.addActivityMessage(message, type);
+      }
+    },
+    [git],
+  );
 
   // Perform the actual repository switch
-  const performRepoSwitch = useCallback(async (repoPath: string) => {
-    try {
-      setLoading(true)
-      notify(`Switching to ${repoPath}...`)
-      
-      // Update the current repo path (this will trigger useEffect to reinitialize git & watcher)
-      setCurrentRepoPath(repoPath)
-      
-      // Reset all state
-      setView('main')
-      setFocusedPanel('status')
-      setSelectedIndex(0)
-      setDiff('')
-      setSelectedFilePath(undefined)
-      setStatus({
-        branch: '',
-        ahead: 0,
-        behind: 0,
-        staged: [],
-        unstaged: [],
-        untracked: [],
-      })
-      setCommits([])
-      setBranches([])
-      setStashes([])
-      setRemotes([])
-      setTags([])
-      
-      // Update workspace history
-      await workspaceManager.addRepository(repoPath)
-      setRepos(workspaceManager.getConfig().recentRepositories)
-      
-      notify(`Switched to ${repoPath}`)
-    } catch (error) {
-      notify(`Failed to switch repository: ${error}`)
-    } finally {
-      setLoading(false)
-    }
-  }, [workspaceManager])
+  const performRepoSwitch = useCallback(
+    async (repoPath: string) => {
+      try {
+        setLoading(true);
+        notify(`Switching to ${repoPath}...`);
 
-  const handleRepoSwitch = useCallback((repoPath: string) => {
-    const hasChanges = status.staged.length > 0 || status.unstaged.length > 0 || status.untracked.length > 0
+        // Update the current repo path (this will trigger useEffect to reinitialize git & watcher)
+        setCurrentRepoPath(repoPath);
 
-    if (hasChanges) {
-      // Show confirmation modal
-      setPendingRepoSwitch(repoPath)
-      setShowRepoSwitchModal(true)
-    } else {
-      // Switch immediately if no changes
-      void performRepoSwitch(repoPath)
-    }
-  }, [status, performRepoSwitch])
+        // Reset all state
+        setView('main');
+        setFocusedPanel('status');
+        setSelectedIndex(0);
+        setDiff('');
+        setSelectedFilePath(undefined);
+        setStatus({
+          branch: '',
+          ahead: 0,
+          behind: 0,
+          staged: [],
+          unstaged: [],
+          untracked: [],
+        });
+        setCommits([]);
+        setBranches([]);
+        setStashes([]);
+        setRemotes([]);
+        setTags([]);
+
+        // Update workspace history
+        await workspaceManager.addRepository(repoPath);
+        setRepos(workspaceManager.getConfig().recentRepositories);
+
+        notify(`Switched to ${repoPath}`);
+      } catch (error) {
+        notify(`Failed to switch repository: ${error}`);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [workspaceManager],
+  );
+
+  const handleRepoSwitch = useCallback(
+    (repoPath: string) => {
+      const hasChanges =
+        status.staged.length > 0 || status.unstaged.length > 0 || status.untracked.length > 0;
+
+      if (hasChanges) {
+        // Show confirmation modal
+        setPendingRepoSwitch(repoPath);
+        setShowRepoSwitchModal(true);
+      } else {
+        // Switch immediately if no changes
+        void performRepoSwitch(repoPath);
+      }
+    },
+    [status, performRepoSwitch],
+  );
 
   const handleConfirmRepoSwitch = useCallback(() => {
     if (pendingRepoSwitch) {
-      void performRepoSwitch(pendingRepoSwitch)
-      setShowRepoSwitchModal(false)
-      setPendingRepoSwitch(null)
+      void performRepoSwitch(pendingRepoSwitch);
+      setShowRepoSwitchModal(false);
+      setPendingRepoSwitch(null);
     }
-  }, [pendingRepoSwitch, performRepoSwitch])
+  }, [pendingRepoSwitch, performRepoSwitch]);
 
-  const loadData = useCallback(async (silent: boolean = false) => {
-    try {
-      if (!silent) {
-        setLoading(true)
+  const loadData = useCallback(
+    async (silent: boolean = false) => {
+      try {
+        if (!silent) {
+          setLoading(true);
+        }
+        const [
+          statusData,
+          commitsData,
+          branchesData,
+          stashesData,
+          mergeStateData,
+          remotesData,
+          tagsData,
+        ] = await Promise.all([
+          git.getStatus(),
+          git.getLog(50),
+          git.getBranches(),
+          git.getStashes(),
+          git.getMergeState(),
+          git.getRemotes(),
+          git.getTags(50), // Limit to 50 most recent tags for performance
+        ]);
+        setStatus(statusData);
+        setCommits(commitsData);
+        setBranches(branchesData);
+        setStashes(stashesData);
+        setMergeState(mergeStateData);
+        setRemotes(remotesData);
+        setTags(tagsData);
+
+        // Auto-show conflict modal if merge is in progress with conflicts
+        if (
+          mergeStateData.inProgress &&
+          mergeStateData.conflicts.length > 0 &&
+          !showConflictModal
+        ) {
+          setShowConflictModal(true);
+        }
+
+        if (!silent) {
+          notify('Data loaded');
+        }
+      } catch (error) {
+        notify(`Error: ${error}`);
+      } finally {
+        if (!silent) {
+          setLoading(false);
+        }
       }
-      const [statusData, commitsData, branchesData, stashesData, mergeStateData, remotesData, tagsData] = await Promise.all([
-        git.getStatus(),
-        git.getLog(50),
-        git.getBranches(),
-        git.getStashes(),
-        git.getMergeState(),
-        git.getRemotes(),
-        git.getTags(50), // Limit to 50 most recent tags for performance
-      ])
-      setStatus(statusData)
-      setCommits(commitsData)
-      setBranches(branchesData)
-      setStashes(stashesData)
-      setMergeState(mergeStateData)
-      setRemotes(remotesData)
-      setTags(tagsData)
-      
-      // Auto-show conflict modal if merge is in progress with conflicts
-      if (mergeStateData.inProgress && mergeStateData.conflicts.length > 0 && !showConflictModal) {
-        setShowConflictModal(true)
-      }
-      
-      if (!silent) {
-        notify('Data loaded')
-      }
-    } catch (error) {
-      notify(`Error: ${error}`)
-    } finally {
-      if (!silent) {
-        setLoading(false)
-      }
-    }
-  }, [git, showConflictModal])
+    },
+    [git, showConflictModal],
+  );
 
   const loadDiff = useCallback(async () => {
     try {
+      setIsLoadingDiff(true);
       if (view === 'main' && focusedPanel === 'status') {
         // Load diff for selected file in status panel
-        const allFiles = [...status.staged, ...status.unstaged, ...status.untracked]
+        const allFiles = [...status.staged, ...status.unstaged, ...status.untracked];
         if (allFiles.length > 0 && selectedIndex < allFiles.length) {
-          const file = allFiles[selectedIndex]
+          const file = allFiles[selectedIndex];
           if (file) {
-            let diffContent: string
+            let diffContent: string;
             if (file.status === 'untracked') {
               // For untracked files, show the file content as a diff
-              diffContent = await git.getUntrackedDiff(file.path)
+              diffContent = await git.getUntrackedDiff(file.path);
             } else if (file.staged) {
-              diffContent = await git.getStagedDiff(file.path)
+              diffContent = await git.getStagedDiff(file.path);
             } else {
-              diffContent = await git.getDiff(file.path)
+              diffContent = await git.getDiff(file.path);
             }
-            setDiff(diffContent)
-            setSelectedFilePath(file.path)
+            setDiff(diffContent);
+            setSelectedFilePath(file.path);
           }
         } else {
-          setDiff('')
-          setSelectedFilePath(undefined)
+          setDiff('');
+          setSelectedFilePath(undefined);
         }
       } else if (view === 'diff') {
         // Keep existing diff when in dedicated diff view
         // (diff is already loaded from other actions)
       } else {
-        setDiff('')
-        setSelectedFilePath(undefined)
+        setDiff('');
+        setSelectedFilePath(undefined);
       }
     } catch (error) {
-      notify(`Error loading diff: ${error}`)
+      notify(`Error loading diff: ${error}`);
+    } finally {
+      setIsLoadingDiff(false);
     }
-  }, [git, status, selectedIndex, view, focusedPanel])
+  }, [git, status, selectedIndex, view, focusedPanel]);
 
   useEffect(() => {
-    void loadData(true)
-  }, [loadData])
+    void loadData(true);
+  }, [loadData]);
 
   // Update watcher callback when loadData changes
   useEffect(() => {
-    watcher.setCallback(() => void loadData(true))
-  }, [watcher, loadData])
+    watcher.setCallback(() => void loadData(true));
+  }, [watcher, loadData]);
 
   // Start file system watcher
   useEffect(() => {
-    watcher.start()
-    return () => watcher.stop()
-  }, [watcher])
+    watcher.start();
+    return () => watcher.stop();
+  }, [watcher]);
 
   // Update activity log periodically
   useEffect(() => {
     const updateActivityLog = () => {
-      setCommandLog(git.getActivityLog())
-    }
-    
+      setCommandLog(git.getActivityLog());
+    };
+
     // Update immediately
-    updateActivityLog()
-    
+    updateActivityLog();
+
     // Update every 2 seconds to reduce overhead
-    const interval = setInterval(updateActivityLog, 2000)
-    
-    return () => clearInterval(interval)
-  }, [git])
+    const interval = setInterval(updateActivityLog, 2000);
+
+    return () => clearInterval(interval);
+  }, [git]);
 
   useEffect(() => {
     if (view === 'diff' || (view === 'main' && focusedPanel === 'status')) {
-      // Debounce diff loading to prevent excessive regeneration during rapid navigation
+      // Increase debounce to 300ms to allow for smoother navigation
+      // Cancel any pending loads if navigation continues
       const timer = setTimeout(() => {
-        void loadDiff()
-      }, 100)
-      
-      return () => clearTimeout(timer)
-    }
-  }, [view, focusedPanel, selectedIndex, loadDiff])
+        void loadDiff();
+      }, 300);
 
-  const handleStage = useCallback(async (path: string) => {
-    try {
-      await git.stageFile(path)
-      await loadData(true)
-      notify(`Staged: ${path}`)
-    } catch (error) {
-      notify(`Error staging: ${error}`)
+      return () => {
+        clearTimeout(timer);
+        // Clear loading state when navigation continues
+        setIsLoadingDiff(false);
+      };
     }
-  }, [git, loadData])
+  }, [view, focusedPanel, selectedIndex, loadDiff]);
+
+  const handleStage = useCallback(
+    async (path: string) => {
+      try {
+        await git.stageFile(path);
+        await loadData(true);
+        notify(`Staged: ${path}`);
+      } catch (error) {
+        notify(`Error staging: ${error}`);
+      }
+    },
+    [git, loadData],
+  );
 
   const handleStageAll = useCallback(async () => {
     try {
-      const totalFiles = status.unstaged.length + status.untracked.length
+      const totalFiles = status.unstaged.length + status.untracked.length;
       if (totalFiles === 0) {
-        notify('No files to stage')
-        return
+        notify('No files to stage');
+        return;
       }
-      await git.stageAll()
-      await loadData(true)
-      notify(`Staged all files (${totalFiles})`)
+      await git.stageAll();
+      await loadData(true);
+      notify(`Staged all files (${totalFiles})`);
     } catch (error) {
-      notify(`Error staging all: ${error}`)
+      notify(`Error staging all: ${error}`);
     }
-  }, [git, loadData, status])
+  }, [git, loadData, status]);
 
-  const handleUnstage = useCallback(async (path: string) => {
-    try {
-      await git.unstageFile(path)
-      await loadData(true)
-      notify(`Unstaged: ${path}`)
-    } catch (error) {
-      notify(`Error unstaging: ${error}`)
-    }
-  }, [git, loadData])
+  const handleUnstage = useCallback(
+    async (path: string) => {
+      try {
+        await git.unstageFile(path);
+        await loadData(true);
+        notify(`Unstaged: ${path}`);
+      } catch (error) {
+        notify(`Error unstaging: ${error}`);
+      }
+    },
+    [git, loadData],
+  );
 
-  const handleCommit = useCallback(async (commitMessage: string) => {
-    try {
-      await git.commit(commitMessage)
-      await loadData(true)
-      notify(`Committed: ${commitMessage}`)
-      setShowCommitModal(false)
-    } catch (error) {
-      notify(`Error committing: ${error}`)
-      setShowCommitModal(false)
-    }
-  }, [git, loadData])
+  const handleCommit = useCallback(
+    async (commitMessage: string) => {
+      try {
+        await git.commit(commitMessage);
+        await loadData(true);
+        notify(`Committed: ${commitMessage}`);
+        setShowCommitModal(false);
+      } catch (error) {
+        notify(`Error committing: ${error}`);
+        setShowCommitModal(false);
+      }
+    },
+    [git, loadData],
+  );
 
-  const handleCheckout = useCallback(async (branch: string) => {
-    try {
-      await git.checkout(branch)
-      await loadData(true)
-      notify(`Switched to branch: ${branch}`)
-    } catch (error) {
-      notify(`Error checking out: ${error}`)
-    }
-  }, [git, loadData])
+  const handleCheckout = useCallback(
+    async (branch: string) => {
+      try {
+        await git.checkout(branch);
+        await loadData(true);
+        notify(`Switched to branch: ${branch}`);
+      } catch (error) {
+        notify(`Error checking out: ${error}`);
+      }
+    },
+    [git, loadData],
+  );
 
   const handlePush = useCallback(async () => {
     try {
-      notify('Pushing changes...')
+      notify('Pushing changes...');
 
-      await git.push()
+      await git.push();
 
-      await loadData(true)
-      notify('Push completed successfully')
+      await loadData(true);
+      notify('Push completed successfully');
     } catch (error) {
-      notify(`Push failed: ${error}`)
+      notify(`Push failed: ${error}`);
     }
-  }, [git, loadData])
+  }, [git, loadData]);
 
   const handlePull = useCallback(async () => {
     try {
-      setProgressTitle('Pulling changes...')
-      setProgressMessages([])
-      setProgressComplete(false)
-      setProgressError(undefined)
-      setShowProgressModal(true)
+      setProgressTitle('Pulling changes...');
+      setProgressMessages([]);
+      setProgressComplete(false);
+      setProgressError(undefined);
+      setShowProgressModal(true);
 
       await git.pull((line) => {
-        setProgressMessages((prev) => [...prev, line])
-      })
+        setProgressMessages((prev) => [...prev, line]);
+      });
 
-      setProgressComplete(true)
-      await loadData(true)
-      notify('Pull completed successfully')
+      setProgressComplete(true);
+      await loadData(true);
+      notify('Pull completed successfully');
     } catch (error) {
-      setProgressComplete(true)
-      setProgressError(String(error))
-      notify(`Pull failed: ${error}`)
+      setProgressComplete(true);
+      setProgressError(String(error));
+      notify(`Pull failed: ${error}`);
     }
-  }, [git, loadData])
+  }, [git, loadData]);
 
   const handleFetch = useCallback(async () => {
     try {
-      notify('Fetching from remotes...')
+      notify('Fetching from remotes...');
 
-      await git.fetch()
+      await git.fetch();
 
-      await loadData(true)
-      notify('Fetch completed successfully')
+      await loadData(true);
+      notify('Fetch completed successfully');
     } catch (error) {
-      notify(`Fetch failed: ${error}`)
+      notify(`Fetch failed: ${error}`);
     }
-  }, [git, loadData])
+  }, [git, loadData]);
 
-  const handleCreateStash = useCallback(async (stashMessage: string) => {
-    try {
-      await git.createStash(stashMessage || undefined)
-      await loadData(true)
-      notify(stashMessage ? `Stashed: ${stashMessage}` : 'Changes stashed')
-      setShowStashModal(false)
-    } catch (error) {
-      notify(`Error creating stash: ${error}`)
-      setShowStashModal(false)
-    }
-  }, [git, loadData])
+  const handleCreateStash = useCallback(
+    async (stashMessage: string) => {
+      try {
+        await git.createStash(stashMessage || undefined);
+        await loadData(true);
+        notify(stashMessage ? `Stashed: ${stashMessage}` : 'Changes stashed');
+        setShowStashModal(false);
+      } catch (error) {
+        notify(`Error creating stash: ${error}`);
+        setShowStashModal(false);
+      }
+    },
+    [git, loadData],
+  );
 
-  const handleApplyStash = useCallback(async (index: number) => {
-    try {
-      await git.applyStash(index)
-      await loadData(true)
-      notify(`Applied stash@{${index}}`)
-    } catch (error) {
-      notify(`Error applying stash: ${error}`)
-    }
-  }, [git, loadData])
+  const handleApplyStash = useCallback(
+    async (index: number) => {
+      try {
+        await git.applyStash(index);
+        await loadData(true);
+        notify(`Applied stash@{${index}}`);
+      } catch (error) {
+        notify(`Error applying stash: ${error}`);
+      }
+    },
+    [git, loadData],
+  );
 
-  const handlePopStash = useCallback(async (index: number) => {
-    try {
-      await git.popStash(index)
-      await loadData(true)
-      notify(`Popped stash@{${index}}`)
-    } catch (error) {
-      notify(`Error popping stash: ${error}`)
-    }
-  }, [git, loadData])
+  const handlePopStash = useCallback(
+    async (index: number) => {
+      try {
+        await git.popStash(index);
+        await loadData(true);
+        notify(`Popped stash@{${index}}`);
+      } catch (error) {
+        notify(`Error popping stash: ${error}`);
+      }
+    },
+    [git, loadData],
+  );
 
-  const handleDropStash = useCallback(async (index: number) => {
-    try {
-      await git.dropStash(index)
-      await loadData(true)
-      notify(`Dropped stash@{${index}}`)
-    } catch (error) {
-      notify(`Error dropping stash: ${error}`)
-    }
-  }, [git, loadData])
+  const handleDropStash = useCallback(
+    async (index: number) => {
+      try {
+        await git.dropStash(index);
+        await loadData(true);
+        notify(`Dropped stash@{${index}}`);
+      } catch (error) {
+        notify(`Error dropping stash: ${error}`);
+      }
+    },
+    [git, loadData],
+  );
 
-  const handleDropStashWithConfirm = useCallback((index: number, stashName: string, message: string) => {
-    setConfirmModalProps({
-      title: 'Drop Stash?',
-      message: `Are you sure you want to drop ${stashName}: ${message}? This cannot be undone.`,
-      onConfirm: () => {
-        setShowConfirmModal(false)
-        void handleDropStash(index)
-      },
-      danger: true,
-    })
-    setShowConfirmModal(true)
-  }, [handleDropStash])
+  const handleDropStashWithConfirm = useCallback(
+    (index: number, stashName: string, message: string) => {
+      setConfirmModalProps({
+        title: 'Drop Stash?',
+        message: `Are you sure you want to drop ${stashName}: ${message}? This cannot be undone.`,
+        onConfirm: () => {
+          setShowConfirmModal(false);
+          void handleDropStash(index);
+        },
+        danger: true,
+      });
+      setShowConfirmModal(true);
+    },
+    [handleDropStash],
+  );
 
-  const handleViewStashDiff = useCallback(async (index: number) => {
-    try {
-      const stashDiff = await git.getStashDiff(index)
-      setDiff(stashDiff)
-      setView('diff')
-      notify(`Viewing diff for stash@{${index}}`)
-    } catch (error) {
-      notify(`Error loading stash diff: ${error}`)
-    }
-  }, [git])
+  const handleViewStashDiff = useCallback(
+    async (index: number) => {
+      try {
+        const stashDiff = await git.getStashDiff(index);
+        setDiff(stashDiff);
+        setView('diff');
+        notify(`Viewing diff for stash@{${index}}`);
+      } catch (error) {
+        notify(`Error loading stash diff: ${error}`);
+      }
+    },
+    [git],
+  );
 
   const handleUnstageAll = useCallback(async () => {
     try {
       if (status.staged.length === 0) {
-        notify('No staged files to unstage')
-        return
+        notify('No staged files to unstage');
+        return;
       }
-      await git.unstageAll()
-      await loadData(true)
-      notify(`Unstaged all files (${status.staged.length})`)
+      await git.unstageAll();
+      await loadData(true);
+      notify(`Unstaged all files (${status.staged.length})`);
     } catch (error) {
-      notify(`Error unstaging all: ${error}`)
+      notify(`Error unstaging all: ${error}`);
     }
-  }, [git, loadData, status])
+  }, [git, loadData, status]);
 
-  const handleDiscardChanges = useCallback(async (path: string) => {
-    try {
-      await git.discardChanges(path)
-      await loadData(true)
-      notify(`Discarded changes: ${path}`)
-    } catch (error) {
-      notify(`Error discarding changes: ${error}`)
-    }
-  }, [git, loadData])
+  const handleDiscardChanges = useCallback(
+    async (path: string) => {
+      try {
+        await git.discardChanges(path);
+        await loadData(true);
+        notify(`Discarded changes: ${path}`);
+      } catch (error) {
+        notify(`Error discarding changes: ${error}`);
+      }
+    },
+    [git, loadData],
+  );
 
-  const handleDeleteUntracked = useCallback(async (path: string) => {
-    try {
-      await git.deleteUntrackedFile(path)
-      await loadData(true)
-      notify(`Deleted untracked file: ${path}`)
-    } catch (error) {
-      notify(`Error deleting file: ${error}`)
-    }
-  }, [git, loadData])
+  const handleDeleteUntracked = useCallback(
+    async (path: string) => {
+      try {
+        await git.deleteUntrackedFile(path);
+        await loadData(true);
+        notify(`Deleted untracked file: ${path}`);
+      } catch (error) {
+        notify(`Error deleting file: ${error}`);
+      }
+    },
+    [git, loadData],
+  );
 
-  const handleRenameFile = useCallback(async (oldPath: string, newPath: string) => {
-    try {
-      await git.renameFile(oldPath, newPath)
-      await loadData(true)
-      notify(`Renamed: ${oldPath} → ${newPath}`)
-      setShowRenameModal(false)
-    } catch (error) {
-      notify(`Error renaming file: ${error}`)
-      setShowRenameModal(false)
-    }
-  }, [git, loadData])
+  const handleRenameFile = useCallback(
+    async (oldPath: string, newPath: string) => {
+      try {
+        await git.renameFile(oldPath, newPath);
+        await loadData(true);
+        notify(`Renamed: ${oldPath} → ${newPath}`);
+        setShowRenameModal(false);
+      } catch (error) {
+        notify(`Error renaming file: ${error}`);
+        setShowRenameModal(false);
+      }
+    },
+    [git, loadData],
+  );
 
-  const handleDiscardWithConfirm = useCallback((path: string) => {
-    setConfirmModalProps({
-      title: 'Discard Changes?',
-      message: `Are you sure you want to discard all changes to "${path}"?`,
-      onConfirm: () => {
-        setShowConfirmModal(false)
-        void handleDiscardChanges(path)
-      },
-      danger: true,
-    })
-    setShowConfirmModal(true)
-  }, [handleDiscardChanges])
+  const handleDiscardWithConfirm = useCallback(
+    (path: string) => {
+      setConfirmModalProps({
+        title: 'Discard Changes?',
+        message: `Are you sure you want to discard all changes to "${path}"?`,
+        onConfirm: () => {
+          setShowConfirmModal(false);
+          void handleDiscardChanges(path);
+        },
+        danger: true,
+      });
+      setShowConfirmModal(true);
+    },
+    [handleDiscardChanges],
+  );
 
-  const handleDeleteWithConfirm = useCallback((path: string) => {
-    setConfirmModalProps({
-      title: 'Delete Untracked File?',
-      message: `Are you sure you want to delete "${path}"?`,
-      onConfirm: () => {
-        setShowConfirmModal(false)
-        void handleDeleteUntracked(path)
-      },
-      danger: true,
-    })
-    setShowConfirmModal(true)
-  }, [handleDeleteUntracked])
+  const handleDeleteWithConfirm = useCallback(
+    (path: string) => {
+      setConfirmModalProps({
+        title: 'Delete Untracked File?',
+        message: `Are you sure you want to delete "${path}"?`,
+        onConfirm: () => {
+          setShowConfirmModal(false);
+          void handleDeleteUntracked(path);
+        },
+        danger: true,
+      });
+      setShowConfirmModal(true);
+    },
+    [handleDeleteUntracked],
+  );
 
   const handleUnstageAllWithConfirm = useCallback(() => {
     if (status.staged.length === 0) {
-      notify('No staged files to unstage')
-      return
+      notify('No staged files to unstage');
+      return;
     }
     setConfirmModalProps({
       title: 'Unstage All Files?',
       message: `Are you sure you want to unstage all ${status.staged.length} staged files?`,
       onConfirm: () => {
-        setShowConfirmModal(false)
-        void handleUnstageAll()
+        setShowConfirmModal(false);
+        void handleUnstageAll();
       },
       danger: false,
-    })
-    setShowConfirmModal(true)
-  }, [handleUnstageAll, status])
+    });
+    setShowConfirmModal(true);
+  }, [handleUnstageAll, status]);
 
   const handleRenameWithModal = useCallback((path: string) => {
-    setRenameFilePath(path)
-    setShowRenameModal(true)
-  }, [])
+    setRenameFilePath(path);
+    setShowRenameModal(true);
+  }, []);
 
-  const handleCreateBranch = useCallback(async (name: string, startPoint?: string) => {
-    try {
-      await git.createBranch(name, startPoint)
-      await loadData(true)
-      notify(`Created branch: ${name}`)
-      setShowBranchModal(false)
-    } catch (error) {
-      notify(`Error creating branch: ${error}`)
-      setShowBranchModal(false)
-    }
-  }, [git, loadData])
-
-  const handleDeleteBranch = useCallback((branch: string) => {
-    setConfirmModalProps({
-      title: 'Delete Branch?',
-      message: `Are you sure you want to delete branch "${branch}"? This cannot be undone if the branch is not merged.`,
-      onConfirm: async () => {
-        setShowConfirmModal(false)
-        try {
-          await git.deleteBranch(branch, false)
-          await loadData(true)
-          notify(`Deleted branch: ${branch}`)
-        } catch (error) {
-          // Try to get merge status to provide better error message
-          const errorMsg = String(error)
-          if (errorMsg.includes('not fully merged')) {
-            setConfirmModalProps({
-              title: 'Force Delete Branch?',
-              message: `Branch "${branch}" is not fully merged. Force delete anyway? This will permanently lose commits.`,
-              onConfirm: async () => {
-                setShowConfirmModal(false)
-                try {
-                  await git.deleteBranch(branch, true)
-                  await loadData(true)
-                  notify(`Force deleted branch: ${branch}`)
-                } catch (err) {
-                  notify(`Error force deleting branch: ${err}`)
-                }
-              },
-              danger: true,
-            })
-            setShowConfirmModal(true)
-          } else {
-            notify(`Error deleting branch: ${error}`)
-          }
-        }
-      },
-      danger: true,
-    })
-    setShowConfirmModal(true)
-  }, [git, loadData])
-
-  const handleDeleteRemoteBranch = useCallback((remoteBranch: string) => {
-    // Parse remote and branch name from "remotes/origin/branch-name"
-    const parts = remoteBranch.replace('remotes/', '').split('/')
-    const remote = parts[0]
-    const branch = parts.slice(1).join('/')
-    
-    if (!remote || !branch) {
-      notify('Invalid remote branch format')
-      return
-    }
-
-    setConfirmModalProps({
-      title: 'Delete Remote Branch?',
-      message: `Are you sure you want to delete remote branch "${branch}" on "${remote}"? This will affect all users.`,
-      onConfirm: async () => {
-        setShowConfirmModal(false)
-        try {
-          await git.deleteRemoteBranch(remote, branch)
-          await loadData(true)
-          notify(`Deleted remote branch: ${remote}/${branch}`)
-        } catch (error) {
-          notify(`Error deleting remote branch: ${error}`)
-        }
-      },
-      danger: true,
-    })
-    setShowConfirmModal(true)
-  }, [git, loadData])
-
-  const handleRenameBranch = useCallback(async (oldName: string, newName: string) => {
-    try {
-      await git.renameBranch(oldName, newName)
-      await loadData(true)
-      notify(`Renamed branch: ${oldName} → ${newName}`)
-      setShowBranchRenameModal(false)
-    } catch (error) {
-      notify(`Error renaming branch: ${error}`)
-      setShowBranchRenameModal(false)
-    }
-  }, [git, loadData])
-
-  const handleSetUpstream = useCallback(async (branch: string, upstream: string) => {
-    try {
-      await git.setUpstream(branch, upstream)
-      await loadData(true)
-      notify(`Set upstream for ${branch}: ${upstream}`)
-      setShowSetUpstreamModal(false)
-    } catch (error) {
-      notify(`Error setting upstream: ${error}`)
-      setShowSetUpstreamModal(false)
-    }
-  }, [git, loadData])
-
-  const handleUnsetUpstream = useCallback(async (branch: string) => {
-    try {
-      await git.unsetUpstream(branch)
-      await loadData(true)
-      notify(`Unset upstream for ${branch}`)
-    } catch (error) {
-      notify(`Error unsetting upstream: ${error}`)
-    }
-  }, [git, loadData])
-
-  const handleMerge = useCallback(async (branch: string, strategy: MergeStrategy) => {
-    try {
-      setShowMergeModal(false)
-      notify(`Merging ${branch}...`)
-      await git.merge(branch, strategy)
-      await loadData(true)
-      
-      // Check if there are conflicts
-      const newMergeState = await git.getMergeState()
-      if (newMergeState.inProgress && newMergeState.conflicts.length > 0) {
-        setMergeState(newMergeState)
-        setShowConflictModal(true)
-        notify(`Merge conflicts detected (${newMergeState.conflicts.length} files)`)
-      } else {
-        notify(`Successfully merged ${branch}`)
+  const handleCreateBranch = useCallback(
+    async (name: string, startPoint?: string) => {
+      try {
+        await git.createBranch(name, startPoint);
+        await loadData(true);
+        notify(`Created branch: ${name}`);
+        setShowBranchModal(false);
+      } catch (error) {
+        notify(`Error creating branch: ${error}`);
+        setShowBranchModal(false);
       }
-    } catch (error) {
-      notify(`Merge failed: ${error}`)
-    }
-  }, [git, loadData])
+    },
+    [git, loadData],
+  );
+
+  const handleDeleteBranch = useCallback(
+    (branch: string) => {
+      setConfirmModalProps({
+        title: 'Delete Branch?',
+        message: `Are you sure you want to delete branch "${branch}"? This cannot be undone if the branch is not merged.`,
+        onConfirm: async () => {
+          setShowConfirmModal(false);
+          try {
+            await git.deleteBranch(branch, false);
+            await loadData(true);
+            notify(`Deleted branch: ${branch}`);
+          } catch (error) {
+            // Try to get merge status to provide better error message
+            const errorMsg = String(error);
+            if (errorMsg.includes('not fully merged')) {
+              setConfirmModalProps({
+                title: 'Force Delete Branch?',
+                message: `Branch "${branch}" is not fully merged. Force delete anyway? This will permanently lose commits.`,
+                onConfirm: async () => {
+                  setShowConfirmModal(false);
+                  try {
+                    await git.deleteBranch(branch, true);
+                    await loadData(true);
+                    notify(`Force deleted branch: ${branch}`);
+                  } catch (err) {
+                    notify(`Error force deleting branch: ${err}`);
+                  }
+                },
+                danger: true,
+              });
+              setShowConfirmModal(true);
+            } else {
+              notify(`Error deleting branch: ${error}`);
+            }
+          }
+        },
+        danger: true,
+      });
+      setShowConfirmModal(true);
+    },
+    [git, loadData],
+  );
+
+  const handleDeleteRemoteBranch = useCallback(
+    (remoteBranch: string) => {
+      // Parse remote and branch name from "remotes/origin/branch-name"
+      const parts = remoteBranch.replace('remotes/', '').split('/');
+      const remote = parts[0];
+      const branch = parts.slice(1).join('/');
+
+      if (!remote || !branch) {
+        notify('Invalid remote branch format');
+        return;
+      }
+
+      setConfirmModalProps({
+        title: 'Delete Remote Branch?',
+        message: `Are you sure you want to delete remote branch "${branch}" on "${remote}"? This will affect all users.`,
+        onConfirm: async () => {
+          setShowConfirmModal(false);
+          try {
+            await git.deleteRemoteBranch(remote, branch);
+            await loadData(true);
+            notify(`Deleted remote branch: ${remote}/${branch}`);
+          } catch (error) {
+            notify(`Error deleting remote branch: ${error}`);
+          }
+        },
+        danger: true,
+      });
+      setShowConfirmModal(true);
+    },
+    [git, loadData],
+  );
+
+  const handleRenameBranch = useCallback(
+    async (oldName: string, newName: string) => {
+      try {
+        await git.renameBranch(oldName, newName);
+        await loadData(true);
+        notify(`Renamed branch: ${oldName} → ${newName}`);
+        setShowBranchRenameModal(false);
+      } catch (error) {
+        notify(`Error renaming branch: ${error}`);
+        setShowBranchRenameModal(false);
+      }
+    },
+    [git, loadData],
+  );
+
+  const handleSetUpstream = useCallback(
+    async (branch: string, upstream: string) => {
+      try {
+        await git.setUpstream(branch, upstream);
+        await loadData(true);
+        notify(`Set upstream for ${branch}: ${upstream}`);
+        setShowSetUpstreamModal(false);
+      } catch (error) {
+        notify(`Error setting upstream: ${error}`);
+        setShowSetUpstreamModal(false);
+      }
+    },
+    [git, loadData],
+  );
+
+  const handleUnsetUpstream = useCallback(
+    async (branch: string) => {
+      try {
+        await git.unsetUpstream(branch);
+        await loadData(true);
+        notify(`Unset upstream for ${branch}`);
+      } catch (error) {
+        notify(`Error unsetting upstream: ${error}`);
+      }
+    },
+    [git, loadData],
+  );
+
+  const handleMerge = useCallback(
+    async (branch: string, strategy: MergeStrategy) => {
+      try {
+        setShowMergeModal(false);
+        notify(`Merging ${branch}...`);
+        await git.merge(branch, strategy);
+        await loadData(true);
+
+        // Check if there are conflicts
+        const newMergeState = await git.getMergeState();
+        if (newMergeState.inProgress && newMergeState.conflicts.length > 0) {
+          setMergeState(newMergeState);
+          setShowConflictModal(true);
+          notify(`Merge conflicts detected (${newMergeState.conflicts.length} files)`);
+        } else {
+          notify(`Successfully merged ${branch}`);
+        }
+      } catch (error) {
+        notify(`Merge failed: ${error}`);
+      }
+    },
+    [git, loadData],
+  );
 
   const handleAbortMerge = useCallback(async () => {
     try {
-      await git.abortMerge()
-      await loadData(true)
-      setShowConflictModal(false)
-      notify('Merge aborted')
+      await git.abortMerge();
+      await loadData(true);
+      setShowConflictModal(false);
+      notify('Merge aborted');
     } catch (error) {
-      notify(`Error aborting merge: ${error}`)
+      notify(`Error aborting merge: ${error}`);
     }
-  }, [git, loadData])
+  }, [git, loadData]);
 
-  const handleResolveConflict = useCallback(async (path: string, resolution: 'ours' | 'theirs' | 'manual') => {
-    try {
-      await git.resolveConflict(path, resolution)
-      await loadData(true)
-      notify(`Resolved ${path} using ${resolution}`)
-    } catch (error) {
-      notify(`Error resolving conflict: ${error}`)
-    }
-  }, [git, loadData])
-
-  const handleEditConflict = useCallback(async (path: string, content: string) => {
-    try {
-      await git.writeConflictedFileContent(path, content)
-      notify(`Edited ${path}`)
-    } catch (error) {
-      notify(`Error editing conflict: ${error}`)
-    }
-  }, [git])
-
-  const handleStageResolved = useCallback(async (path: string) => {
-    try {
-      await git.stageFile(path)
-      await loadData(true)
-      notify(`Staged resolved file: ${path}`)
-    } catch (error) {
-      notify(`Error staging file: ${error}`)
-    }
-  }, [git, loadData])
-
-  const handleContinueMerge = useCallback(async (commitMessage: string) => {
-    try {
-      await git.continueMerge(commitMessage)
-      await loadData(true)
-      setShowConflictModal(false)
-      notify('Merge completed successfully')
-    } catch (error) {
-      notify(`Error completing merge: ${error}`)
-    }
-  }, [git, loadData])
-
-  const handleCherryPick = useCallback(async (commitHash: string) => {
-    try {
-      await git.cherryPick(commitHash)
-      await loadData(true)
-      notify(`Cherry-picked commit ${commitHash}`)
-    } catch (error) {
-      notify(`Error cherry-picking: ${error}`)
-    }
-  }, [git, loadData])
-
-  const handleRevert = useCallback(async (commitHash: string) => {
-    try {
-      await git.revertCommit(commitHash)
-      await loadData(true)
-      notify(`Reverted commit ${commitHash}`)
-    } catch (error) {
-      notify(`Error reverting: ${error}`)
-    }
-  }, [git, loadData])
-
-  const handleAmend = useCallback(async (commitMessage: string) => {
-    try {
-      await git.amendCommit(commitMessage)
-      await loadData(true)
-      notify('Amended last commit')
-    } catch (error) {
-      notify(`Error amending commit: ${error}`)
-    }
-  }, [git, loadData])
-
-  const handleReset = useCallback(async (commitHash: string, mode: 'soft' | 'mixed' | 'hard') => {
-    try {
-      await git.resetToCommit(commitHash, mode)
-      await loadData(true)
-      setShowResetModal(false)
-      notify(`Reset to ${commitHash} (${mode})`)
-    } catch (error) {
-      notify(`Error resetting: ${error}`)
-      setShowResetModal(false)
-    }
-  }, [git, loadData])
-
-  const handleViewCommitDiff = useCallback(async (commitHash: string) => {
-    try {
-      const commitDiff = await git.getCommitDiff(commitHash)
-      setDiff(commitDiff)
-      setView('diff')
-      notify(`Viewing commit ${commitHash}`)
-    } catch (error) {
-      notify(`Error loading commit diff: ${error}`)
-    }
-  }, [git])
-
-  const handleCopyCommitHash = useCallback(async (commitHash: string) => {
-    try {
-      await git.copyToClipboard(commitHash)
-      notify(`Copied ${commitHash} to clipboard`)
-    } catch (error) {
-      notify(`Error copying to clipboard: ${error}`)
-    }
-  }, [git])
-
-  const handleCreateTag = useCallback(async (commitHash: string, tagName: string, message?: string) => {
-    try {
-      await git.createTag(tagName, commitHash, message)
-      await loadData(true)
-      setShowTagModal(false)
-      notify(`Created tag ${tagName} at ${commitHash}`)
-    } catch (error) {
-      notify(`Error creating tag: ${error}`)
-      setShowTagModal(false)
-    }
-  }, [git, loadData])
-
-  const handleAddRemote = useCallback(async (name: string, fetchUrl: string, pushUrl?: string) => {
-    try {
-      await git.addRemote(name, fetchUrl)
-      if (pushUrl && pushUrl !== fetchUrl) {
-        await git.setRemoteUrl(name, fetchUrl, pushUrl)
+  const handleResolveConflict = useCallback(
+    async (path: string, resolution: 'ours' | 'theirs' | 'manual') => {
+      try {
+        await git.resolveConflict(path, resolution);
+        await loadData(true);
+        notify(`Resolved ${path} using ${resolution}`);
+      } catch (error) {
+        notify(`Error resolving conflict: ${error}`);
       }
-      await loadData(true)
-      setShowRemoteModal(false)
-      notify(`Added remote: ${name}`)
-    } catch (error) {
-      notify(`Error adding remote: ${error}`)
-      setShowRemoteModal(false)
-    }
-  }, [git, loadData])
+    },
+    [git, loadData],
+  );
 
-  const handleEditRemote = useCallback(async (name: string, fetchUrl: string, pushUrl?: string) => {
-    try {
-      await git.setRemoteUrl(name, fetchUrl, pushUrl)
-      await loadData(true)
-      setShowRemoteModal(false)
-      notify(`Updated remote: ${name}`)
-    } catch (error) {
-      notify(`Error updating remote: ${error}`)
-      setShowRemoteModal(false)
-    }
-  }, [git, loadData])
+  const handleEditConflict = useCallback(
+    async (path: string, content: string) => {
+      try {
+        await git.writeConflictedFileContent(path, content);
+        notify(`Edited ${path}`);
+      } catch (error) {
+        notify(`Error editing conflict: ${error}`);
+      }
+    },
+    [git],
+  );
 
-  const handleRemoveRemote = useCallback(async (name: string) => {
-    try {
-      await git.removeRemote(name)
-      await loadData(true)
-      notify(`Removed remote: ${name}`)
-    } catch (error) {
-      notify(`Error removing remote: ${error}`)
-    }
-  }, [git, loadData])
+  const handleStageResolved = useCallback(
+    async (path: string) => {
+      try {
+        await git.stageFile(path);
+        await loadData(true);
+        notify(`Staged resolved file: ${path}`);
+      } catch (error) {
+        notify(`Error staging file: ${error}`);
+      }
+    },
+    [git, loadData],
+  );
 
-  const handleRemoveRemoteWithConfirm = useCallback((name: string) => {
-    setConfirmModalProps({
-      title: 'Remove Remote?',
-      message: `Are you sure you want to remove remote "${name}"?`,
-      onConfirm: () => {
-        setShowConfirmModal(false)
-        void handleRemoveRemote(name)
-      },
-      danger: true,
-    })
-    setShowConfirmModal(true)
-  }, [handleRemoveRemote])
+  const handleContinueMerge = useCallback(
+    async (commitMessage: string) => {
+      try {
+        await git.continueMerge(commitMessage);
+        await loadData(true);
+        setShowConflictModal(false);
+        notify('Merge completed successfully');
+      } catch (error) {
+        notify(`Error completing merge: ${error}`);
+      }
+    },
+    [git, loadData],
+  );
 
-  const handleFetchRemote = useCallback(async (name: string) => {
-    try {
-      notify(`Fetching from ${name}...`)
-      await git.fetch()
-      await loadData(true)
-      notify(`Fetch from ${name} completed`)
-    } catch (error) {
-      notify(`Error fetching from ${name}: ${error}`)
-    }
-  }, [git, loadData])
+  const handleCherryPick = useCallback(
+    async (commitHash: string) => {
+      try {
+        await git.cherryPick(commitHash);
+        await loadData(true);
+        notify(`Cherry-picked commit ${commitHash}`);
+      } catch (error) {
+        notify(`Error cherry-picking: ${error}`);
+      }
+    },
+    [git, loadData],
+  );
 
-  const handleDeleteTag = useCallback(async (tagName: string) => {
-    try {
-      await git.deleteTag(tagName)
-      await loadData(true)
-      notify(`Deleted tag: ${tagName}`)
-    } catch (error) {
-      notify(`Error deleting tag: ${error}`)
-    }
-  }, [git, loadData])
+  const handleRevert = useCallback(
+    async (commitHash: string) => {
+      try {
+        await git.revertCommit(commitHash);
+        await loadData(true);
+        notify(`Reverted commit ${commitHash}`);
+      } catch (error) {
+        notify(`Error reverting: ${error}`);
+      }
+    },
+    [git, loadData],
+  );
 
-  const handleDeleteTagWithConfirm = useCallback((tagName: string) => {
-    setConfirmModalProps({
-      title: 'Delete Tag?',
-      message: `Are you sure you want to delete tag "${tagName}"?`,
-      onConfirm: () => {
-        setShowConfirmModal(false)
-        void handleDeleteTag(tagName)
-      },
-      danger: true,
-    })
-    setShowConfirmModal(true)
-  }, [handleDeleteTag])
+  const handleAmend = useCallback(
+    async (commitMessage: string) => {
+      try {
+        await git.amendCommit(commitMessage);
+        await loadData(true);
+        notify('Amended last commit');
+      } catch (error) {
+        notify(`Error amending commit: ${error}`);
+      }
+    },
+    [git, loadData],
+  );
 
-  const handlePushTag = useCallback(async (tagName: string, remote: string = 'origin') => {
-    try {
-      notify(`Pushing tag ${tagName} to ${remote}...`)
-      await git.pushTag(tagName, remote)
-      await loadData(true)
-      notify(`Pushed tag ${tagName} to ${remote}`)
-    } catch (error) {
-      notify(`Error pushing tag: ${error}`)
-    }
-  }, [git, loadData])
+  const handleReset = useCallback(
+    async (commitHash: string, mode: 'soft' | 'mixed' | 'hard') => {
+      try {
+        await git.resetToCommit(commitHash, mode);
+        await loadData(true);
+        setShowResetModal(false);
+        notify(`Reset to ${commitHash} (${mode})`);
+      } catch (error) {
+        notify(`Error resetting: ${error}`);
+        setShowResetModal(false);
+      }
+    },
+    [git, loadData],
+  );
 
-  const handlePushAllTags = useCallback(async (remote: string = 'origin') => {
-    try {
-      notify(`Pushing all tags to ${remote}...`)
-      await git.pushAllTags(remote)
-      await loadData(true)
-      notify(`Pushed all tags to ${remote}`)
-    } catch (error) {
-      notify(`Error pushing tags: ${error}`)
-    }
-  }, [git, loadData])
+  const handleViewCommitDiff = useCallback(
+    async (commitHash: string) => {
+      try {
+        const commitDiff = await git.getCommitDiff(commitHash);
+        setDiff(commitDiff);
+        setView('diff');
+        notify(`Viewing commit ${commitHash}`);
+      } catch (error) {
+        notify(`Error loading commit diff: ${error}`);
+      }
+    },
+    [git],
+  );
 
-  const handleCheckoutTag = useCallback(async (tagName: string) => {
-    try {
-      await git.checkoutTag(tagName)
-      await loadData(true)
-      notify(`Checked out tag: ${tagName}`)
-    } catch (error) {
-      notify(`Error checking out tag: ${error}`)
-    }
-  }, [git, loadData])
+  const handleCopyCommitHash = useCallback(
+    async (commitHash: string) => {
+      try {
+        await git.copyToClipboard(commitHash);
+        notify(`Copied ${commitHash} to clipboard`);
+      } catch (error) {
+        notify(`Error copying to clipboard: ${error}`);
+      }
+    },
+    [git],
+  );
 
-  const handleDeleteRemoteTag = useCallback((tagName: string, remote: string) => {
-    setConfirmModalProps({
-      title: 'Delete Remote Tag?',
-      message: `Are you sure you want to delete tag "${tagName}" from remote "${remote}"? This will affect all users.`,
-      onConfirm: async () => {
-        setShowConfirmModal(false)
-        try {
-          await git.deleteRemoteTag(remote, tagName)
-          await loadData(true)
-          notify(`Deleted remote tag: ${tagName} from ${remote}`)
-        } catch (error) {
-          notify(`Error deleting remote tag: ${error}`)
+  const handleCreateTag = useCallback(
+    async (commitHash: string, tagName: string, message?: string) => {
+      try {
+        await git.createTag(tagName, commitHash, message);
+        await loadData(true);
+        setShowTagModal(false);
+        notify(`Created tag ${tagName} at ${commitHash}`);
+      } catch (error) {
+        notify(`Error creating tag: ${error}`);
+        setShowTagModal(false);
+      }
+    },
+    [git, loadData],
+  );
+
+  const handleAddRemote = useCallback(
+    async (name: string, fetchUrl: string, pushUrl?: string) => {
+      try {
+        await git.addRemote(name, fetchUrl);
+        if (pushUrl && pushUrl !== fetchUrl) {
+          await git.setRemoteUrl(name, fetchUrl, pushUrl);
         }
-      },
-      danger: true,
-    })
-    setShowConfirmModal(true)
-  }, [git, loadData])
+        await loadData(true);
+        setShowRemoteModal(false);
+        notify(`Added remote: ${name}`);
+      } catch (error) {
+        notify(`Error adding remote: ${error}`);
+        setShowRemoteModal(false);
+      }
+    },
+    [git, loadData],
+  );
 
+  const handleEditRemote = useCallback(
+    async (name: string, fetchUrl: string, pushUrl?: string) => {
+      try {
+        await git.setRemoteUrl(name, fetchUrl, pushUrl);
+        await loadData(true);
+        setShowRemoteModal(false);
+        notify(`Updated remote: ${name}`);
+      } catch (error) {
+        notify(`Error updating remote: ${error}`);
+        setShowRemoteModal(false);
+      }
+    },
+    [git, loadData],
+  );
+
+  const handleRemoveRemote = useCallback(
+    async (name: string) => {
+      try {
+        await git.removeRemote(name);
+        await loadData(true);
+        notify(`Removed remote: ${name}`);
+      } catch (error) {
+        notify(`Error removing remote: ${error}`);
+      }
+    },
+    [git, loadData],
+  );
+
+  const handleRemoveRemoteWithConfirm = useCallback(
+    (name: string) => {
+      setConfirmModalProps({
+        title: 'Remove Remote?',
+        message: `Are you sure you want to remove remote "${name}"?`,
+        onConfirm: () => {
+          setShowConfirmModal(false);
+          void handleRemoveRemote(name);
+        },
+        danger: true,
+      });
+      setShowConfirmModal(true);
+    },
+    [handleRemoveRemote],
+  );
+
+  const handleFetchRemote = useCallback(
+    async (name: string) => {
+      try {
+        notify(`Fetching from ${name}...`);
+        await git.fetch();
+        await loadData(true);
+        notify(`Fetch from ${name} completed`);
+      } catch (error) {
+        notify(`Error fetching from ${name}: ${error}`);
+      }
+    },
+    [git, loadData],
+  );
+
+  const handleDeleteTag = useCallback(
+    async (tagName: string) => {
+      try {
+        await git.deleteTag(tagName);
+        await loadData(true);
+        notify(`Deleted tag: ${tagName}`);
+      } catch (error) {
+        notify(`Error deleting tag: ${error}`);
+      }
+    },
+    [git, loadData],
+  );
+
+  const handleDeleteTagWithConfirm = useCallback(
+    (tagName: string) => {
+      setConfirmModalProps({
+        title: 'Delete Tag?',
+        message: `Are you sure you want to delete tag "${tagName}"?`,
+        onConfirm: () => {
+          setShowConfirmModal(false);
+          void handleDeleteTag(tagName);
+        },
+        danger: true,
+      });
+      setShowConfirmModal(true);
+    },
+    [handleDeleteTag],
+  );
+
+  const handlePushTag = useCallback(
+    async (tagName: string, remote: string = 'origin') => {
+      try {
+        notify(`Pushing tag ${tagName} to ${remote}...`);
+        await git.pushTag(tagName, remote);
+        await loadData(true);
+        notify(`Pushed tag ${tagName} to ${remote}`);
+      } catch (error) {
+        notify(`Error pushing tag: ${error}`);
+      }
+    },
+    [git, loadData],
+  );
+
+  const handlePushAllTags = useCallback(
+    async (remote: string = 'origin') => {
+      try {
+        notify(`Pushing all tags to ${remote}...`);
+        await git.pushAllTags(remote);
+        await loadData(true);
+        notify(`Pushed all tags to ${remote}`);
+      } catch (error) {
+        notify(`Error pushing tags: ${error}`);
+      }
+    },
+    [git, loadData],
+  );
+
+  const handleCheckoutTag = useCallback(
+    async (tagName: string) => {
+      try {
+        await git.checkoutTag(tagName);
+        await loadData(true);
+        notify(`Checked out tag: ${tagName}`);
+      } catch (error) {
+        notify(`Error checking out tag: ${error}`);
+      }
+    },
+    [git, loadData],
+  );
+
+  const handleDeleteRemoteTag = useCallback(
+    (tagName: string, remote: string) => {
+      setConfirmModalProps({
+        title: 'Delete Remote Tag?',
+        message: `Are you sure you want to delete tag "${tagName}" from remote "${remote}"? This will affect all users.`,
+        onConfirm: async () => {
+          setShowConfirmModal(false);
+          try {
+            await git.deleteRemoteTag(remote, tagName);
+            await loadData(true);
+            notify(`Deleted remote tag: ${tagName} from ${remote}`);
+          } catch (error) {
+            notify(`Error deleting remote tag: ${error}`);
+          }
+        },
+        danger: true,
+      });
+      setShowConfirmModal(true);
+    },
+    [git, loadData],
+  );
 
   const getMaxIndex = useCallback(() => {
     switch (view) {
       case 'main':
         if (focusedPanel === 'status') {
-          return status.staged.length + status.unstaged.length + status.untracked.length - 1
+          return status.staged.length + status.unstaged.length + status.untracked.length - 1;
         } else if (focusedPanel === 'branches') {
-          return branches.filter((b) => !b.remote).length - 1
+          return branches.filter((b) => !b.remote).length - 1;
         } else if (focusedPanel === 'stashes') {
-          return stashes.length - 1 // All stashes are now scrollable
+          return stashes.length - 1; // All stashes are now scrollable
         } else if (focusedPanel === 'remotes') {
-          return remotes.length - 1
+          return remotes.length - 1;
         } else if (focusedPanel === 'tags') {
-          return tags.length - 1 // All tags are now scrollable
+          return tags.length - 1; // All tags are now scrollable
         } else if (focusedPanel === 'diff') {
-          return 0 // Diff panel is not selectable (uses scrolling)
+          return 0; // Diff panel is not selectable (uses scrolling)
         } else {
-          return Math.min(commits.length - 1, 9) // log panel shows max 10 commits
+          return Math.min(commits.length - 1, 9); // log panel shows max 10 commits
         }
       case 'log':
-        return commits.length - 1
+        return commits.length - 1;
       case 'stash':
-        return stashes.length - 1
+        return stashes.length - 1;
       case 'remotes':
-        return remotes.length - 1
+        return remotes.length - 1;
       case 'repos':
-        return repos.filter(r => 
-          !repoFilterQuery || 
-          r.name.toLowerCase().includes(repoFilterQuery.toLowerCase()) ||
-          r.path.toLowerCase().includes(repoFilterQuery.toLowerCase())
-        ).length - 1
+        return (
+          repos.filter(
+            (r) =>
+              !repoFilterQuery ||
+              r.name.toLowerCase().includes(repoFilterQuery.toLowerCase()) ||
+              r.path.toLowerCase().includes(repoFilterQuery.toLowerCase()),
+          ).length - 1
+        );
       default:
-        return 0
+        return 0;
     }
-  }, [view, focusedPanel, status, commits, branches, stashes, remotes, tags, repos, repoFilterQuery])
+  }, [
+    view,
+    focusedPanel,
+    status,
+    commits,
+    branches,
+    stashes,
+    remotes,
+    tags,
+    repos,
+    repoFilterQuery,
+  ]);
 
   // Define available commands
   const commands: Command[] = [
@@ -1140,8 +1335,8 @@ export function App({ cwd }: { cwd: string }) {
       description: 'Show status and branches side by side',
       shortcut: '1',
       execute: () => {
-        setView('main')
-        setSelectedIndex(0)
+        setView('main');
+        setSelectedIndex(0);
       },
     },
     {
@@ -1150,8 +1345,8 @@ export function App({ cwd }: { cwd: string }) {
       description: 'Show commit history (full screen)',
       shortcut: '2',
       execute: () => {
-        setView('log')
-        setSelectedIndex(0)
+        setView('log');
+        setSelectedIndex(0);
       },
     },
     {
@@ -1167,8 +1362,8 @@ export function App({ cwd }: { cwd: string }) {
       description: 'Show stash list',
       shortcut: '4',
       execute: () => {
-        setView('stash')
-        setSelectedIndex(0)
+        setView('stash');
+        setSelectedIndex(0);
       },
     },
     {
@@ -1177,8 +1372,8 @@ export function App({ cwd }: { cwd: string }) {
       description: 'Show remotes list',
       shortcut: '5',
       execute: () => {
-        setView('remotes')
-        setSelectedIndex(0)
+        setView('remotes');
+        setSelectedIndex(0);
       },
     },
     {
@@ -1187,10 +1382,10 @@ export function App({ cwd }: { cwd: string }) {
       description: 'Show repository history and switch repos',
       shortcut: '6',
       execute: () => {
-        setView('repos')
-        setSelectedIndex(0)
-        setRepoFilterQuery('')
-        setRepoFocusedPanel('repos')
+        setView('repos');
+        setSelectedIndex(0);
+        setRepoFilterQuery('');
+        setRepoFocusedPanel('repos');
       },
     },
     {
@@ -1199,19 +1394,22 @@ export function App({ cwd }: { cwd: string }) {
       description: 'Navigate to previous tab in focused panel',
       shortcut: '[',
       execute: () => {
-        if (view === 'main' && (focusedPanel === 'branches' || focusedPanel === 'remotes' || focusedPanel === 'tags')) {
+        if (
+          view === 'main' &&
+          (focusedPanel === 'branches' || focusedPanel === 'remotes' || focusedPanel === 'tags')
+        ) {
           // Navigate to previous tab
           if (branchRemoteTab === 'branches') {
-            setBranchRemoteTab('tags')
-            setFocusedPanel('tags')
+            setBranchRemoteTab('tags');
+            setFocusedPanel('tags');
           } else if (branchRemoteTab === 'remotes') {
-            setBranchRemoteTab('branches')
-            setFocusedPanel('branches')
+            setBranchRemoteTab('branches');
+            setFocusedPanel('branches');
           } else if (branchRemoteTab === 'tags') {
-            setBranchRemoteTab('remotes')
-            setFocusedPanel('remotes')
+            setBranchRemoteTab('remotes');
+            setFocusedPanel('remotes');
           }
-          setSelectedIndex(0)
+          setSelectedIndex(0);
         }
       },
     },
@@ -1221,19 +1419,22 @@ export function App({ cwd }: { cwd: string }) {
       description: 'Navigate to next tab in focused panel',
       shortcut: ']',
       execute: () => {
-        if (view === 'main' && (focusedPanel === 'branches' || focusedPanel === 'remotes' || focusedPanel === 'tags')) {
+        if (
+          view === 'main' &&
+          (focusedPanel === 'branches' || focusedPanel === 'remotes' || focusedPanel === 'tags')
+        ) {
           // Navigate to next tab
           if (branchRemoteTab === 'branches') {
-            setBranchRemoteTab('remotes')
-            setFocusedPanel('remotes')
+            setBranchRemoteTab('remotes');
+            setFocusedPanel('remotes');
           } else if (branchRemoteTab === 'remotes') {
-            setBranchRemoteTab('tags')
-            setFocusedPanel('tags')
+            setBranchRemoteTab('tags');
+            setFocusedPanel('tags');
           } else if (branchRemoteTab === 'tags') {
-            setBranchRemoteTab('branches')
-            setFocusedPanel('branches')
+            setBranchRemoteTab('branches');
+            setFocusedPanel('branches');
           }
-          setSelectedIndex(0)
+          setSelectedIndex(0);
         }
       },
     },
@@ -1244,14 +1445,17 @@ export function App({ cwd }: { cwd: string }) {
       shortcut: 'TAB / Shift+TAB',
       execute: () => {
         if (view === 'main') {
-          const panels: Array<'status' | 'branches' | 'log' | 'stashes' | 'remotes' | 'tags' | 'diff'> = stashes.length > 0
-            ? ['status', 'branches', 'stashes', 'log', 'diff']
-            : ['status', 'branches', 'log', 'diff']
-          
-          const currentIndex = panels.indexOf(focusedPanel)
-          const nextIndex = (currentIndex + 1) % panels.length
-          setFocusedPanel(panels[nextIndex]!)
-          setSelectedIndex(0)
+          const panels: Array<
+            'status' | 'branches' | 'log' | 'stashes' | 'remotes' | 'tags' | 'diff'
+          > =
+            stashes.length > 0
+              ? ['status', 'branches', 'stashes', 'log', 'diff']
+              : ['status', 'branches', 'log', 'diff'];
+
+          const currentIndex = panels.indexOf(focusedPanel);
+          const nextIndex = (currentIndex + 1) % panels.length;
+          setFocusedPanel(panels[nextIndex]!);
+          setSelectedIndex(0);
         }
       },
     },
@@ -1261,9 +1465,9 @@ export function App({ cwd }: { cwd: string }) {
       description: 'Focus working directory panel',
       shortcut: 'w',
       execute: () => {
-        setView('main')
-        setFocusedPanel('status')
-        setSelectedIndex(0)
+        setView('main');
+        setFocusedPanel('status');
+        setSelectedIndex(0);
       },
     },
     {
@@ -1272,10 +1476,10 @@ export function App({ cwd }: { cwd: string }) {
       description: 'Focus branches panel',
       shortcut: 'b',
       execute: () => {
-        setView('main')
-        setBranchRemoteTab('branches')
-        setFocusedPanel('branches')
-        setSelectedIndex(0)
+        setView('main');
+        setBranchRemoteTab('branches');
+        setFocusedPanel('branches');
+        setSelectedIndex(0);
       },
     },
     {
@@ -1284,9 +1488,9 @@ export function App({ cwd }: { cwd: string }) {
       description: 'Focus commits panel',
       shortcut: 'l',
       execute: () => {
-        setView('main')
-        setFocusedPanel('log')
-        setSelectedIndex(0)
+        setView('main');
+        setFocusedPanel('log');
+        setSelectedIndex(0);
       },
     },
     {
@@ -1295,9 +1499,9 @@ export function App({ cwd }: { cwd: string }) {
       description: 'Focus stashes panel',
       shortcut: 'h',
       execute: () => {
-        setView('main')
-        setFocusedPanel('stashes')
-        setSelectedIndex(0)
+        setView('main');
+        setFocusedPanel('stashes');
+        setSelectedIndex(0);
       },
     },
     {
@@ -1306,9 +1510,9 @@ export function App({ cwd }: { cwd: string }) {
       description: 'Focus diff panel',
       shortcut: 'v',
       execute: () => {
-        setView('main')
-        setFocusedPanel('diff')
-        setSelectedIndex(0)
+        setView('main');
+        setFocusedPanel('diff');
+        setSelectedIndex(0);
       },
     },
     {
@@ -1316,9 +1520,9 @@ export function App({ cwd }: { cwd: string }) {
       label: 'Panel: Remotes',
       description: 'Focus remotes panel (removed shortcut)',
       execute: () => {
-        setView('main')
-        setFocusedPanel('remotes')
-        setSelectedIndex(0)
+        setView('main');
+        setFocusedPanel('remotes');
+        setSelectedIndex(0);
       },
     },
     {
@@ -1328,9 +1532,9 @@ export function App({ cwd }: { cwd: string }) {
       shortcut: 'c',
       execute: () => {
         if (status.staged.length > 0) {
-          setShowCommitModal(true)
+          setShowCommitModal(true);
         } else {
-          notify('No staged files to commit')
+          notify('No staged files to commit');
         }
       },
     },
@@ -1375,18 +1579,18 @@ export function App({ cwd }: { cwd: string }) {
       shortcut: 'd',
       execute: () => {
         if (view === 'main' && focusedPanel === 'status') {
-          const allFiles = [...status.staged, ...status.unstaged, ...status.untracked]
-          const file = allFiles[selectedIndex]
+          const allFiles = [...status.staged, ...status.unstaged, ...status.untracked];
+          const file = allFiles[selectedIndex];
           if (file) {
             // Check if the file is untracked - if so, delete it
-            const untrackedIndex = selectedIndex - status.staged.length - status.unstaged.length
+            const untrackedIndex = selectedIndex - status.staged.length - status.unstaged.length;
             if (untrackedIndex >= 0 && status.untracked[untrackedIndex]) {
-              handleDeleteWithConfirm(file.path)
+              handleDeleteWithConfirm(file.path);
             } else {
-              handleDiscardWithConfirm(file.path)
+              handleDiscardWithConfirm(file.path);
             }
           } else {
-            notify('No file selected')
+            notify('No file selected');
           }
         }
       },
@@ -1398,12 +1602,12 @@ export function App({ cwd }: { cwd: string }) {
       shortcut: 'D',
       execute: () => {
         if (view === 'main' && focusedPanel === 'status') {
-          const untrackedIndex = selectedIndex - status.staged.length - status.unstaged.length
-          const file = status.untracked[untrackedIndex]
+          const untrackedIndex = selectedIndex - status.staged.length - status.unstaged.length;
+          const file = status.untracked[untrackedIndex];
           if (file && untrackedIndex >= 0) {
-            handleDeleteWithConfirm(file.path)
+            handleDeleteWithConfirm(file.path);
           } else {
-            notify('No untracked file selected')
+            notify('No untracked file selected');
           }
         }
       },
@@ -1415,12 +1619,12 @@ export function App({ cwd }: { cwd: string }) {
       shortcut: 'r',
       execute: () => {
         if (view === 'main' && focusedPanel === 'status') {
-          const allFiles = [...status.staged, ...status.unstaged, ...status.untracked]
-          const file = allFiles[selectedIndex]
+          const allFiles = [...status.staged, ...status.unstaged, ...status.untracked];
+          const file = allFiles[selectedIndex];
           if (file) {
-            handleRenameWithModal(file.path)
+            handleRenameWithModal(file.path);
           } else {
-            notify('No file selected')
+            notify('No file selected');
           }
         }
       },
@@ -1439,14 +1643,14 @@ export function App({ cwd }: { cwd: string }) {
       shortcut: 'D (in branches panel)',
       execute: () => {
         if (view === 'main' && focusedPanel === 'branches') {
-          const localBranches = branches.filter((b) => !b.remote)
-          const branch = localBranches[selectedIndex]
+          const localBranches = branches.filter((b) => !b.remote);
+          const branch = localBranches[selectedIndex];
           if (branch && !branch.current) {
-            handleDeleteBranch(branch.name)
+            handleDeleteBranch(branch.name);
           } else if (branch?.current) {
-            notify('Cannot delete current branch')
+            notify('Cannot delete current branch');
           } else {
-            notify('No branch selected')
+            notify('No branch selected');
           }
         }
       },
@@ -1458,13 +1662,13 @@ export function App({ cwd }: { cwd: string }) {
       shortcut: 'R (in branches panel)',
       execute: () => {
         if (view === 'main' && focusedPanel === 'branches') {
-          const localBranches = branches.filter((b) => !b.remote)
-          const branch = localBranches[selectedIndex]
+          const localBranches = branches.filter((b) => !b.remote);
+          const branch = localBranches[selectedIndex];
           if (branch) {
-            setBranchToRename(branch.name)
-            setShowBranchRenameModal(true)
+            setBranchToRename(branch.name);
+            setShowBranchRenameModal(true);
           } else {
-            notify('No branch selected')
+            notify('No branch selected');
           }
         }
       },
@@ -1476,13 +1680,13 @@ export function App({ cwd }: { cwd: string }) {
       shortcut: 'u (in branches panel)',
       execute: () => {
         if (view === 'main' && focusedPanel === 'branches') {
-          const localBranches = branches.filter((b) => !b.remote)
-          const branch = localBranches[selectedIndex]
+          const localBranches = branches.filter((b) => !b.remote);
+          const branch = localBranches[selectedIndex];
           if (branch) {
-            setBranchForUpstream(branch.name)
-            setShowSetUpstreamModal(true)
+            setBranchForUpstream(branch.name);
+            setShowSetUpstreamModal(true);
           } else {
-            notify('No branch selected')
+            notify('No branch selected');
           }
         }
       },
@@ -1494,14 +1698,14 @@ export function App({ cwd }: { cwd: string }) {
       shortcut: 'U (in branches panel)',
       execute: () => {
         if (view === 'main' && focusedPanel === 'branches') {
-          const localBranches = branches.filter((b) => !b.remote)
-          const branch = localBranches[selectedIndex]
+          const localBranches = branches.filter((b) => !b.remote);
+          const branch = localBranches[selectedIndex];
           if (branch && branch.upstream) {
-            void handleUnsetUpstream(branch.name)
+            void handleUnsetUpstream(branch.name);
           } else if (branch && !branch.upstream) {
-            notify('Branch has no upstream set')
+            notify('Branch has no upstream set');
           } else {
-            notify('No branch selected')
+            notify('No branch selected');
           }
         }
       },
@@ -1513,9 +1717,9 @@ export function App({ cwd }: { cwd: string }) {
       shortcut: 'm',
       execute: () => {
         if (mergeState.inProgress) {
-          notify('Merge already in progress - resolve conflicts first')
+          notify('Merge already in progress - resolve conflicts first');
         } else {
-          setShowMergeModal(true)
+          setShowMergeModal(true);
         }
       },
     },
@@ -1526,9 +1730,9 @@ export function App({ cwd }: { cwd: string }) {
       shortcut: 'C',
       execute: () => {
         if (mergeState.inProgress) {
-          setShowConflictModal(true)
+          setShowConflictModal(true);
         } else {
-          notify('No merge in progress')
+          notify('No merge in progress');
         }
       },
     },
@@ -1540,16 +1744,17 @@ export function App({ cwd }: { cwd: string }) {
         if (mergeState.inProgress) {
           setConfirmModalProps({
             title: 'Abort Merge?',
-            message: 'Are you sure you want to abort the current merge? All conflict resolutions will be lost.',
+            message:
+              'Are you sure you want to abort the current merge? All conflict resolutions will be lost.',
             onConfirm: () => {
-              setShowConfirmModal(false)
-              void handleAbortMerge()
+              setShowConfirmModal(false);
+              void handleAbortMerge();
             },
             danger: true,
-          })
-          setShowConfirmModal(true)
+          });
+          setShowConfirmModal(true);
         } else {
-          notify('No merge in progress')
+          notify('No merge in progress');
         }
       },
     },
@@ -1560,18 +1765,18 @@ export function App({ cwd }: { cwd: string }) {
       shortcut: 'y (in log view)',
       execute: () => {
         if (view === 'log' || (view === 'main' && focusedPanel === 'log')) {
-          const commit = commits[selectedIndex]
+          const commit = commits[selectedIndex];
           if (commit) {
             setConfirmModalProps({
               title: 'Cherry-pick Commit?',
               message: `Apply changes from commit ${commit.shortHash}: ${commit.message}`,
               onConfirm: () => {
-                setShowConfirmModal(false)
-                void handleCherryPick(commit.hash)
+                setShowConfirmModal(false);
+                void handleCherryPick(commit.hash);
               },
               danger: false,
-            })
-            setShowConfirmModal(true)
+            });
+            setShowConfirmModal(true);
           }
         }
       },
@@ -1583,18 +1788,18 @@ export function App({ cwd }: { cwd: string }) {
       shortcut: 'R (in log view)',
       execute: () => {
         if (view === 'log' || (view === 'main' && focusedPanel === 'log')) {
-          const commit = commits[selectedIndex]
+          const commit = commits[selectedIndex];
           if (commit) {
             setConfirmModalProps({
               title: 'Revert Commit?',
               message: `Create a new commit that undoes ${commit.shortHash}: ${commit.message}`,
               onConfirm: () => {
-                setShowConfirmModal(false)
-                void handleRevert(commit.hash)
+                setShowConfirmModal(false);
+                void handleRevert(commit.hash);
               },
               danger: false,
-            })
-            setShowConfirmModal(true)
+            });
+            setShowConfirmModal(true);
           }
         }
       },
@@ -1610,17 +1815,17 @@ export function App({ cwd }: { cwd: string }) {
             title: 'Amend Last Commit?',
             message: `Add staged changes to the last commit? This will change commit history.`,
             onConfirm: () => {
-              setShowConfirmModal(false)
-              const lastCommit = commits[0]
+              setShowConfirmModal(false);
+              const lastCommit = commits[0];
               if (lastCommit) {
-                void handleAmend(lastCommit.message)
+                void handleAmend(lastCommit.message);
               }
             },
             danger: true,
-          })
-          setShowConfirmModal(true)
+          });
+          setShowConfirmModal(true);
         } else {
-          notify('No staged changes to amend')
+          notify('No staged changes to amend');
         }
       },
     },
@@ -1631,10 +1836,10 @@ export function App({ cwd }: { cwd: string }) {
       shortcut: 'X (in log view)',
       execute: () => {
         if (view === 'log' || (view === 'main' && focusedPanel === 'log')) {
-          const commit = commits[selectedIndex]
+          const commit = commits[selectedIndex];
           if (commit) {
-            setSelectedCommitForAction(commit)
-            setShowResetModal(true)
+            setSelectedCommitForAction(commit);
+            setShowResetModal(true);
           }
         }
       },
@@ -1646,9 +1851,9 @@ export function App({ cwd }: { cwd: string }) {
       shortcut: 'Enter (in log view)',
       execute: () => {
         if (view === 'log' || (view === 'main' && focusedPanel === 'log')) {
-          const commit = commits[selectedIndex]
+          const commit = commits[selectedIndex];
           if (commit) {
-            void handleViewCommitDiff(commit.hash)
+            void handleViewCommitDiff(commit.hash);
           }
         }
       },
@@ -1660,9 +1865,9 @@ export function App({ cwd }: { cwd: string }) {
       shortcut: 'Y (in log view)',
       execute: () => {
         if (view === 'log' || (view === 'main' && focusedPanel === 'log')) {
-          const commit = commits[selectedIndex]
+          const commit = commits[selectedIndex];
           if (commit) {
-            void handleCopyCommitHash(commit.hash)
+            void handleCopyCommitHash(commit.hash);
           }
         }
       },
@@ -1674,10 +1879,10 @@ export function App({ cwd }: { cwd: string }) {
       shortcut: 't (in log view)',
       execute: () => {
         if (view === 'log' || (view === 'main' && focusedPanel === 'log')) {
-          const commit = commits[selectedIndex]
+          const commit = commits[selectedIndex];
           if (commit) {
-            setSelectedCommitForAction(commit)
-            setShowTagModal(true)
+            setSelectedCommitForAction(commit);
+            setShowTagModal(true);
           }
         }
       },
@@ -1688,9 +1893,9 @@ export function App({ cwd }: { cwd: string }) {
       description: 'Add a new remote repository',
       shortcut: 'n (in remotes panel)',
       execute: () => {
-        setRemoteModalMode('add')
-        setRemoteToEdit(undefined)
-        setShowRemoteModal(true)
+        setRemoteModalMode('add');
+        setRemoteToEdit(undefined);
+        setShowRemoteModal(true);
       },
     },
     {
@@ -1700,11 +1905,11 @@ export function App({ cwd }: { cwd: string }) {
       shortcut: 'e (in remotes panel)',
       execute: () => {
         if ((view === 'main' && focusedPanel === 'remotes') || view === 'remotes') {
-          const remote = remotes[selectedIndex]
+          const remote = remotes[selectedIndex];
           if (remote) {
-            setRemoteModalMode('edit')
-            setRemoteToEdit(remote)
-            setShowRemoteModal(true)
+            setRemoteModalMode('edit');
+            setRemoteToEdit(remote);
+            setShowRemoteModal(true);
           }
         }
       },
@@ -1716,9 +1921,9 @@ export function App({ cwd }: { cwd: string }) {
       shortcut: 'D (in remotes panel)',
       execute: () => {
         if ((view === 'main' && focusedPanel === 'remotes') || view === 'remotes') {
-          const remote = remotes[selectedIndex]
+          const remote = remotes[selectedIndex];
           if (remote) {
-            handleRemoveRemoteWithConfirm(remote.name)
+            handleRemoveRemoteWithConfirm(remote.name);
           }
         }
       },
@@ -1729,10 +1934,10 @@ export function App({ cwd }: { cwd: string }) {
       description: 'Display the git version being used',
       execute: async () => {
         try {
-          const version = await git.getVersion()
-          notify(version)
+          const version = await git.getVersion();
+          notify(version);
         } catch (error) {
-          notify(`Error getting git version: ${error}`)
+          notify(`Error getting git version: ${error}`);
         }
       },
     },
@@ -1750,11 +1955,11 @@ export function App({ cwd }: { cwd: string }) {
       shortcut: 'D (in tags panel)',
       execute: () => {
         if (view === 'main' && focusedPanel === 'tags') {
-          const tag = tags[selectedIndex]
+          const tag = tags[selectedIndex];
           if (tag) {
-            handleDeleteTagWithConfirm(tag.name)
+            handleDeleteTagWithConfirm(tag.name);
           } else {
-            notify('No tag selected')
+            notify('No tag selected');
           }
         }
       },
@@ -1766,11 +1971,11 @@ export function App({ cwd }: { cwd: string }) {
       shortcut: 'P (in tags panel)',
       execute: () => {
         if (view === 'main' && focusedPanel === 'tags') {
-          const tag = tags[selectedIndex]
+          const tag = tags[selectedIndex];
           if (tag) {
-            void handlePushTag(tag.name)
+            void handlePushTag(tag.name);
           } else {
-            notify('No tag selected')
+            notify('No tag selected');
           }
         }
       },
@@ -1787,20 +1992,20 @@ export function App({ cwd }: { cwd: string }) {
       description: 'Delete a tag from remote repository',
       execute: () => {
         if (view === 'main' && focusedPanel === 'tags') {
-          const tag = tags[selectedIndex]
+          const tag = tags[selectedIndex];
           if (tag) {
             setConfirmModalProps({
               title: 'Delete Remote Tag?',
               message: `Delete tag '${tag.name}' from remote 'origin'? This cannot be undone.`,
               onConfirm: () => {
-                setShowConfirmModal(false)
-                void handleDeleteRemoteTag('origin', tag.name)
+                setShowConfirmModal(false);
+                void handleDeleteRemoteTag('origin', tag.name);
               },
               danger: true,
-            })
-            setShowConfirmModal(true)
+            });
+            setShowConfirmModal(true);
           } else {
-            notify('No tag selected')
+            notify('No tag selected');
           }
         }
       },
@@ -1812,11 +2017,11 @@ export function App({ cwd }: { cwd: string }) {
       shortcut: 'ENTER (in tags panel)',
       execute: () => {
         if (view === 'main' && focusedPanel === 'tags') {
-          const tag = tags[selectedIndex]
+          const tag = tags[selectedIndex];
           if (tag) {
-            void handleCheckoutTag(tag.name)
+            void handleCheckoutTag(tag.name);
           } else {
-            notify('No tag selected')
+            notify('No tag selected');
           }
         }
       },
@@ -1828,11 +2033,11 @@ export function App({ cwd }: { cwd: string }) {
       shortcut: 'i (in tags panel)',
       execute: () => {
         if (view === 'main' && focusedPanel === 'tags') {
-          const tag = tags[selectedIndex]
+          const tag = tags[selectedIndex];
           if (tag) {
-            setView('tagDetails')
+            setView('tagDetails');
           } else {
-            notify('No tag selected')
+            notify('No tag selected');
           }
         }
       },
@@ -1844,128 +2049,146 @@ export function App({ cwd }: { cwd: string }) {
       shortcut: 'q / ESC',
       execute: () => setShowExitModal(true),
     },
-  ]
+  ];
 
   useKeyboard((key) => {
-    if (showExitModal || showCommandPalette || showConfigModal || showThemesModal || showProgressModal || showConfirmModal || showRenameModal || showBranchModal || showBranchRenameModal || showSetUpstreamModal || showMergeModal || showConflictModal || showResetModal || showTagModal || showRemoteModal || showRepoSwitchModal || showKeyboardShortcutsModal) {
+    if (
+      showExitModal ||
+      showCommandPalette ||
+      showConfigModal ||
+      showThemesModal ||
+      showProgressModal ||
+      showConfirmModal ||
+      showRenameModal ||
+      showBranchModal ||
+      showBranchRenameModal ||
+      showSetUpstreamModal ||
+      showMergeModal ||
+      showConflictModal ||
+      showResetModal ||
+      showTagModal ||
+      showRemoteModal ||
+      showRepoSwitchModal ||
+      showKeyboardShortcutsModal
+    ) {
       // Modals handle their own keyboard input
-      return
+      return;
     }
 
     if (showCommitModal || showStashModal) {
       if (key.name === 'escape') {
-        setShowCommitModal(false)
-        setShowStashModal(false)
+        setShowCommitModal(false);
+        setShowStashModal(false);
       }
-      return
+      return;
     }
 
     // Special handling for repos view filter panel - intercept all keys except Tab and Escape
     if (view === 'repos' && repoFocusedPanel === 'filter') {
       // Tab to switch to repos panel
       if (key.name === 'tab') {
-        setRepoFocusedPanel('repos')
-        setSelectedIndex(0)
-        return
+        setRepoFocusedPanel('repos');
+        setSelectedIndex(0);
+        return;
       }
 
       // Only Escape exits (not 'q' - that's a valid filter character)
       if (key.name === 'escape') {
-        setShowExitModal(true)
-        return
+        setShowExitModal(true);
+        return;
       }
 
       // Handle text input for filtering
       if (key.sequence && key.sequence.length === 1 && !key.ctrl && !key.meta) {
-        const char = key.sequence
+        const char = key.sequence;
         if (/^[a-zA-Z0-9_\-\/. ]$/.test(char)) {
-          setRepoFilterQuery(prev => prev + char)
-          return
+          setRepoFilterQuery((prev) => prev + char);
+          return;
         }
       }
 
       // Backspace to remove character from filter
       if (key.name === 'backspace') {
         if (repoFilterQuery.length > 0) {
-          setRepoFilterQuery(prev => prev.slice(0, -1))
+          setRepoFilterQuery((prev) => prev.slice(0, -1));
         }
-        return
+        return;
       }
 
       // Block all other shortcuts when in filter panel
-      return
+      return;
     }
 
     // Command palette with '/' key
     if (key.sequence === '/') {
-      setShowCommandPalette(true)
-      return
+      setShowCommandPalette(true);
+      return;
     }
 
     // Toggle command log with '`' key (backtick)
     if (key.sequence === '`') {
-      setShowCommandLog((prev) => !prev)
-      return
+      setShowCommandLog((prev) => !prev);
+      return;
     }
 
     // Show keyboard shortcuts with Shift+? (which is just '?')
     if (key.sequence === '?') {
-      setShowKeyboardShortcutsModal(true)
-      return
+      setShowKeyboardShortcutsModal(true);
+      return;
     }
 
     // Tag details view navigation
     if (view === 'tagDetails') {
-      const tag = tags[selectedIndex]
-      
+      const tag = tags[selectedIndex];
+
       if (key.name === 'escape') {
-        setView('main')
-        setFocusedPanel('tags')
-        return
+        setView('main');
+        setFocusedPanel('tags');
+        return;
       }
-      
+
       if (tag && key.sequence === 'D') {
-        handleDeleteTagWithConfirm(tag.name)
-        return
+        handleDeleteTagWithConfirm(tag.name);
+        return;
       }
-      
+
       if (tag && key.sequence === 'P') {
-        void handlePushTag(tag.name)
-        return
+        void handlePushTag(tag.name);
+        return;
       }
-      
+
       if (tag && key.name === 'return') {
-        void handleCheckoutTag(tag.name)
-        return
+        void handleCheckoutTag(tag.name);
+        return;
       }
     }
 
     // ESC or 'q' key should show exit modal
     if (key.name === 'escape' || key.sequence === 'q') {
-      setShowExitModal(true)
-      return
+      setShowExitModal(true);
+      return;
     }
 
     // View switching
     if (key.sequence === '1') {
-      setView('main')
-      setSelectedIndex(0)
+      setView('main');
+      setSelectedIndex(0);
     } else if (key.sequence === '2') {
-      setView('log')
-      setSelectedIndex(0)
+      setView('log');
+      setSelectedIndex(0);
     } else if (key.sequence === '3') {
-      setView('diff')
+      setView('diff');
     } else if (key.sequence === '4') {
-      setView('stash')
-      setSelectedIndex(0)
+      setView('stash');
+      setSelectedIndex(0);
     } else if (key.sequence === '5') {
-      setView('remotes')
-      setSelectedIndex(0)
+      setView('remotes');
+      setSelectedIndex(0);
     } else if (key.sequence === '6') {
-      setView('repos')
-      setSelectedIndex(0)
-      setRepoFilterQuery('')
-      setRepoFocusedPanel('repos')
+      setView('repos');
+      setSelectedIndex(0);
+      setRepoFilterQuery('');
+      setRepoFocusedPanel('repos');
     }
 
     // Panel switching (when in main view)
@@ -1975,98 +2198,101 @@ export function App({ cwd }: { cwd: string }) {
         if (key.sequence === '[') {
           // Navigate to previous tab: branches <- remotes <- tags <- branches
           if (branchRemoteTab === 'branches') {
-            setBranchRemoteTab('tags')
-            setFocusedPanel('tags')
+            setBranchRemoteTab('tags');
+            setFocusedPanel('tags');
           } else if (branchRemoteTab === 'remotes') {
-            setBranchRemoteTab('branches')
-            setFocusedPanel('branches')
+            setBranchRemoteTab('branches');
+            setFocusedPanel('branches');
           } else if (branchRemoteTab === 'tags') {
-            setBranchRemoteTab('remotes')
-            setFocusedPanel('remotes')
+            setBranchRemoteTab('remotes');
+            setFocusedPanel('remotes');
           }
-          setSelectedIndex(0)
-          return
+          setSelectedIndex(0);
+          return;
         } else if (key.sequence === ']') {
           // Navigate to next tab: branches -> remotes -> tags -> branches
           if (branchRemoteTab === 'branches') {
-            setBranchRemoteTab('remotes')
-            setFocusedPanel('remotes')
+            setBranchRemoteTab('remotes');
+            setFocusedPanel('remotes');
           } else if (branchRemoteTab === 'remotes') {
-            setBranchRemoteTab('tags')
-            setFocusedPanel('tags')
+            setBranchRemoteTab('tags');
+            setFocusedPanel('tags');
           } else if (branchRemoteTab === 'tags') {
-            setBranchRemoteTab('branches')
-            setFocusedPanel('branches')
+            setBranchRemoteTab('branches');
+            setFocusedPanel('branches');
           }
-          setSelectedIndex(0)
-          return
+          setSelectedIndex(0);
+          return;
         }
       }
-      
+
       // Panel shortcuts
       if (key.sequence === 'w') {
-        setFocusedPanel('status')
-        setSelectedIndex(0)
+        setFocusedPanel('status');
+        setSelectedIndex(0);
       } else if (key.sequence === 'b') {
-        setBranchRemoteTab('branches')
-        setFocusedPanel('branches')
-        setSelectedIndex(0)
+        setBranchRemoteTab('branches');
+        setFocusedPanel('branches');
+        setSelectedIndex(0);
       } else if (key.sequence === 'l') {
-        setFocusedPanel('log')
-        setSelectedIndex(0)
+        setFocusedPanel('log');
+        setSelectedIndex(0);
       } else if (key.sequence === 'h') {
-        setFocusedPanel('stashes')
-        setSelectedIndex(0)
+        setFocusedPanel('stashes');
+        setSelectedIndex(0);
       } else if (key.sequence === 'v') {
-        setFocusedPanel('diff')
-        setSelectedIndex(0)
+        setFocusedPanel('diff');
+        setSelectedIndex(0);
       }
-      
+
       // Tab key to cycle through panels (forward with Tab, backward with Shift+Tab)
       if (key.name === 'tab') {
-        const panels: Array<'status' | 'branches' | 'log' | 'stashes' | 'remotes' | 'tags' | 'diff'> = stashes.length > 0
-          ? ['status', 'branches', 'stashes', 'log', 'diff']
-          : ['status', 'branches', 'log', 'diff']
-        
-        const currentIndex = panels.indexOf(focusedPanel)
-        
+        const panels: Array<
+          'status' | 'branches' | 'log' | 'stashes' | 'remotes' | 'tags' | 'diff'
+        > =
+          stashes.length > 0
+            ? ['status', 'branches', 'stashes', 'log', 'diff']
+            : ['status', 'branches', 'log', 'diff'];
+
+        const currentIndex = panels.indexOf(focusedPanel);
+
         // Shift+Tab goes backward, Tab goes forward
         const nextIndex = key.shift
           ? (currentIndex - 1 + panels.length) % panels.length
-          : (currentIndex + 1) % panels.length
-        
-        setFocusedPanel(panels[nextIndex]!)
-        setSelectedIndex(0)
+          : (currentIndex + 1) % panels.length;
+
+        setFocusedPanel(panels[nextIndex]!);
+        setSelectedIndex(0);
       }
-      
+
       // Switch between Branches/Remotes/Tags tabs with left/right arrow when panel is focused
       if (focusedPanel === 'branches' || focusedPanel === 'remotes' || focusedPanel === 'tags') {
         if (key.name === 'left') {
           // Cycle left: tags -> remotes -> branches -> tags
           if (branchRemoteTab === 'branches') {
-            setBranchRemoteTab('tags')
-            setFocusedPanel('tags')
+            setBranchRemoteTab('tags');
+            setFocusedPanel('tags');
           } else if (branchRemoteTab === 'remotes') {
-            setBranchRemoteTab('branches')
-            setFocusedPanel('branches')
+            setBranchRemoteTab('branches');
+            setFocusedPanel('branches');
           } else if (branchRemoteTab === 'tags') {
-            setBranchRemoteTab('remotes')
-            setFocusedPanel('remotes')
+            setBranchRemoteTab('remotes');
+            setFocusedPanel('remotes');
           }
-          setSelectedIndex(0)
+          setSelectedIndex(0);
         } else if (key.name === 'right') {
           // Cycle right: branches -> remotes -> tags -> branches
           if (branchRemoteTab === 'branches') {
-            setBranchRemoteTab('remotes')
-            setFocusedPanel('remotes')
+            setBranchRemoteTab('remotes');
+            setFocusedPanel('remotes');
           } else if (branchRemoteTab === 'remotes') {
-            setBranchRemoteTab('tags')
-            setFocusedPanel('tags')
+            setBranchRemoteTab('tags');
+            setFocusedPanel('tags');
           } else if (branchRemoteTab === 'tags') {
-            setBranchRemoteTab('branches')
-            setFocusedPanel('branches')
+            setBranchRemoteTab('branches');
+            setFocusedPanel('branches');
           }
-          setSelectedIndex(0)
+          setSelectedIndex(0);
         }
       }
     }
@@ -2077,86 +2303,86 @@ export function App({ cwd }: { cwd: string }) {
       if (view === 'repos' && repoFocusedPanel === 'filter') {
         // Don't allow up/down navigation in filter panel
       } else if (key.name === 'up') {
-        setSelectedIndex((prev) => Math.max(0, prev - 1))
+        setSelectedIndex((prev) => Math.max(0, prev - 1));
       } else if (key.name === 'down') {
-        const max = getMaxIndex()
-        setSelectedIndex((prev) => Math.min(max, prev + 1))
+        const max = getMaxIndex();
+        setSelectedIndex((prev) => Math.min(max, prev + 1));
       }
     }
 
     // Actions
     if (key.name === 'return') {
       if (view === 'main' && focusedPanel === 'branches' && branchRemoteTab === 'branches') {
-        const localBranches = branches.filter((b) => !b.remote)
-        const branch = localBranches[selectedIndex]
+        const localBranches = branches.filter((b) => !b.remote);
+        const branch = localBranches[selectedIndex];
         if (branch && !branch.current) {
-          void handleCheckout(branch.name)
+          void handleCheckout(branch.name);
         }
       }
     }
 
     // Branch operations (when in branches panel and branches tab is active)
     if (view === 'main' && focusedPanel === 'branches' && branchRemoteTab === 'branches') {
-      const localBranches = branches.filter((b) => !b.remote)
-      const branch = localBranches[selectedIndex]
+      const localBranches = branches.filter((b) => !b.remote);
+      const branch = localBranches[selectedIndex];
 
       // 'n' key to create new branch
       if (key.sequence === 'n') {
-        setShowBranchModal(true)
+        setShowBranchModal(true);
       }
 
       // 'D' key to delete branch
       if (key.sequence === 'D' && branch && !branch.current) {
-        handleDeleteBranch(branch.name)
+        handleDeleteBranch(branch.name);
       }
 
       // 'R' key to rename branch
       if (key.sequence === 'R' && branch) {
-        setBranchToRename(branch.name)
-        setShowBranchRenameModal(true)
+        setBranchToRename(branch.name);
+        setShowBranchRenameModal(true);
       }
 
       // 'u' key to set upstream
       if (key.sequence === 'u' && branch) {
-        setBranchForUpstream(branch.name)
-        setShowSetUpstreamModal(true)
+        setBranchForUpstream(branch.name);
+        setShowSetUpstreamModal(true);
       }
 
       // 'U' key to unset upstream
       if (key.sequence === 'U' && branch && branch.upstream) {
-        void handleUnsetUpstream(branch.name)
+        void handleUnsetUpstream(branch.name);
       }
     }
 
     // Stash operations (when in stashes panel)
     if (view === 'main' && focusedPanel === 'stashes') {
-      const stash = stashes[selectedIndex]
+      const stash = stashes[selectedIndex];
 
       if (stash && key.name === 'return') {
         // Apply stash on Enter
-        void handleApplyStash(stash.index)
+        void handleApplyStash(stash.index);
       } else if (stash && key.sequence === 'P') {
         // Pop stash on Shift+P
-        void handlePopStash(stash.index)
+        void handlePopStash(stash.index);
       } else if (stash && key.sequence === 'D') {
         // Drop stash on Shift+D
-        handleDropStashWithConfirm(stash.index, stash.name, stash.message)
+        handleDropStashWithConfirm(stash.index, stash.name, stash.message);
       } else if (stash && key.sequence === 'V') {
         // View stash diff on Shift+V
-        void handleViewStashDiff(stash.index)
+        void handleViewStashDiff(stash.index);
       }
     }
 
     // Spacebar to stage/unstage file in status panel
     if (key.name === 'space') {
       if (view === 'main' && focusedPanel === 'status') {
-        const allFiles = [...status.staged, ...status.unstaged, ...status.untracked]
-        const file = allFiles[selectedIndex]
+        const allFiles = [...status.staged, ...status.unstaged, ...status.untracked];
+        const file = allFiles[selectedIndex];
         if (file) {
           if (file.staged) {
-            void handleUnstage(file.path)
+            void handleUnstage(file.path);
           } else {
-            void handleStage(file.path)
+            void handleStage(file.path);
           }
         }
       }
@@ -2165,20 +2391,20 @@ export function App({ cwd }: { cwd: string }) {
     // 'd' key to discard changes to unstaged files or delete untracked files
     if (key.sequence === 'd') {
       if (view === 'main' && focusedPanel === 'status') {
-        const allFiles = [...status.staged, ...status.unstaged, ...status.untracked]
-        const file = allFiles[selectedIndex]
+        const allFiles = [...status.staged, ...status.unstaged, ...status.untracked];
+        const file = allFiles[selectedIndex];
         if (file && !file.staged) {
           // Check if the file is untracked - if so, delete it
-          const untrackedIndex = selectedIndex - status.staged.length - status.unstaged.length
+          const untrackedIndex = selectedIndex - status.staged.length - status.unstaged.length;
           if (untrackedIndex >= 0 && status.untracked[untrackedIndex]) {
-            handleDeleteWithConfirm(file.path)
+            handleDeleteWithConfirm(file.path);
           } else {
-            handleDiscardWithConfirm(file.path)
+            handleDiscardWithConfirm(file.path);
           }
         } else if (file?.staged) {
-          notify('Cannot discard staged file (unstage it first)')
+          notify('Cannot discard staged file (unstage it first)');
         } else {
-          notify('No file selected')
+          notify('No file selected');
         }
       }
     }
@@ -2186,10 +2412,10 @@ export function App({ cwd }: { cwd: string }) {
     // 'D' key (shift+d) to delete untracked files
     if (key.sequence === 'D') {
       if (view === 'main' && focusedPanel === 'status') {
-        const untrackedIndex = selectedIndex - status.staged.length - status.unstaged.length
-        const file = status.untracked[untrackedIndex]
+        const untrackedIndex = selectedIndex - status.staged.length - status.unstaged.length;
+        const file = status.untracked[untrackedIndex];
         if (file && untrackedIndex >= 0) {
-          handleDeleteWithConfirm(file.path)
+          handleDeleteWithConfirm(file.path);
         }
       }
     }
@@ -2197,197 +2423,206 @@ export function App({ cwd }: { cwd: string }) {
     // 'r' key to rename/move file
     if (key.sequence === 'r') {
       if (view === 'main' && focusedPanel === 'status') {
-        const allFiles = [...status.staged, ...status.unstaged, ...status.untracked]
-        const file = allFiles[selectedIndex]
+        const allFiles = [...status.staged, ...status.unstaged, ...status.untracked];
+        const file = allFiles[selectedIndex];
         if (file) {
-          handleRenameWithModal(file.path)
+          handleRenameWithModal(file.path);
         }
       }
     }
 
     // 'A' key (shift+a) to unstage all
     if (key.sequence === 'A') {
-      void handleUnstageAll()
+      void handleUnstageAll();
     }
 
     // 's' key to create stash
     if (key.sequence === 's') {
-      setShowStashModal(true)
+      setShowStashModal(true);
     }
 
     if (key.sequence === 'a') {
-      void handleStageAll()
+      void handleStageAll();
     }
 
     if (key.sequence === 'c') {
       if (status.staged.length > 0) {
-        setShowCommitModal(true)
+        setShowCommitModal(true);
       } else {
-        notify('No staged files to commit')
+        notify('No staged files to commit');
       }
     }
 
     if (key.sequence === 'P') {
-      void handlePush()
+      void handlePush();
     }
 
     if (key.sequence === 'p') {
-      void handlePull()
+      void handlePull();
     }
 
     if (key.sequence === 'f') {
-      void handleFetch()
+      void handleFetch();
     }
 
     // Merge operations
     if (key.sequence === 'm') {
       if (mergeState.inProgress) {
-        notify('Merge already in progress - resolve conflicts first')
+        notify('Merge already in progress - resolve conflicts first');
       } else {
-        setShowMergeModal(true)
+        setShowMergeModal(true);
       }
     }
 
     if (key.sequence === 'C') {
       if (mergeState.inProgress) {
-        setShowConflictModal(true)
+        setShowConflictModal(true);
       } else {
-        notify('No merge in progress')
+        notify('No merge in progress');
       }
     }
 
     // Stash operations
     if (key.sequence === 'S') {
-      setShowStashModal(true)
+      setShowStashModal(true);
     }
 
     // Stash view actions
     if (view === 'stash' && stashes.length > 0) {
-      const stash = stashes[selectedIndex]
-      
+      const stash = stashes[selectedIndex];
+
       if (stash && key.name === 'return') {
         // Apply stash on Enter
-        void handleApplyStash(stash.index)
+        void handleApplyStash(stash.index);
       } else if (stash && key.sequence === 'P') {
         // Pop stash on Shift+P
-        void handlePopStash(stash.index)
+        void handlePopStash(stash.index);
       } else if (stash && key.sequence === 'D') {
         // Drop stash on Shift+D
-        handleDropStashWithConfirm(stash.index, stash.name, stash.message)
+        handleDropStashWithConfirm(stash.index, stash.name, stash.message);
       } else if (stash && key.sequence === 'V') {
         // View stash diff on Shift+V
-        void handleViewStashDiff(stash.index)
+        void handleViewStashDiff(stash.index);
       }
     }
 
     // Tag operations (when in tags panel or tags tab)
-    if ((view === 'main' && focusedPanel === 'tags') || (view === 'main' && branchRemoteTab === 'tags')) {
-      const tag = tags[selectedIndex]
+    if (
+      (view === 'main' && focusedPanel === 'tags') ||
+      (view === 'main' && branchRemoteTab === 'tags')
+    ) {
+      const tag = tags[selectedIndex];
 
       // Enter key to checkout tag
       if (tag && key.name === 'return') {
-        void handleCheckoutTag(tag.name)
+        void handleCheckoutTag(tag.name);
       }
 
       // 'i' key to view tag details
       if (tag && key.sequence === 'i') {
-        setView('tagDetails')
+        setView('tagDetails');
       }
 
       // 'n' key to create new tag
       if (key.sequence === 'n') {
-        setShowTagModal(true)
+        setShowTagModal(true);
       }
 
       // 'D' key to delete tag
       if (tag && key.sequence === 'D') {
-        handleDeleteTagWithConfirm(tag.name)
+        handleDeleteTagWithConfirm(tag.name);
       }
 
       // 'P' key to push tag
       if (tag && key.sequence === 'P') {
-        void handlePushTag(tag.name)
+        void handlePushTag(tag.name);
       }
 
       // 't' key to create tag at HEAD
       if (key.sequence === 't') {
-        setSelectedCommitForAction(commits[0] || null)
-        setShowTagModal(true)
+        setSelectedCommitForAction(commits[0] || null);
+        setShowTagModal(true);
       }
     }
 
     // Remotes view and panel actions
-    if ((view === 'remotes' || (view === 'main' && focusedPanel === 'remotes')) && remotes.length > 0) {
-      const remote = remotes[selectedIndex]
-      
+    if (
+      (view === 'remotes' || (view === 'main' && focusedPanel === 'remotes')) &&
+      remotes.length > 0
+    ) {
+      const remote = remotes[selectedIndex];
+
       if (remote && key.name === 'return') {
         // Fetch from remote on Enter
-        void handleFetchRemote(remote.name)
+        void handleFetchRemote(remote.name);
       } else if (key.sequence === 'n') {
         // Add new remote on 'n'
-        setRemoteModalMode('add')
-        setRemoteToEdit(undefined)
-        setShowRemoteModal(true)
+        setRemoteModalMode('add');
+        setRemoteToEdit(undefined);
+        setShowRemoteModal(true);
       } else if (remote && key.sequence === 'e') {
         // Edit remote on 'e'
-        setRemoteModalMode('edit')
-        setRemoteToEdit(remote)
-        setShowRemoteModal(true)
+        setRemoteModalMode('edit');
+        setRemoteToEdit(remote);
+        setShowRemoteModal(true);
       } else if (remote && key.sequence === 'D') {
         // Delete remote on Shift+D
-        handleRemoveRemoteWithConfirm(remote.name)
+        handleRemoveRemoteWithConfirm(remote.name);
       }
-    } else if ((view === 'remotes' || (view === 'main' && focusedPanel === 'remotes')) && remotes.length === 0) {
+    } else if (
+      (view === 'remotes' || (view === 'main' && focusedPanel === 'remotes')) &&
+      remotes.length === 0
+    ) {
       // Allow adding remotes even when list is empty
       if (key.sequence === 'n') {
-        setRemoteModalMode('add')
-        setRemoteToEdit(undefined)
-        setShowRemoteModal(true)
+        setRemoteModalMode('add');
+        setRemoteToEdit(undefined);
+        setShowRemoteModal(true);
       }
     }
 
     // Log view actions
     if (view === 'log' || (view === 'main' && focusedPanel === 'log')) {
-      const commit = commits[selectedIndex]
-      
+      const commit = commits[selectedIndex];
+
       if (commit && key.name === 'return') {
         // View commit diff on Enter
-        void handleViewCommitDiff(commit.hash)
+        void handleViewCommitDiff(commit.hash);
       } else if (commit && key.sequence === 'y') {
         // Cherry-pick on 'y'
         setConfirmModalProps({
           title: 'Cherry-pick Commit?',
           message: `Apply changes from commit ${commit.shortHash}: ${commit.message}`,
           onConfirm: () => {
-            setShowConfirmModal(false)
-            void handleCherryPick(commit.hash)
+            setShowConfirmModal(false);
+            void handleCherryPick(commit.hash);
           },
           danger: false,
-        })
-        setShowConfirmModal(true)
+        });
+        setShowConfirmModal(true);
       } else if (commit && key.sequence === 'R') {
         // Revert on Shift+R
         setConfirmModalProps({
           title: 'Revert Commit?',
           message: `Create a new commit that undoes ${commit.shortHash}: ${commit.message}`,
           onConfirm: () => {
-            setShowConfirmModal(false)
-            void handleRevert(commit.hash)
+            setShowConfirmModal(false);
+            void handleRevert(commit.hash);
           },
           danger: false,
-        })
-        setShowConfirmModal(true)
+        });
+        setShowConfirmModal(true);
       } else if (commit && key.sequence === 'X') {
         // Reset on Shift+X
-        setSelectedCommitForAction(commit)
-        setShowResetModal(true)
+        setSelectedCommitForAction(commit);
+        setShowResetModal(true);
       } else if (commit && key.sequence === 'Y') {
         // Copy hash on Shift+Y
-        void handleCopyCommitHash(commit.hash)
+        void handleCopyCommitHash(commit.hash);
       } else if (commit && key.sequence === 't') {
         // Create tag on 't'
-        setSelectedCommitForAction(commit)
-        setShowTagModal(true)
+        setSelectedCommitForAction(commit);
+        setShowTagModal(true);
       }
     }
 
@@ -2395,77 +2630,86 @@ export function App({ cwd }: { cwd: string }) {
     if (view === 'repos' && repoFocusedPanel === 'repos') {
       // Tab to switch back to filter panel
       if (key.name === 'tab') {
-        setRepoFocusedPanel('filter')
-        setSelectedIndex(0)
-        return
+        setRepoFocusedPanel('filter');
+        setSelectedIndex(0);
+        return;
       }
 
       // Enter to switch to selected repo
       if (key.name === 'return') {
         const filteredRepos = repoFilterQuery
-          ? repos.filter(r => 
-              r.name.toLowerCase().includes(repoFilterQuery.toLowerCase()) ||
-              r.path.toLowerCase().includes(repoFilterQuery.toLowerCase())
+          ? repos.filter(
+              (r) =>
+                r.name.toLowerCase().includes(repoFilterQuery.toLowerCase()) ||
+                r.path.toLowerCase().includes(repoFilterQuery.toLowerCase()),
             )
-          : repos
+          : repos;
 
-        const selectedRepo = filteredRepos[selectedIndex]
+        const selectedRepo = filteredRepos[selectedIndex];
         if (selectedRepo) {
-          handleRepoSwitch(selectedRepo.path)
+          handleRepoSwitch(selectedRepo.path);
         }
-        return
+        return;
       }
 
       // 'D' to delete repo from history with confirmation
       if (key.sequence === 'D') {
         const filteredRepos = repoFilterQuery
-          ? repos.filter(r => 
-              r.name.toLowerCase().includes(repoFilterQuery.toLowerCase()) ||
-              r.path.toLowerCase().includes(repoFilterQuery.toLowerCase())
+          ? repos.filter(
+              (r) =>
+                r.name.toLowerCase().includes(repoFilterQuery.toLowerCase()) ||
+                r.path.toLowerCase().includes(repoFilterQuery.toLowerCase()),
             )
-          : repos
+          : repos;
 
-        const selectedRepo = filteredRepos[selectedIndex]
+        const selectedRepo = filteredRepos[selectedIndex];
         if (selectedRepo) {
           // Prevent deleting the currently active repository
           if (selectedRepo.path === currentRepoPath) {
-            notify('Cannot remove the currently active repository from history')
-            return
+            notify('Cannot remove the currently active repository from history');
+            return;
           }
 
           setConfirmModalProps({
             title: 'Remove from History?',
             message: `Remove "${selectedRepo.name}" from repository history?\n\nPath: ${selectedRepo.path}\n\nThis will not delete the repository, only remove it from GitArbor's history.`,
             onConfirm: () => {
-              setShowConfirmModal(false)
+              setShowConfirmModal(false);
               // Remove from workspace recentRepositories
-              const config = workspaceManager.getConfig()
-              config.recentRepositories = config.recentRepositories.filter(r => r.path !== selectedRepo.path)
+              const config = workspaceManager.getConfig();
+              config.recentRepositories = config.recentRepositories.filter(
+                (r) => r.path !== selectedRepo.path,
+              );
               void workspaceManager.save().then(() => {
-                setRepos(workspaceManager.getConfig().recentRepositories)
-                notify(`Removed ${selectedRepo.name} from history`)
+                setRepos(workspaceManager.getConfig().recentRepositories);
+                notify(`Removed ${selectedRepo.name} from history`);
                 // Adjust selected index if needed
                 if (selectedIndex >= filteredRepos.length - 1) {
-                  setSelectedIndex(Math.max(0, filteredRepos.length - 2))
+                  setSelectedIndex(Math.max(0, filteredRepos.length - 2));
                 }
-              })
+              });
             },
             danger: false,
-          })
-          setShowConfirmModal(true)
+          });
+          setShowConfirmModal(true);
         }
-        return
+        return;
       }
     }
-  })
+  });
 
   const handleViewChange = useCallback((newView: View) => {
-    setView(newView)
-    setSelectedIndex(0)
-  }, [])
+    setView(newView);
+    setSelectedIndex(0);
+  }, []);
 
   return (
-    <box width="100%" height="100%" flexDirection="column" backgroundColor={theme.colors.background.primary}>
+    <box
+      width="100%"
+      height="100%"
+      flexDirection="column"
+      backgroundColor={theme.colors.background.primary}
+    >
       <Header
         branch={status.branch}
         ahead={status.ahead}
@@ -2473,7 +2717,7 @@ export function App({ cwd }: { cwd: string }) {
         view={view}
         onViewChange={handleViewChange}
       />
-      
+
       {view === 'main' && (
         <MainView
           staged={status.staged}
@@ -2497,23 +2741,15 @@ export function App({ cwd }: { cwd: string }) {
           selectedFilePath={selectedFilePath}
           commandLog={commandLog}
           showCommandLog={showCommandLog}
+          isLoadingDiff={isLoadingDiff}
         />
       )}
 
       {view === 'log' && (
-        <HistoryView
-          commits={commits}
-          selectedIndex={selectedIndex}
-          focused={!showCommitModal}
-        />
+        <HistoryView commits={commits} selectedIndex={selectedIndex} focused={!showCommitModal} />
       )}
 
-      {view === 'diff' && (
-        <DiffView
-          diff={diff}
-          focused={!showCommitModal && !showStashModal}
-        />
-      )}
+      {view === 'diff' && <DiffView diff={diff} focused={!showCommitModal && !showStashModal} />}
 
       {view === 'stash' && (
         <StashView
@@ -2524,11 +2760,7 @@ export function App({ cwd }: { cwd: string }) {
       )}
 
       {view === 'remotes' && (
-        <RemotesView
-          remotes={remotes}
-          selectedIndex={selectedIndex}
-          focused={!showRemoteModal}
-        />
+        <RemotesView remotes={remotes} selectedIndex={selectedIndex} focused={!showRemoteModal} />
       )}
 
       {view === 'repos' && (
@@ -2545,7 +2777,7 @@ export function App({ cwd }: { cwd: string }) {
         <TagDetailsView tag={tags[selectedIndex]!} />
       )}
 
-      <Footer 
+      <Footer
         view={view}
         focusedPanel={focusedPanel}
         hasStaged={status.staged.length > 0}
@@ -2556,40 +2788,24 @@ export function App({ cwd }: { cwd: string }) {
       />
 
       {showCommitModal && (
-        <CommitModal
-          onCommit={handleCommit}
-          onCancel={() => setShowCommitModal(false)}
-        />
+        <CommitModal onCommit={handleCommit} onCancel={() => setShowCommitModal(false)} />
       )}
 
       {showStashModal && (
-        <StashModal
-          onStash={handleCreateStash}
-          onCancel={() => setShowStashModal(false)}
-        />
+        <StashModal onStash={handleCreateStash} onCancel={() => setShowStashModal(false)} />
       )}
 
       {showExitModal && (
-        <ExitModal
-          onConfirm={handleExit}
-          onCancel={() => setShowExitModal(false)}
-        />
+        <ExitModal onConfirm={handleExit} onCancel={() => setShowExitModal(false)} />
       )}
 
       {showCommandPalette && (
-        <CommandPalette
-          commands={commands}
-          onClose={() => setShowCommandPalette(false)}
-        />
+        <CommandPalette commands={commands} onClose={() => setShowCommandPalette(false)} />
       )}
 
-      {showConfigModal && (
-        <ConfigModal onClose={() => setShowConfigModal(false)} />
-      )}
+      {showConfigModal && <ConfigModal onClose={() => setShowConfigModal(false)} />}
 
-      {showThemesModal && (
-        <ThemesModal onClose={() => setShowThemesModal(false)} />
-      )}
+      {showThemesModal && <ThemesModal onClose={() => setShowThemesModal(false)} />}
 
       {showProgressModal && (
         <ProgressModal
@@ -2681,8 +2897,8 @@ export function App({ cwd }: { cwd: string }) {
           commitHash={selectedCommitForAction?.shortHash}
           commitMessage={selectedCommitForAction?.message}
           onCreateTag={(tagName, message) => {
-            const commitHash = selectedCommitForAction?.hash || 'HEAD'
-            void handleCreateTag(commitHash, tagName, message)
+            const commitHash = selectedCommitForAction?.hash || 'HEAD';
+            void handleCreateTag(commitHash, tagName, message);
           }}
           onCancel={() => setShowTagModal(false)}
         />
@@ -2699,23 +2915,21 @@ export function App({ cwd }: { cwd: string }) {
 
       {showRepoSwitchModal && pendingRepoSwitch && (
         <RepoSwitchModal
-          repoName={repos.find(r => r.path === pendingRepoSwitch)?.name || pendingRepoSwitch}
+          repoName={repos.find((r) => r.path === pendingRepoSwitch)?.name || pendingRepoSwitch}
           stagedCount={status.staged.length}
           unstagedCount={status.unstaged.length}
           untrackedCount={status.untracked.length}
           onConfirm={handleConfirmRepoSwitch}
           onCancel={() => {
-            setShowRepoSwitchModal(false)
-            setPendingRepoSwitch(null)
+            setShowRepoSwitchModal(false);
+            setPendingRepoSwitch(null);
           }}
         />
       )}
 
       {showKeyboardShortcutsModal && (
-        <KeyboardShortcutsModal
-          onClose={() => setShowKeyboardShortcutsModal(false)}
-        />
+        <KeyboardShortcutsModal onClose={() => setShowKeyboardShortcutsModal(false)} />
       )}
     </box>
-  )
+  );
 }

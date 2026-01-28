@@ -1,11 +1,11 @@
-import { theme } from '../theme'
-import type { Repository } from '../types/workspace'
+import { theme } from '../theme';
+import type { Repository } from '../types/workspace';
 
 interface RepositoryTabsProps {
-  repositories: Repository[]
-  activeRepositoryId: string
-  onSelectRepository: (repositoryId: string) => void
-  onCloseRepository: (repositoryId: string) => void
+  repositories: Repository[];
+  activeRepositoryId: string;
+  onSelectRepository: (repositoryId: string) => void;
+  onCloseRepository: (repositoryId: string) => void;
 }
 
 export function RepositoryTabs({
@@ -15,7 +15,7 @@ export function RepositoryTabs({
   onCloseRepository,
 }: RepositoryTabsProps) {
   if (repositories.length === 0) {
-    return null
+    return null;
   }
 
   return (
@@ -29,8 +29,8 @@ export function RepositoryTabs({
     >
       <box width="100%" height={1} />
       {repositories.map((repo, index) => {
-        const isActive = repo.id === activeRepositoryId
-        const isLast = index === repositories.length - 1
+        const isActive = repo.id === activeRepositoryId;
+        const isLast = index === repositories.length - 1;
 
         return (
           <box key={repo.id} flexDirection="row">
@@ -39,34 +39,21 @@ export function RepositoryTabs({
               paddingLeft={theme.spacing.sm}
               paddingRight={theme.spacing.sm}
               backgroundColor={
-                isActive
-                  ? theme.colors.background.primary
-                  : theme.colors.background.secondary
+                isActive ? theme.colors.background.primary : theme.colors.background.secondary
               }
             >
-            <text
-              fg={
-                isActive
-                  ? theme.colors.primary
-                  : theme.colors.text.secondary
-              }
-            >
-              {repo.name}
-            </text>
-            {repositories.length > 1 && (
-              <text
-                fg={theme.colors.text.muted}
-                marginLeft={theme.spacing.xs}
-              >
-                ×
+              <text fg={isActive ? theme.colors.primary : theme.colors.text.secondary}>
+                {repo.name}
               </text>
-            )}
+              {repositories.length > 1 && (
+                <text fg={theme.colors.text.muted} marginLeft={theme.spacing.xs}>
+                  ×
+                </text>
+              )}
             </box>
-            {!isLast && (
-              <box width={1} backgroundColor={theme.colors.border} />
-            )}
+            {!isLast && <box width={1} backgroundColor={theme.colors.border} />}
           </box>
-        )
+        );
       })}
       {repositories.length < 10 && (
         <box paddingLeft={theme.spacing.sm} paddingRight={theme.spacing.sm}>
@@ -74,5 +61,5 @@ export function RepositoryTabs({
         </box>
       )}
     </box>
-  )
+  );
 }

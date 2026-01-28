@@ -1,15 +1,15 @@
-import { theme } from '../theme'
-import type { GitBranch } from '../types/git'
+import { theme } from '../theme';
+import type { GitBranch } from '../types/git';
 
 interface BranchesViewProps {
-  branches: GitBranch[]
-  selectedIndex: number
-  focused: boolean
+  branches: GitBranch[];
+  selectedIndex: number;
+  focused: boolean;
 }
 
 export function BranchesView({ branches, selectedIndex, focused }: BranchesViewProps) {
-  const localBranches = branches.filter((b) => !b.remote)
-  const remoteBranches = branches.filter((b) => b.remote)
+  const localBranches = branches.filter((b) => !b.remote);
+  const remoteBranches = branches.filter((b) => b.remote);
 
   return (
     <box
@@ -24,8 +24,8 @@ export function BranchesView({ branches, selectedIndex, focused }: BranchesViewP
         <text> </text>
         <text fg={theme.colors.git.staged}>Local:</text>
         {localBranches.map((branch, idx) => {
-          const isSelected = idx === selectedIndex
-          
+          const isSelected = idx === selectedIndex;
+
           return (
             <box key={branch.name} flexDirection="column">
               <box flexDirection="row">
@@ -54,18 +54,18 @@ export function BranchesView({ branches, selectedIndex, focused }: BranchesViewP
                 </box>
               )}
             </box>
-          )
+          );
         })}
         <text> </text>
         <text fg={theme.colors.status.info}>Remote:</text>
         {remoteBranches.slice(0, 10).map((branch) => {
           return (
             <box key={branch.name} flexDirection="row">
-              <text fg={theme.colors.text.muted}>  {branch.name}</text>
+              <text fg={theme.colors.text.muted}> {branch.name}</text>
             </box>
-          )
+          );
         })}
       </box>
     </box>
-  )
+  );
 }

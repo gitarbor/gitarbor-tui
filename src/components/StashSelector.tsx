@@ -1,24 +1,20 @@
-import { theme } from '../theme'
-import { Fieldset } from './Fieldset'
-import type { GitStash } from '../types/git'
+import { theme } from '../theme';
+import { Fieldset } from './Fieldset';
+import type { GitStash } from '../types/git';
 
 interface StashSelectorProps {
-  stashes: GitStash[]
-  selectedIndex: number
-  focused: boolean
+  stashes: GitStash[];
+  selectedIndex: number;
+  focused: boolean;
 }
 
-export function StashSelector({
-  stashes,
-  selectedIndex,
-  focused,
-}: StashSelectorProps) {
+export function StashSelector({ stashes, selectedIndex, focused }: StashSelectorProps) {
   if (stashes.length === 0) {
-    return null
+    return null;
   }
 
   // Show the selected stash when focused, otherwise show the most recent stash (index 0)
-  const stash = focused && stashes[selectedIndex] ? stashes[selectedIndex]! : stashes[0]!
+  const stash = focused && stashes[selectedIndex] ? stashes[selectedIndex]! : stashes[0]!;
 
   return (
     <Fieldset
@@ -45,5 +41,5 @@ export function StashSelector({
         </box>
       </box>
     </Fieldset>
-  )
+  );
 }

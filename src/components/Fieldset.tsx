@@ -1,4 +1,4 @@
-import { theme } from '../theme'
+import { theme } from '../theme';
 
 export interface FieldsetProps {
   title: string;
@@ -28,7 +28,11 @@ export function Fieldset({
   paddingY = theme.spacing.none,
 }: FieldsetProps) {
   // Determine colors based on state
-  const actualBorderColor = focused ? theme.colors.borderFocused : editMode ? theme.colors.git.staged : borderColor;
+  const actualBorderColor = focused
+    ? theme.colors.borderFocused
+    : editMode
+      ? theme.colors.git.staged
+      : borderColor;
 
   return (
     <box

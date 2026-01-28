@@ -1,32 +1,32 @@
-import { useState, useEffect } from 'react'
-import { useKeyboard } from '@opentui/react'
-import { exec } from 'child_process'
-import { promisify } from 'util'
-import { theme } from '../theme'
-import { Modal } from './Modal'
-import { Input } from './Input'
+import { useState, useEffect } from 'react';
+import { useKeyboard } from '@opentui/react';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+import { theme } from '../theme';
+import { Modal } from './Modal';
+import { Input } from './Input';
 
-const execAsync = promisify(exec)
+const execAsync = promisify(exec);
 
 interface ConfigModalProps {
-  onClose: () => void
+  onClose: () => void;
 }
 
 interface GitConfig {
-  name: string
-  email: string
+  name: string;
+  email: string;
 }
 
-type GitField = 'name' | 'email'
+type GitField = 'name' | 'email';
 
 export function ConfigModal({ onClose }: ConfigModalProps) {
-  const [gitConfig, setGitConfig] = useState<GitConfig>({ name: '', email: '' })
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [selectedField, setSelectedField] = useState<GitField>('name')
-  const [editMode, setEditMode] = useState(false)
-  const [editValue, setEditValue] = useState('')
-  const [saving, setSaving] = useState(false)
+  const [gitConfig, setGitConfig] = useState<GitConfig>({ name: '', email: '' });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [selectedField, setSelectedField] = useState<GitField>('name');
+  const [editMode, setEditMode] = useState(false);
+  const [editValue, setEditValue] = useState('');
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     async function loadConfig() {
@@ -34,85 +34,83 @@ export function ConfigModal({ onClose }: ConfigModalProps) {
         const [nameResult, emailResult] = await Promise.all([
           execAsync('git config --global user.name').catch(() => ({ stdout: '' })),
           execAsync('git config --global user.email').catch(() => ({ stdout: '' })),
-        ])
+        ]);
         setGitConfig({
           name: nameResult.stdout.trim(),
           email: emailResult.stdout.trim(),
-        })
+        });
       } catch (err) {
-        setError('Failed to load configuration')
+        setError('Failed to load configuration');
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
-    void loadConfig()
-  }, [])
+    void loadConfig();
+  }, []);
 
   const handleSaveGitField = async () => {
     try {
-      setSaving(true)
-      setError('')
-      
-      const field = selectedField === 'name' ? 'user.name' : 'user.email'
-      await execAsync(`git config --global ${field} "${editValue}"`)
-      
+      setSaving(true);
+      setError('');
+
+      const field = selectedField === 'name' ? 'user.name' : 'user.email';
+      await execAsync(`git config --global ${field} "${editValue}"`);
+
       setGitConfig((prev) => ({
         ...prev,
         [selectedField]: editValue,
-      }))
-      setEditMode(false)
-      setEditValue('')
+      }));
+      setEditMode(false);
+      setEditValue('');
     } catch (err) {
-      setError(`Failed to save ${selectedField}`)
+      setError(`Failed to save ${selectedField}`);
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
   useKeyboard((key) => {
     if (editMode) {
       if (key.name === 'escape') {
-        setEditMode(false)
-        setEditValue('')
+        setEditMode(false);
+        setEditValue('');
       }
       // Input component handles text entry and Enter key
-      return
+      return;
     }
 
     if (key.name === 'escape') {
-      onClose()
+      onClose();
     } else if (key.name === 'up' || key.name === 'down') {
-      setSelectedField((prev) => (prev === 'name' ? 'email' : 'name'))
+      setSelectedField((prev) => (prev === 'name' ? 'email' : 'name'));
     } else if (key.name === 'return' || key.sequence === 'e') {
-      setEditMode(true)
-      setEditValue(gitConfig[selectedField])
+      setEditMode(true);
+      setEditValue(gitConfig[selectedField]);
     }
-  })
+  });
 
   if (loading) {
     return (
-      <Modal
-        width={60}
-        height={5}
-        borderColor={theme.colors.primary}
-      >
+      <Modal width={60} height={5} borderColor={theme.colors.primary}>
         <text fg={theme.colors.text.muted}>Loading configuration...</text>
       </Modal>
-    )
+    );
   }
 
   return (
-    <Modal
-      width={60}
-      height={14}
-      title="Git Config"
-    >
+    <Modal width={60} height={14} title="Git Config">
       <text fg={theme.colors.text.muted}>Git Global Configuration</text>
       <text> </text>
-      
+
       {/* Name field */}
       <box flexDirection="row" marginBottom={1}>
-        <text fg={selectedField === 'name' && !editMode ? theme.colors.git.modified : theme.colors.text.muted}>
+        <text
+          fg={
+            selectedField === 'name' && !editMode
+              ? theme.colors.git.modified
+              : theme.colors.text.muted
+          }
+        >
           {selectedField === 'name' && !editMode ? '> ' : '  '}
         </text>
         <text fg={theme.colors.text.muted} width={10}>
@@ -130,10 +128,16 @@ export function ConfigModal({ onClose }: ConfigModalProps) {
           <text fg={theme.colors.text.primary}>{gitConfig.name || '(not set)'}</text>
         )}
       </box>
-      
+
       {/* Email field */}
       <box flexDirection="row">
-        <text fg={selectedField === 'email' && !editMode ? theme.colors.git.modified : theme.colors.text.muted}>
+        <text
+          fg={
+            selectedField === 'email' && !editMode
+              ? theme.colors.git.modified
+              : theme.colors.text.muted
+          }
+        >
           {selectedField === 'email' && !editMode ? '> ' : '  '}
         </text>
         <text fg={theme.colors.text.muted} width={10}>
@@ -151,26 +155,28 @@ export function ConfigModal({ onClose }: ConfigModalProps) {
           <text fg={theme.colors.text.primary}>{gitConfig.email || '(not set)'}</text>
         )}
       </box>
-      
+
       {error && (
         <>
           <text> </text>
           <text fg={theme.colors.status.error}>{error}</text>
         </>
       )}
-      
+
       <text> </text>
-      <box borderStyle={theme.borders.style} borderColor={theme.colors.border} padding={theme.spacing.none}>
+      <box
+        borderStyle={theme.borders.style}
+        borderColor={theme.colors.border}
+        padding={theme.spacing.none}
+      >
         <text fg={theme.colors.text.muted}>
-          {saving ? (
-            'Saving...'
-          ) : editMode ? (
-            'Enter: Save | ESC: Cancel'
-          ) : (
-            'Up/Down: Navigate | Enter/E: Edit | ESC: Close'
-          )}
+          {saving
+            ? 'Saving...'
+            : editMode
+              ? 'Enter: Save | ESC: Cancel'
+              : 'Up/Down: Navigate | Enter/E: Edit | ESC: Close'}
         </text>
       </box>
     </Modal>
-  )
+  );
 }

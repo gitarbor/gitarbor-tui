@@ -1,14 +1,14 @@
-import { useState } from 'react'
-import { useKeyboard } from '@opentui/react'
-import { theme } from '../theme'
-import type { Repository } from '../types/workspace'
+import { useState } from 'react';
+import { useKeyboard } from '@opentui/react';
+import { theme } from '../theme';
+import type { Repository } from '../types/workspace';
 
 interface RepositorySwitcherModalProps {
-  repositories: Repository[]
-  recentRepositories: Repository[]
-  onSelectRepository: (repository: Repository) => void
-  onAddRepository: (path: string) => void
-  onClose: () => void
+  repositories: Repository[];
+  recentRepositories: Repository[];
+  onSelectRepository: (repository: Repository) => void;
+  onAddRepository: (path: string) => void;
+  onClose: () => void;
 }
 
 export function RepositorySwitcherModal({
@@ -18,53 +18,51 @@ export function RepositorySwitcherModal({
   onAddRepository,
   onClose,
 }: RepositorySwitcherModalProps) {
-  const [selectedIndex, setSelectedIndex] = useState(0)
-  const [inputMode, setInputMode] = useState(false)
-  const [inputPath, setInputPath] = useState('')
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [inputMode, setInputMode] = useState(false);
+  const [inputPath, setInputPath] = useState('');
 
   // Combine current repositories and recent ones (excluding duplicates)
   const allRepos = [
     ...repositories,
-    ...recentRepositories.filter(
-      (recent) => !repositories.find((r) => r.path === recent.path)
-    ),
-  ]
+    ...recentRepositories.filter((recent) => !repositories.find((r) => r.path === recent.path)),
+  ];
 
-  const maxIndex = inputMode ? 0 : allRepos.length - 1
+  const maxIndex = inputMode ? 0 : allRepos.length - 1;
 
   useKeyboard((key) => {
     if (inputMode) {
       if (key.name === 'escape') {
-        setInputMode(false)
-        setInputPath('')
+        setInputMode(false);
+        setInputPath('');
       } else if (key.name === 'return') {
         if (inputPath.trim()) {
-          onAddRepository(inputPath.trim())
-          onClose()
+          onAddRepository(inputPath.trim());
+          onClose();
         }
       } else if (key.name === 'backspace') {
-        setInputPath((prev) => prev.slice(0, -1))
+        setInputPath((prev) => prev.slice(0, -1));
       } else if (key.sequence && key.sequence.length === 1) {
-        setInputPath((prev) => prev + key.sequence)
+        setInputPath((prev) => prev + key.sequence);
       }
     } else {
       if (key.name === 'escape' || key.sequence === 'q') {
-        onClose()
+        onClose();
       } else if (key.name === 'up') {
-        setSelectedIndex((prev) => Math.max(0, prev - 1))
+        setSelectedIndex((prev) => Math.max(0, prev - 1));
       } else if (key.name === 'down') {
-        setSelectedIndex((prev) => Math.min(maxIndex, prev + 1))
+        setSelectedIndex((prev) => Math.min(maxIndex, prev + 1));
       } else if (key.name === 'return') {
-        const repo = allRepos[selectedIndex]
+        const repo = allRepos[selectedIndex];
         if (repo) {
-          onSelectRepository(repo)
-          onClose()
+          onSelectRepository(repo);
+          onClose();
         }
       } else if (key.sequence === 'n') {
-        setInputMode(true)
+        setInputMode(true);
       }
     }
-  })
+  });
 
   return (
     <box
@@ -86,10 +84,8 @@ export function RepositorySwitcherModal({
         backgroundColor={theme.colors.background.primary}
         padding={theme.spacing.sm}
       >
-        <text fg={theme.colors.primary}>
-          Repository Switcher
-        </text>
-        
+        <text fg={theme.colors.primary}>Repository Switcher</text>
+
         <box marginTop={theme.spacing.xs} marginBottom={theme.spacing.xs}>
           <text fg={theme.colors.text.muted}>
             {inputMode
@@ -105,9 +101,7 @@ export function RepositorySwitcherModal({
             padding={theme.spacing.xs}
             marginTop={theme.spacing.xs}
           >
-            <text fg={theme.colors.text.primary}>
-              {inputPath || '_'}
-            </text>
+            <text fg={theme.colors.text.primary}>{inputPath || '_'}</text>
           </box>
         ) : (
           <box flexDirection="column" marginTop={theme.spacing.xs}>
@@ -115,8 +109,8 @@ export function RepositorySwitcherModal({
               <text fg={theme.colors.text.muted}>No repositories. Press 'n' to add one.</text>
             ) : (
               allRepos.map((repo, index) => {
-                const isSelected = index === selectedIndex
-                const isCurrent = repositories.find((r) => r.id === repo.id)
+                const isSelected = index === selectedIndex;
+                const isCurrent = repositories.find((r) => r.id === repo.id);
 
                 return (
                   <box
@@ -129,24 +123,15 @@ export function RepositorySwitcherModal({
                         : theme.colors.background.primary
                     }
                   >
-                    <text
-                      fg={
-                        isSelected
-                          ? theme.colors.primary
-                          : theme.colors.text.primary
-                      }
-                    >
+                    <text fg={isSelected ? theme.colors.primary : theme.colors.text.primary}>
                       {isCurrent ? '● ' : '  '}
                       {repo.name}
                     </text>
-                    <text
-                      fg={theme.colors.text.muted}
-                      marginLeft={theme.spacing.xs}
-                    >
+                    <text fg={theme.colors.text.muted} marginLeft={theme.spacing.xs}>
                       - {repo.path}
                     </text>
                   </box>
-                )
+                );
               })
             )}
           </box>
@@ -154,12 +139,10 @@ export function RepositorySwitcherModal({
 
         <box marginTop={theme.spacing.sm}>
           <text fg={theme.colors.text.muted}>
-            {inputMode
-              ? ''
-              : `${allRepos.length} repositories (${repositories.length} open)`}
+            {inputMode ? '' : `${allRepos.length} repositories (${repositories.length} open)`}
           </text>
         </box>
       </box>
     </box>
-  )
+  );
 }

@@ -1,20 +1,18 @@
-import { theme } from '../theme'
-import { Tabs } from './Tabs'
-import type { View } from '../types/git'
-import packageJson from '../../package.json'
+import { theme } from '../theme';
+import { Tabs } from './Tabs';
+import type { View } from '../types/git';
+import packageJson from '../../package.json';
 
 interface HeaderProps {
-  branch: string
-  ahead: number
-  behind: number
-  view: View
-  onViewChange: (view: View) => void
+  branch: string;
+  ahead: number;
+  behind: number;
+  view: View;
+  onViewChange: (view: View) => void;
 }
 
 export function Header({ branch, ahead, behind, view, onViewChange }: HeaderProps) {
-  const aheadBehind = ahead > 0 || behind > 0
-    ? ` [↑${ahead} ↓${behind}]`
-    : ''
+  const aheadBehind = ahead > 0 || behind > 0 ? ` [↑${ahead} ↓${behind}]` : '';
 
   return (
     <box
@@ -32,5 +30,5 @@ export function Header({ branch, ahead, behind, view, onViewChange }: HeaderProp
       </box>
       <Tabs activeView={view} onViewChange={onViewChange} />
     </box>
-  )
+  );
 }

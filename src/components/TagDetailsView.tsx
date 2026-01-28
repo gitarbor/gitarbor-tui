@@ -1,8 +1,8 @@
-import { theme } from '../theme'
-import type { GitTag } from '../types/git'
+import { theme } from '../theme';
+import type { GitTag } from '../types/git';
 
 interface TagDetailsViewProps {
-  tag: GitTag
+  tag: GitTag;
 }
 
 export function TagDetailsView({ tag }: TagDetailsViewProps) {
@@ -20,17 +20,17 @@ export function TagDetailsView({ tag }: TagDetailsViewProps) {
         <text fg={theme.colors.git.modified}>{tag.name}</text>
         <text fg={theme.colors.text.muted}> ({tag.isAnnotated ? 'annotated' : 'lightweight'})</text>
       </box>
-      
+
       <box flexDirection="row" marginBottom={theme.spacing.xs}>
         <text fg={theme.colors.primary}>Commit: </text>
         <text fg={theme.colors.git.modified}>{tag.commit.substring(0, 8)}</text>
       </box>
-      
+
       <box flexDirection="row" marginBottom={theme.spacing.xs}>
         <text fg={theme.colors.primary}>Date: </text>
         <text fg={theme.colors.text.secondary}>{tag.date}</text>
       </box>
-      
+
       {tag.message && (
         <>
           <text fg={theme.colors.primary}>Message:</text>
@@ -46,13 +46,13 @@ export function TagDetailsView({ tag }: TagDetailsViewProps) {
           </box>
         </>
       )}
-      
+
       {!tag.message && (
         <box flexGrow={1}>
           <text fg={theme.colors.text.muted}>No annotation message</text>
         </box>
       )}
-      
+
       <box
         marginTop={theme.spacing.xs}
         borderStyle={theme.borders.style}
@@ -64,5 +64,5 @@ export function TagDetailsView({ tag }: TagDetailsViewProps) {
         </text>
       </box>
     </box>
-  )
+  );
 }

@@ -1,11 +1,11 @@
-import { theme } from '../theme'
-import { Fieldset } from './Fieldset'
-import type { GitStash } from '../types/git'
+import { theme } from '../theme';
+import { Fieldset } from './Fieldset';
+import type { GitStash } from '../types/git';
 
 interface StashViewProps {
-  stashes: GitStash[]
-  selectedIndex: number
-  focused: boolean
+  stashes: GitStash[];
+  selectedIndex: number;
+  focused: boolean;
 }
 
 export function StashView({ stashes, selectedIndex, focused }: StashViewProps) {
@@ -22,8 +22,8 @@ export function StashView({ stashes, selectedIndex, focused }: StashViewProps) {
           <text fg={theme.colors.text.muted}>No stashes saved</text>
         ) : (
           stashes.map((stash, idx) => {
-            const isSelected = idx === selectedIndex
-            
+            const isSelected = idx === selectedIndex;
+
             return (
               <box key={stash.name} flexDirection="row">
                 <text fg={isSelected ? theme.colors.primary : theme.colors.border}>
@@ -37,10 +37,10 @@ export function StashView({ stashes, selectedIndex, focused }: StashViewProps) {
                   {stash.message}
                 </text>
               </box>
-            )
+            );
           })
         )}
       </box>
     </Fieldset>
-  )
+  );
 }

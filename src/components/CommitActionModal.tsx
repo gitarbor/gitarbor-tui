@@ -1,19 +1,19 @@
-import { useState, useCallback } from 'react'
-import { useKeyboard } from '@opentui/react'
-import { theme } from '../theme'
+import { useState, useCallback } from 'react';
+import { useKeyboard } from '@opentui/react';
+import { theme } from '../theme';
 
 interface CommitActionModalProps {
-  title: string
-  commitHash: string
-  commitMessage: string
-  action: 'cherry-pick' | 'revert' | 'amend' | 'reset' | 'tag'
-  onConfirm: () => void
-  onCancel: () => void
-  requiresInput?: boolean
-  inputLabel?: string
-  inputPlaceholder?: string
-  onInputChange?: (value: string) => void
-  children?: React.ReactNode
+  title: string;
+  commitHash: string;
+  commitMessage: string;
+  action: 'cherry-pick' | 'revert' | 'amend' | 'reset' | 'tag';
+  onConfirm: () => void;
+  onCancel: () => void;
+  requiresInput?: boolean;
+  inputLabel?: string;
+  inputPlaceholder?: string;
+  onInputChange?: (value: string) => void;
+  children?: React.ReactNode;
 }
 
 export function CommitActionModal({
@@ -29,46 +29,46 @@ export function CommitActionModal({
   onInputChange,
   children,
 }: CommitActionModalProps) {
-  const [input, setInput] = useState('')
+  const [input, setInput] = useState('');
 
   const handleKeyPress = useCallback(
     (key: { name?: string; sequence?: string }) => {
       if (key.name === 'escape') {
-        onCancel()
+        onCancel();
       } else if (key.name === 'return') {
         if (requiresInput && onInputChange) {
-          onInputChange(input)
+          onInputChange(input);
         }
-        onConfirm()
+        onConfirm();
       } else if (requiresInput) {
         if (key.name === 'backspace') {
-          setInput((prev) => prev.slice(0, -1))
+          setInput((prev) => prev.slice(0, -1));
         } else if (key.sequence && key.sequence.length === 1) {
-          setInput((prev) => prev + key.sequence)
+          setInput((prev) => prev + key.sequence);
         }
       }
     },
-    [onCancel, onConfirm, requiresInput, onInputChange, input]
-  )
+    [onCancel, onConfirm, requiresInput, onInputChange, input],
+  );
 
-  useKeyboard(handleKeyPress)
+  useKeyboard(handleKeyPress);
 
   const getActionDescription = () => {
     switch (action) {
       case 'cherry-pick':
-        return 'Apply the changes from this commit to the current branch'
+        return 'Apply the changes from this commit to the current branch';
       case 'revert':
-        return 'Create a new commit that undoes the changes from this commit'
+        return 'Create a new commit that undoes the changes from this commit';
       case 'amend':
-        return 'Modify the last commit with staged changes'
+        return 'Modify the last commit with staged changes';
       case 'reset':
-        return 'Reset current branch to this commit'
+        return 'Reset current branch to this commit';
       case 'tag':
-        return 'Create a tag pointing to this commit'
+        return 'Create a tag pointing to this commit';
       default:
-        return ''
+        return '';
     }
-  }
+  };
 
   return (
     <box
@@ -121,8 +121,7 @@ export function CommitActionModal({
         {children}
 
         <box flexDirection="row" marginTop={theme.spacing.xs}>
-          <text fg={theme.colors.text.muted}>
-            Press </text>
+          <text fg={theme.colors.text.muted}>Press </text>
           <text fg={theme.colors.primary}>Enter</text>
           <text fg={theme.colors.text.muted}> to confirm, </text>
           <text fg={theme.colors.primary}>ESC</text>
@@ -130,5 +129,5 @@ export function CommitActionModal({
         </box>
       </box>
     </box>
-  )
+  );
 }

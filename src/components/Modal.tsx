@@ -1,17 +1,17 @@
-import type { ReactNode } from 'react'
-import { theme } from '../theme'
+import type { ReactNode } from 'react';
+import { theme } from '../theme';
 
 interface ModalProps {
-  children: ReactNode
-  width?: number
-  height?: number
-  title?: string
-  borderStyle?: 'single' | 'double'
-  borderColor?: string
-  centered?: boolean
-  left?: number
-  top?: number
-  showOverlay?: boolean
+  children: ReactNode;
+  width?: number;
+  height?: number;
+  title?: string;
+  borderStyle?: 'single' | 'double';
+  borderColor?: string;
+  centered?: boolean;
+  left?: number;
+  top?: number;
+  showOverlay?: boolean;
 }
 
 export function Modal({
@@ -59,7 +59,7 @@ export function Modal({
           {children}
         </box>
       </box>
-    )
+    );
   }
 
   return (
@@ -86,5 +86,5 @@ export function Modal({
       )}
       {children}
     </box>
-  )
+  );
 }

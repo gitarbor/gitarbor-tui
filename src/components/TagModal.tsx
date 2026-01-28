@@ -1,51 +1,42 @@
-import { useState, useCallback } from 'react'
-import { useKeyboard } from '@opentui/react'
-import { theme } from '../theme'
-import { Modal } from './Modal'
-import { Input } from './Input'
+import { useState, useCallback } from 'react';
+import { useKeyboard } from '@opentui/react';
+import { theme } from '../theme';
+import { Modal } from './Modal';
+import { Input } from './Input';
 
 interface TagModalProps {
-  commitHash?: string
-  commitMessage?: string
-  onCreateTag: (tagName: string, message?: string) => void
-  onCancel: () => void
+  commitHash?: string;
+  commitMessage?: string;
+  onCreateTag: (tagName: string, message?: string) => void;
+  onCancel: () => void;
 }
 
-export function TagModal({
-  commitHash,
-  commitMessage,
-  onCreateTag,
-  onCancel,
-}: TagModalProps) {
-  const [tagName, setTagName] = useState('')
-  const [tagMessage, setTagMessage] = useState('')
-  const [focusedField, setFocusedField] = useState<'name' | 'message'>('name')
+export function TagModal({ commitHash, commitMessage, onCreateTag, onCancel }: TagModalProps) {
+  const [tagName, setTagName] = useState('');
+  const [tagMessage, setTagMessage] = useState('');
+  const [focusedField, setFocusedField] = useState<'name' | 'message'>('name');
 
   const handleSubmit = useCallback(() => {
     if (tagName.trim()) {
-      onCreateTag(tagName, tagMessage || undefined)
+      onCreateTag(tagName, tagMessage || undefined);
     }
-  }, [tagName, tagMessage, onCreateTag])
+  }, [tagName, tagMessage, onCreateTag]);
 
   const handleKeyPress = useCallback(
     (key: { name?: string; sequence?: string; ctrl?: boolean }) => {
       if (key.name === 'escape') {
-        onCancel()
+        onCancel();
       } else if (key.name === 'tab') {
-        setFocusedField((prev) => (prev === 'name' ? 'message' : 'name'))
+        setFocusedField((prev) => (prev === 'name' ? 'message' : 'name'));
       }
     },
-    [onCancel]
-  )
+    [onCancel],
+  );
 
-  useKeyboard(handleKeyPress)
+  useKeyboard(handleKeyPress);
 
   return (
-    <Modal
-      width={80}
-      height={18}
-      title="Create Tag"
-    >
+    <Modal width={80} height={18} title="Create Tag">
       {commitHash && commitMessage && (
         <box flexDirection="row" marginBottom={theme.spacing.xs}>
           <text fg={theme.colors.text.muted}>Commit: </text>
@@ -90,5 +81,5 @@ export function TagModal({
         </text>
       </box>
     </Modal>
-  )
+  );
 }

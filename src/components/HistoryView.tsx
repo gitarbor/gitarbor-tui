@@ -1,11 +1,11 @@
-import { theme } from '../theme'
-import { Fieldset } from './Fieldset'
-import type { GitCommit } from '../types/git'
+import { theme } from '../theme';
+import { Fieldset } from './Fieldset';
+import type { GitCommit } from '../types/git';
 
 interface HistoryViewProps {
-  commits: GitCommit[]
-  selectedIndex: number
-  focused: boolean
+  commits: GitCommit[];
+  selectedIndex: number;
+  focused: boolean;
 }
 
 export function HistoryView({ commits, selectedIndex, focused }: HistoryViewProps) {
@@ -17,18 +17,13 @@ export function HistoryView({ commits, selectedIndex, focused }: HistoryViewProp
       paddingX={theme.spacing.none}
       paddingY={theme.spacing.none}
     >
-      <scrollbox
-        width="100%"
-        flexGrow={1}
-        scrollY={true}
-        paddingLeft={theme.spacing.xs}
-      >
+      <scrollbox width="100%" flexGrow={1} scrollY={true} paddingLeft={theme.spacing.xs}>
         {commits.length === 0 ? (
           <text fg={theme.colors.text.muted}>No commits</text>
         ) : (
           commits.map((commit, idx) => {
-            const isSelected = idx === selectedIndex
-            
+            const isSelected = idx === selectedIndex;
+
             return (
               <box key={commit.hash} flexDirection="row">
                 <text fg={isSelected ? theme.colors.primary : theme.colors.border}>
@@ -43,10 +38,10 @@ export function HistoryView({ commits, selectedIndex, focused }: HistoryViewProp
                   {commit.message}
                 </text>
               </box>
-            )
+            );
           })
         )}
       </scrollbox>
     </Fieldset>
-  )
+  );
 }

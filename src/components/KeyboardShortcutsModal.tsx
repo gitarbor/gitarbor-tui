@@ -1,16 +1,16 @@
-import { useRef, useEffect } from 'react'
-import { useKeyboard } from '@opentui/react'
-import { ScrollBoxRenderable } from '@opentui/core'
-import { theme } from '../theme'
-import { Modal } from './Modal'
+import { useRef, useEffect } from 'react';
+import { useKeyboard } from '@opentui/react';
+import { ScrollBoxRenderable } from '@opentui/core';
+import { theme } from '../theme';
+import { Modal } from './Modal';
 
 interface KeyboardShortcutsModalProps {
-  onClose: () => void
+  onClose: () => void;
 }
 
 interface ShortcutSection {
-  title: string
-  shortcuts: Array<{ keys: string; description: string }>
+  title: string;
+  shortcuts: Array<{ keys: string; description: string }>;
 }
 
 const shortcutSections: ShortcutSection[] = [
@@ -122,35 +122,24 @@ const shortcutSections: ShortcutSection[] = [
       { keys: 'e', description: 'Edit manually' },
     ],
   },
-]
+];
 
 export function KeyboardShortcutsModal({ onClose }: KeyboardShortcutsModalProps) {
-  const scrollRef = useRef<ScrollBoxRenderable>(null)
+  const scrollRef = useRef<ScrollBoxRenderable>(null);
 
   useKeyboard((key) => {
     if (key.name === 'escape') {
-      onClose()
+      onClose();
     }
-  })
+  });
 
   return (
-    <Modal
-      width={65}
-      height={30}
-      title="Keyboard Shortcuts"
-    >
-      <scrollbox
-        ref={scrollRef}
-        width="100%"
-        height={24}
-        viewportCulling={true}
-      >
+    <Modal width={65} height={30} title="Keyboard Shortcuts">
+      <scrollbox ref={scrollRef} width="100%" height={24} viewportCulling={true}>
         {shortcutSections.map((section, sectionIdx) => (
           <box key={section.title} flexDirection="column">
             {/* Section title */}
-            <text fg={theme.colors.primary}>
-              {section.title}
-            </text>
+            <text fg={theme.colors.primary}>{section.title}</text>
             <text> </text>
 
             {/* Shortcuts in this section */}
@@ -159,9 +148,7 @@ export function KeyboardShortcutsModal({ onClose }: KeyboardShortcutsModalProps)
                 <text fg={theme.colors.text.secondary} width={20}>
                   {shortcut.keys}
                 </text>
-                <text fg={theme.colors.text.primary}>
-                  {shortcut.description}
-                </text>
+                <text fg={theme.colors.text.primary}>{shortcut.description}</text>
               </box>
             ))}
 
@@ -172,9 +159,7 @@ export function KeyboardShortcutsModal({ onClose }: KeyboardShortcutsModalProps)
       </scrollbox>
 
       <text> </text>
-      <text fg={theme.colors.text.muted}>
-        [Esc] Close
-      </text>
+      <text fg={theme.colors.text.muted}>[Esc] Close</text>
     </Modal>
-  )
+  );
 }

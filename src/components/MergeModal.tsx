@@ -1,54 +1,62 @@
-import { useState } from 'react'
-import { useKeyboard } from '@opentui/react'
-import { theme } from '../theme'
-import type { GitBranch, MergeStrategy } from '../types/git'
+import { useState } from 'react';
+import { useKeyboard } from '@opentui/react';
+import { theme } from '../theme';
+import type { GitBranch, MergeStrategy } from '../types/git';
 
 interface MergeModalProps {
-  branches: GitBranch[]
-  currentBranch: string
-  onMerge: (branch: string, strategy: MergeStrategy) => void
-  onCancel: () => void
+  branches: GitBranch[];
+  currentBranch: string;
+  onMerge: (branch: string, strategy: MergeStrategy) => void;
+  onCancel: () => void;
 }
 
 export function MergeModal({ branches, currentBranch, onMerge, onCancel }: MergeModalProps) {
-  const [selectedIndex, setSelectedIndex] = useState(0)
-  const [strategyIndex, setStrategyIndex] = useState(0)
-  const [focusedField, setFocusedField] = useState<'branch' | 'strategy'>('branch')
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [strategyIndex, setStrategyIndex] = useState(0);
+  const [focusedField, setFocusedField] = useState<'branch' | 'strategy'>('branch');
 
   const strategies: { value: MergeStrategy; label: string; description: string }[] = [
-    { value: 'default', label: 'Default', description: 'Fast-forward if possible, otherwise create merge commit' },
+    {
+      value: 'default',
+      label: 'Default',
+      description: 'Fast-forward if possible, otherwise create merge commit',
+    },
     { value: 'no-ff', label: 'No Fast-Forward', description: 'Always create a merge commit' },
-    { value: 'ff-only', label: 'Fast-Forward Only', description: 'Only merge if fast-forward is possible' },
-  ]
+    {
+      value: 'ff-only',
+      label: 'Fast-Forward Only',
+      description: 'Only merge if fast-forward is possible',
+    },
+  ];
 
   // Filter out current branch and remote branches
-  const availableBranches = branches.filter((b) => !b.remote && b.name !== currentBranch)
+  const availableBranches = branches.filter((b) => !b.remote && b.name !== currentBranch);
 
   useKeyboard((key) => {
     if (key.name === 'escape') {
-      onCancel()
+      onCancel();
     } else if (key.name === 'tab') {
-      setFocusedField(focusedField === 'branch' ? 'strategy' : 'branch')
+      setFocusedField(focusedField === 'branch' ? 'strategy' : 'branch');
     } else if (key.name === 'up') {
       if (focusedField === 'branch') {
-        setSelectedIndex((prev) => Math.max(0, prev - 1))
+        setSelectedIndex((prev) => Math.max(0, prev - 1));
       } else {
-        setStrategyIndex((prev) => Math.max(0, prev - 1))
+        setStrategyIndex((prev) => Math.max(0, prev - 1));
       }
     } else if (key.name === 'down') {
       if (focusedField === 'branch') {
-        setSelectedIndex((prev) => Math.min(availableBranches.length - 1, prev + 1))
+        setSelectedIndex((prev) => Math.min(availableBranches.length - 1, prev + 1));
       } else {
-        setStrategyIndex((prev) => Math.min(strategies.length - 1, prev + 1))
+        setStrategyIndex((prev) => Math.min(strategies.length - 1, prev + 1));
       }
     } else if (key.name === 'return') {
-      const selectedBranch = availableBranches[selectedIndex]
-      const selectedStrategy = strategies[strategyIndex]
+      const selectedBranch = availableBranches[selectedIndex];
+      const selectedStrategy = strategies[strategyIndex];
       if (selectedBranch && selectedStrategy) {
-        onMerge(selectedBranch.name, selectedStrategy.value)
+        onMerge(selectedBranch.name, selectedStrategy.value);
       }
     }
-  })
+  });
 
   if (availableBranches.length === 0) {
     return (
@@ -68,15 +76,17 @@ export function MergeModal({ branches, currentBranch, onMerge, onCancel }: Merge
       >
         <text fg={theme.colors.primary}>No Branches to Merge</text>
         <box height={1} />
-        <text fg={theme.colors.text.secondary}>There are no available branches to merge into {currentBranch}.</text>
+        <text fg={theme.colors.text.secondary}>
+          There are no available branches to merge into {currentBranch}.
+        </text>
         <box height={1} />
         <text fg={theme.colors.text.muted}>Press ESC to close</text>
       </box>
-    )
+    );
   }
 
-  const selectedBranch = availableBranches[selectedIndex]
-  const selectedStrategy = strategies[strategyIndex]
+  const selectedBranch = availableBranches[selectedIndex];
+  const selectedStrategy = strategies[strategyIndex];
 
   return (
     <box
@@ -96,9 +106,7 @@ export function MergeModal({ branches, currentBranch, onMerge, onCancel }: Merge
       <text fg={theme.colors.primary}>Merge Branch into {currentBranch}</text>
       <box height={1} />
 
-      <text fg={theme.colors.text.secondary}>
-        Select branch to merge (Tab to switch fields):
-      </text>
+      <text fg={theme.colors.text.secondary}>Select branch to merge (Tab to switch fields):</text>
       <box height={1} />
 
       <box
@@ -112,13 +120,13 @@ export function MergeModal({ branches, currentBranch, onMerge, onCancel }: Merge
             <text fg={idx === selectedIndex ? theme.colors.primary : theme.colors.border}>
               {idx === selectedIndex ? '>' : ' '}
             </text>
-            <text fg={idx === selectedIndex ? theme.colors.text.primary : theme.colors.text.secondary}>
+            <text
+              fg={idx === selectedIndex ? theme.colors.text.primary : theme.colors.text.secondary}
+            >
               {' '}
               {branch.name}
             </text>
-            {branch.upstream && (
-              <text fg={theme.colors.text.muted}> → {branch.upstream}</text>
-            )}
+            {branch.upstream && <text fg={theme.colors.text.muted}> → {branch.upstream}</text>}
           </box>
         ))}
       </box>
@@ -138,7 +146,9 @@ export function MergeModal({ branches, currentBranch, onMerge, onCancel }: Merge
             <text fg={idx === strategyIndex ? theme.colors.primary : theme.colors.border}>
               {idx === strategyIndex ? '>' : ' '}
             </text>
-            <text fg={idx === strategyIndex ? theme.colors.text.primary : theme.colors.text.secondary}>
+            <text
+              fg={idx === strategyIndex ? theme.colors.text.primary : theme.colors.text.secondary}
+            >
               {' '}
               {strategy.label}
             </text>
@@ -154,9 +164,7 @@ export function MergeModal({ branches, currentBranch, onMerge, onCancel }: Merge
       )}
 
       <box height={1} />
-      <text fg={theme.colors.text.muted}>
-        Enter: Merge | Tab: Switch field | ESC: Cancel
-      </text>
+      <text fg={theme.colors.text.muted}>Enter: Merge | Tab: Switch field | ESC: Cancel</text>
     </box>
-  )
+  );
 }

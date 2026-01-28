@@ -1,15 +1,15 @@
-import { useState } from 'react'
-import { useKeyboard } from '@opentui/react'
-import { theme } from '../theme'
-import type { WorkspaceSession } from '../types/workspace'
+import { useState } from 'react';
+import { useKeyboard } from '@opentui/react';
+import { theme } from '../theme';
+import type { WorkspaceSession } from '../types/workspace';
 
 interface WorkspaceModalProps {
-  sessions: WorkspaceSession[]
-  activeSessionId?: string
-  onLoadSession: (sessionId: string) => void
-  onSaveSession: (name: string) => void
-  onDeleteSession: (sessionId: string) => void
-  onClose: () => void
+  sessions: WorkspaceSession[];
+  activeSessionId?: string;
+  onLoadSession: (sessionId: string) => void;
+  onSaveSession: (name: string) => void;
+  onDeleteSession: (sessionId: string) => void;
+  onClose: () => void;
 }
 
 export function WorkspaceModal({
@@ -20,65 +20,65 @@ export function WorkspaceModal({
   onDeleteSession,
   onClose,
 }: WorkspaceModalProps) {
-  const [selectedIndex, setSelectedIndex] = useState(0)
-  const [mode, setMode] = useState<'list' | 'save' | 'confirm'>('list')
-  const [inputName, setInputName] = useState('')
-  const [sessionToDelete, setSessionToDelete] = useState<string | null>(null)
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [mode, setMode] = useState<'list' | 'save' | 'confirm'>('list');
+  const [inputName, setInputName] = useState('');
+  const [sessionToDelete, setSessionToDelete] = useState<string | null>(null);
 
-  const maxIndex = sessions.length - 1
+  const maxIndex = sessions.length - 1;
 
   useKeyboard((key) => {
     if (mode === 'save') {
       if (key.name === 'escape') {
-        setMode('list')
-        setInputName('')
+        setMode('list');
+        setInputName('');
       } else if (key.name === 'return') {
         if (inputName.trim()) {
-          onSaveSession(inputName.trim())
-          setMode('list')
-          setInputName('')
+          onSaveSession(inputName.trim());
+          setMode('list');
+          setInputName('');
         }
       } else if (key.name === 'backspace') {
-        setInputName((prev) => prev.slice(0, -1))
+        setInputName((prev) => prev.slice(0, -1));
       } else if (key.sequence && key.sequence.length === 1 && key.sequence !== '/') {
-        setInputName((prev) => prev + key.sequence)
+        setInputName((prev) => prev + key.sequence);
       }
     } else if (mode === 'confirm') {
       if (key.name === 'escape' || key.sequence === 'n') {
-        setMode('list')
-        setSessionToDelete(null)
+        setMode('list');
+        setSessionToDelete(null);
       } else if (key.sequence === 'y') {
         if (sessionToDelete) {
-          onDeleteSession(sessionToDelete)
-          setMode('list')
-          setSessionToDelete(null)
-          setSelectedIndex(Math.max(0, selectedIndex - 1))
+          onDeleteSession(sessionToDelete);
+          setMode('list');
+          setSessionToDelete(null);
+          setSelectedIndex(Math.max(0, selectedIndex - 1));
         }
       }
     } else {
       if (key.name === 'escape' || key.sequence === 'q') {
-        onClose()
+        onClose();
       } else if (key.name === 'up') {
-        setSelectedIndex((prev) => Math.max(0, prev - 1))
+        setSelectedIndex((prev) => Math.max(0, prev - 1));
       } else if (key.name === 'down') {
-        setSelectedIndex((prev) => Math.min(maxIndex, prev + 1))
+        setSelectedIndex((prev) => Math.min(maxIndex, prev + 1));
       } else if (key.name === 'return') {
-        const session = sessions[selectedIndex]
+        const session = sessions[selectedIndex];
         if (session) {
-          onLoadSession(session.id)
-          onClose()
+          onLoadSession(session.id);
+          onClose();
         }
       } else if (key.sequence === 's') {
-        setMode('save')
+        setMode('save');
       } else if (key.sequence === 'd') {
-        const session = sessions[selectedIndex]
+        const session = sessions[selectedIndex];
         if (session) {
-          setSessionToDelete(session.id)
-          setMode('confirm')
+          setSessionToDelete(session.id);
+          setMode('confirm');
         }
       }
     }
-  })
+  });
 
   return (
     <box
@@ -100,16 +100,12 @@ export function WorkspaceModal({
         backgroundColor={theme.colors.background.primary}
         padding={theme.spacing.sm}
       >
-        <text fg={theme.colors.primary}>
-          Workspace Sessions
-        </text>
+        <text fg={theme.colors.primary}>Workspace Sessions</text>
 
         {mode === 'save' ? (
           <>
             <box marginTop={theme.spacing.xs} marginBottom={theme.spacing.xs}>
-              <text fg={theme.colors.text.muted}>
-                Enter session name (ESC to cancel)
-              </text>
+              <text fg={theme.colors.text.muted}>Enter session name (ESC to cancel)</text>
             </box>
             <box
               borderStyle={theme.borders.style}
@@ -117,17 +113,13 @@ export function WorkspaceModal({
               padding={theme.spacing.xs}
               marginTop={theme.spacing.xs}
             >
-              <text fg={theme.colors.text.primary}>
-                {inputName || '_'}
-              </text>
+              <text fg={theme.colors.text.primary}>{inputName || '_'}</text>
             </box>
           </>
         ) : mode === 'confirm' ? (
           <>
             <box marginTop={theme.spacing.sm} marginBottom={theme.spacing.sm}>
-              <text fg={theme.colors.status.warning}>
-                Delete this session? (y/n)
-              </text>
+              <text fg={theme.colors.status.warning}>Delete this session? (y/n)</text>
             </box>
             <box paddingLeft={theme.spacing.sm}>
               <text fg={theme.colors.text.muted}>
@@ -150,9 +142,9 @@ export function WorkspaceModal({
                 </text>
               ) : (
                 sessions.map((session, index) => {
-                  const isSelected = index === selectedIndex
-                  const isActive = session.id === activeSessionId
-                  const date = new Date(session.lastModified).toLocaleDateString()
+                  const isSelected = index === selectedIndex;
+                  const isActive = session.id === activeSessionId;
+                  const date = new Date(session.lastModified).toLocaleDateString();
 
                   return (
                     <box
@@ -168,30 +160,19 @@ export function WorkspaceModal({
                       }
                     >
                       <box>
-                        <text
-                          fg={
-                            isSelected
-                              ? theme.colors.primary
-                              : theme.colors.text.primary
-                          }
-                        >
+                        <text fg={isSelected ? theme.colors.primary : theme.colors.text.primary}>
                           {isActive ? '● ' : '  '}
                           {session.name}
                         </text>
-                        <text
-                          fg={theme.colors.text.muted}
-                          marginLeft={theme.spacing.xs}
-                        >
+                        <text fg={theme.colors.text.muted} marginLeft={theme.spacing.xs}>
                           ({session.repositories.length} repos)
                         </text>
                       </box>
                       <box paddingLeft={theme.spacing.sm}>
-                        <text fg={theme.colors.text.muted}>
-                          Modified: {date}
-                        </text>
+                        <text fg={theme.colors.text.muted}>Modified: {date}</text>
                       </box>
                     </box>
-                  )
+                  );
                 })
               )}
             </box>
@@ -199,5 +180,5 @@ export function WorkspaceModal({
         )}
       </box>
     </box>
-  )
+  );
 }

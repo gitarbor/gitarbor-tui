@@ -1,11 +1,11 @@
-import { theme } from '../theme'
-import { Fieldset } from './Fieldset'
-import type { GitRemote } from '../types/git'
+import { theme } from '../theme';
+import { Fieldset } from './Fieldset';
+import type { GitRemote } from '../types/git';
 
 interface RemotesViewProps {
-  remotes: GitRemote[]
-  selectedIndex: number
-  focused: boolean
+  remotes: GitRemote[];
+  selectedIndex: number;
+  focused: boolean;
 }
 
 export function RemotesView({ remotes, selectedIndex, focused }: RemotesViewProps) {
@@ -22,7 +22,7 @@ export function RemotesView({ remotes, selectedIndex, focused }: RemotesViewProp
           <text fg={theme.colors.text.muted}>No remotes configured</text>
         ) : (
           remotes.map((remote, idx) => {
-            const isSelected = idx === selectedIndex
+            const isSelected = idx === selectedIndex;
 
             return (
               <box key={remote.name} flexDirection="column">
@@ -41,15 +41,15 @@ export function RemotesView({ remotes, selectedIndex, focused }: RemotesViewProp
                 </box>
                 {remote.pushUrl !== remote.fetchUrl && (
                   <box flexDirection="row" paddingLeft={theme.spacing.md}>
-                    <text fg={theme.colors.text.muted}>push:  </text>
+                    <text fg={theme.colors.text.muted}>push: </text>
                     <text fg={theme.colors.text.secondary}>{remote.pushUrl}</text>
                   </box>
                 )}
               </box>
-            )
+            );
           })
         )}
       </box>
     </Fieldset>
-  )
+  );
 }

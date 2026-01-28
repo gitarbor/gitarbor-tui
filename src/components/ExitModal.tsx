@@ -1,60 +1,55 @@
-import { useState, useCallback } from 'react'
-import { useKeyboard } from '@opentui/react'
-import { theme } from '../theme'
-import { Modal } from './Modal'
+import { useState, useCallback } from 'react';
+import { useKeyboard } from '@opentui/react';
+import { theme } from '../theme';
+import { Modal } from './Modal';
 
 interface ExitModalProps {
-  onConfirm: () => void
-  onCancel: () => void
+  onConfirm: () => void;
+  onCancel: () => void;
 }
 
 export function ExitModal({ onConfirm, onCancel }: ExitModalProps) {
-  const [selectedOption, setSelectedOption] = useState<'yes' | 'no'>('no')
+  const [selectedOption, setSelectedOption] = useState<'yes' | 'no'>('no');
 
   const handleKeyboard = useCallback(
     (key: { name: string; sequence?: string }) => {
       // Handle arrow keys for navigation
       if (key.name === 'left') {
-        setSelectedOption('yes')
-        return
+        setSelectedOption('yes');
+        return;
       }
       if (key.name === 'right') {
-        setSelectedOption('no')
-        return
+        setSelectedOption('no');
+        return;
       }
 
       // Handle Enter to confirm selection
       if (key.name === 'return') {
         if (selectedOption === 'yes') {
-          onConfirm()
+          onConfirm();
         } else {
-          onCancel()
+          onCancel();
         }
-        return
+        return;
       }
 
       // Handle Y/N keys directly
       if (key.sequence === 'y' || key.sequence === 'Y') {
-        onConfirm()
-        return
+        onConfirm();
+        return;
       }
       if (key.sequence === 'n' || key.sequence === 'N' || key.name === 'escape') {
-        onCancel()
-        return
+        onCancel();
+        return;
       }
     },
     [selectedOption, onConfirm, onCancel],
-  )
+  );
 
-  useKeyboard(handleKeyboard)
+  useKeyboard(handleKeyboard);
 
   return (
-    <Modal
-      width={55}
-      height={10}
-      title="Exit GitArbor?"
-      borderColor={theme.colors.status.info}
-    >
+    <Modal width={55} height={10} title="Exit GitArbor?" borderColor={theme.colors.status.info}>
       <box style={{ justifyContent: 'center' }}>
         <text fg={theme.colors.text.muted}>Are you sure you want to quit?</text>
       </box>
@@ -87,5 +82,5 @@ export function ExitModal({ onConfirm, onCancel }: ExitModalProps) {
         <text fg={theme.colors.text.disabled}>←→ select │ Enter confirm │ Y/N quick select</text>
       </box>
     </Modal>
-  )
+  );
 }

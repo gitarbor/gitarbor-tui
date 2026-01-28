@@ -1,14 +1,58 @@
-import { useEffect, useRef } from 'react'
-import { ScrollBoxRenderable } from '@opentui/core'
-import { theme } from '../theme'
-import type { GitFile, GitMergeState } from '../types/git'
+import { useEffect, useRef, useMemo, memo } from 'react';
+import { ScrollBoxRenderable } from '@opentui/core';
+import { theme } from '../theme';
+import type { GitFile, GitMergeState } from '../types/git';
 
 interface WorkingDirectoryListProps {
-  allFiles: Array<GitFile & { section: string }>
-  selectedIndex: number
-  isFocused: boolean
-  mergeState?: GitMergeState
+  allFiles: Array<GitFile & { section: string }>;
+  selectedIndex: number;
+  isFocused: boolean;
+  mergeState?: GitMergeState;
 }
+
+// Helper functions moved outside component to avoid recreation
+const getStatusPrefix = (file: GitFile & { section: string }) => {
+  // Check actual git status first
+  if (file.status === 'D') return 'D';
+  if (file.status === 'A') return 'A';
+
+  // Fall back to section-based logic
+  if (file.section === 'untracked') return 'U';
+  return 'M';
+};
+
+const getSectionColor = (section: string, status: string) => {
+  // Prioritize section color (staged files should always be green)
+  if (section === 'staged') return theme.colors.git.staged;
+  if (section === 'untracked') return theme.colors.text.muted;
+  // Only show deleted color for unstaged deleted files
+  if (status === 'D') return theme.colors.git.deleted;
+  return theme.colors.git.modified;
+};
+
+// Memoized file item component to prevent unnecessary re-renders
+interface FileItemProps {
+  file: GitFile & { section: string };
+  isSelected: boolean;
+  prefix: string;
+  color: string;
+}
+
+const FileItem = memo(({ file, isSelected, prefix, color }: FileItemProps) => {
+  return (
+    <box key={file.path} flexDirection="row" paddingLeft={theme.spacing.xs} height={1}>
+      <text fg={isSelected ? theme.colors.primary : theme.colors.border}>
+        {isSelected ? '>' : ' '}
+      </text>
+      <text fg={color}> {prefix} </text>
+      <text fg={isSelected ? theme.colors.text.primary : theme.colors.text.secondary}>
+        {file.path}
+      </text>
+    </box>
+  );
+});
+
+FileItem.displayName = 'FileItem';
 
 export function WorkingDirectoryList({
   allFiles,
@@ -16,35 +60,26 @@ export function WorkingDirectoryList({
   isFocused,
   mergeState,
 }: WorkingDirectoryListProps) {
-  const scrollRef = useRef<ScrollBoxRenderable>(null)
-
-  const getStatusPrefix = (file: GitFile & { section: string }) => {
-    // Check actual git status first
-    if (file.status === 'D') return 'D'
-    if (file.status === 'A') return 'A'
-    
-    // Fall back to section-based logic
-    if (file.section === 'untracked') return 'U'
-    return 'M'
-  }
-
-  const getSectionColor = (section: string, status: string) => {
-    // Prioritize section color (staged files should always be green)
-    if (section === 'staged') return theme.colors.git.staged
-    if (section === 'untracked') return theme.colors.text.muted
-    // Only show deleted color for unstaged deleted files
-    if (status === 'D') return theme.colors.git.deleted
-    return theme.colors.git.modified
-  }
+  const scrollRef = useRef<ScrollBoxRenderable>(null);
 
   // Auto-scroll to selected item when selection changes
   useEffect(() => {
-    if (!isFocused || !scrollRef.current) return
+    if (!isFocused || !scrollRef.current) return;
 
-    const itemHeight = 1
-    const scrollPosition = Math.max(0, selectedIndex * itemHeight - 2)
-    scrollRef.current.scrollTo({ x: 0, y: scrollPosition })
-  }, [selectedIndex, isFocused])
+    const itemHeight = 1;
+    const scrollPosition = Math.max(0, selectedIndex * itemHeight - 2);
+    scrollRef.current.scrollTo({ x: 0, y: scrollPosition });
+  }, [selectedIndex, isFocused]);
+
+  // Memoize file items to prevent re-calculating on every render
+  const fileItems = useMemo(() => {
+    return allFiles.map((file, idx) => ({
+      file,
+      idx,
+      prefix: getStatusPrefix(file),
+      color: getSectionColor(file.section, file.status),
+    }));
+  }, [allFiles]);
 
   return (
     <>
@@ -67,7 +102,8 @@ export function WorkingDirectoryList({
           <text> </text>
           {mergeState.conflicts.length > 0 && (
             <text fg={theme.colors.status.error}>
-              {mergeState.conflicts.length} conflict{mergeState.conflicts.length !== 1 ? 's' : ''} - Press 'C' to resolve
+              {mergeState.conflicts.length} conflict{mergeState.conflicts.length !== 1 ? 's' : ''} -
+              Press 'C' to resolve
             </text>
           )}
           {mergeState.conflicts.length === 0 && (
@@ -75,32 +111,24 @@ export function WorkingDirectoryList({
           )}
         </box>
       )}
-      
+
       {allFiles.length === 0 ? (
         <box paddingLeft={theme.spacing.xs}>
           <text fg={theme.colors.text.muted}>Working directory clean</text>
         </box>
       ) : (
         <scrollbox ref={scrollRef} width="100%" height="100%" viewportCulling={true}>
-          {allFiles.map((file, idx) => {
-            const isSelected = idx === selectedIndex && isFocused
-            const prefix = getStatusPrefix(file)
-            const color = getSectionColor(file.section, file.status)
-            
-            return (
-              <box key={file.path} flexDirection="row" paddingLeft={theme.spacing.xs} height={1}>
-                <text fg={isSelected ? theme.colors.primary : theme.colors.border}>
-                  {isSelected ? '>' : ' '}
-                </text>
-                <text fg={color}> {prefix} </text>
-                <text fg={isSelected ? theme.colors.text.primary : theme.colors.text.secondary}>
-                  {file.path}
-                </text>
-              </box>
-            )
-          })}
+          {fileItems.map((item) => (
+            <FileItem
+              key={item.file.path}
+              file={item.file}
+              isSelected={item.idx === selectedIndex && isFocused}
+              prefix={item.prefix}
+              color={item.color}
+            />
+          ))}
         </scrollbox>
       )}
     </>
-  )
+  );
 }

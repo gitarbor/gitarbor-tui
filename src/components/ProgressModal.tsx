@@ -1,14 +1,14 @@
-import { useEffect, useCallback } from 'react'
-import { useKeyboard } from '@opentui/react'
-import { theme } from '../theme'
-import { Modal } from './Modal'
+import { useEffect, useCallback } from 'react';
+import { useKeyboard } from '@opentui/react';
+import { theme } from '../theme';
+import { Modal } from './Modal';
 
 interface ProgressModalProps {
-  title: string
-  messages: string[]
-  isComplete: boolean
-  error?: string
-  onClose: () => void
+  title: string;
+  messages: string[];
+  isComplete: boolean;
+  error?: string;
+  onClose: () => void;
 }
 
 export function ProgressModal({ title, messages, isComplete, error, onClose }: ProgressModalProps) {
@@ -16,26 +16,26 @@ export function ProgressModal({ title, messages, isComplete, error, onClose }: P
   useEffect(() => {
     if (isComplete && !error) {
       const timer = setTimeout(() => {
-        onClose()
-      }, 1500)
-      return () => clearTimeout(timer)
+        onClose();
+      }, 1500);
+      return () => clearTimeout(timer);
     }
-  }, [isComplete, error, onClose])
+  }, [isComplete, error, onClose]);
 
   const handleKeyPress = useCallback(() => {
     if (isComplete || error) {
-      onClose()
+      onClose();
     }
-  }, [isComplete, error, onClose])
+  }, [isComplete, error, onClose]);
 
   useKeyboard((key) => {
     if (key.name === 'escape' || key.name === 'return') {
-      handleKeyPress()
+      handleKeyPress();
     }
-  })
+  });
 
   // Show last 10 messages
-  const visibleMessages = messages.slice(-10)
+  const visibleMessages = messages.slice(-10);
 
   return (
     <Modal
@@ -46,7 +46,9 @@ export function ProgressModal({ title, messages, isComplete, error, onClose }: P
     >
       <box flexDirection="column" flexGrow={1}>
         {visibleMessages.map((msg, idx) => (
-          <text key={idx} fg={theme.colors.text.secondary}>{msg}</text>
+          <text key={idx} fg={theme.colors.text.secondary}>
+            {msg}
+          </text>
         ))}
       </box>
 
@@ -57,18 +59,12 @@ export function ProgressModal({ title, messages, isComplete, error, onClose }: P
           <text> </text>
         </>
       )}
-      
-      {isComplete && !error && (
-        <text fg={theme.colors.status.success}>Complete!</text>
-      )}
-      
-      {!isComplete && !error && (
-        <text fg={theme.colors.text.muted}>Please wait...</text>
-      )}
-      
-      {(isComplete || error) && (
-        <text fg={theme.colors.text.muted}>[Enter/Esc] Close</text>
-      )}
+
+      {isComplete && !error && <text fg={theme.colors.status.success}>Complete!</text>}
+
+      {!isComplete && !error && <text fg={theme.colors.text.muted}>Please wait...</text>}
+
+      {(isComplete || error) && <text fg={theme.colors.text.muted}>[Enter/Esc] Close</text>}
     </Modal>
-  )
+  );
 }

@@ -1,25 +1,25 @@
-import { theme } from '../theme'
+import { theme } from '../theme';
 
 interface InputProps {
-  value: string
-  onInput?: (value: string) => void
-  onChange?: (value: string) => void
-  onSubmit?: (value: string) => void
-  placeholder?: string
-  focused?: boolean
-  width?: number | 'auto' | `${number}%` | '100%'
-  textColor?: string
-  backgroundColor?: string
-  focusedTextColor?: string
-  focusedBackgroundColor?: string
-  placeholderColor?: string
-  cursorColor?: string
-  maxLength?: number
-  padding?: number | `${number}%`
-  paddingTop?: number | `${number}%`
-  paddingRight?: number | `${number}%`
-  paddingBottom?: number | `${number}%`
-  paddingLeft?: number | `${number}%`
+  value: string;
+  onInput?: (value: string) => void;
+  onChange?: (value: string) => void;
+  onSubmit?: (value: string) => void;
+  placeholder?: string;
+  focused?: boolean;
+  width?: number | 'auto' | `${number}%` | '100%';
+  textColor?: string;
+  backgroundColor?: string;
+  focusedTextColor?: string;
+  focusedBackgroundColor?: string;
+  placeholderColor?: string;
+  cursorColor?: string;
+  maxLength?: number;
+  padding?: number | `${number}%`;
+  paddingTop?: number | `${number}%`;
+  paddingRight?: number | `${number}%`;
+  paddingBottom?: number | `${number}%`;
+  paddingLeft?: number | `${number}%`;
 }
 
 export function Input(props: InputProps) {
@@ -43,16 +43,16 @@ export function Input(props: InputProps) {
     paddingRight,
     paddingBottom,
     paddingLeft = theme.spacing.xs,
-  } = props
+  } = props;
 
   // Normalize the callback - support both onInput and onChange
   const handleInput = (newValue: string) => {
     if (onInput) {
-      onInput(newValue)
+      onInput(newValue);
     } else if (onChange) {
-      onChange(newValue)
+      onChange(newValue);
     }
-  }
+  };
 
   // Pass through onSubmit as-is since it already receives the value
   return (
@@ -76,5 +76,5 @@ export function Input(props: InputProps) {
       paddingBottom={paddingBottom}
       paddingLeft={paddingLeft}
     />
-  )
+  );
 }

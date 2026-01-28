@@ -1,15 +1,15 @@
-import { useState, useCallback } from 'react'
-import { useKeyboard } from '@opentui/react'
-import { theme } from '../theme'
-import { Modal } from './Modal'
+import { useState, useCallback } from 'react';
+import { useKeyboard } from '@opentui/react';
+import { theme } from '../theme';
+import { Modal } from './Modal';
 
 interface RepoSwitchModalProps {
-  repoName: string
-  stagedCount: number
-  unstagedCount: number
-  untrackedCount: number
-  onConfirm: () => void
-  onCancel: () => void
+  repoName: string;
+  stagedCount: number;
+  unstagedCount: number;
+  untrackedCount: number;
+  onConfirm: () => void;
+  onCancel: () => void;
 }
 
 export function RepoSwitchModal({
@@ -20,45 +20,45 @@ export function RepoSwitchModal({
   onConfirm,
   onCancel,
 }: RepoSwitchModalProps) {
-  const totalChanges = stagedCount + unstagedCount + untrackedCount
-  const [selectedOption, setSelectedOption] = useState<'confirm' | 'cancel'>('cancel')
+  const totalChanges = stagedCount + unstagedCount + untrackedCount;
+  const [selectedOption, setSelectedOption] = useState<'confirm' | 'cancel'>('cancel');
 
   const handleKeyboard = useCallback(
     (key: { name: string; sequence?: string }) => {
       // Handle arrow keys for navigation
       if (key.name === 'left') {
-        setSelectedOption('confirm')
-        return
+        setSelectedOption('confirm');
+        return;
       }
       if (key.name === 'right') {
-        setSelectedOption('cancel')
-        return
+        setSelectedOption('cancel');
+        return;
       }
 
       // Handle Enter to confirm selection
       if (key.name === 'return') {
         if (selectedOption === 'confirm') {
-          onConfirm()
+          onConfirm();
         } else {
-          onCancel()
+          onCancel();
         }
-        return
+        return;
       }
 
       // Handle Y/N keys directly
       if (key.sequence === 'y' || key.sequence === 'Y') {
-        onConfirm()
-        return
+        onConfirm();
+        return;
       }
       if (key.sequence === 'n' || key.sequence === 'N' || key.name === 'escape') {
-        onCancel()
-        return
+        onCancel();
+        return;
       }
     },
     [selectedOption, onConfirm, onCancel],
-  )
+  );
 
-  useKeyboard(handleKeyboard)
+  useKeyboard(handleKeyboard);
 
   return (
     <Modal
@@ -90,9 +90,7 @@ export function RepoSwitchModal({
           )}
         </box>
         <box paddingTop={theme.spacing.sm}>
-          <text fg={theme.colors.text.secondary}>
-            Switch to "{repoName}" anyway?
-          </text>
+          <text fg={theme.colors.text.secondary}>Switch to "{repoName}" anyway?</text>
         </box>
         <box paddingTop={theme.spacing.xs}>
           <text fg={theme.colors.text.muted}>
@@ -104,13 +102,21 @@ export function RepoSwitchModal({
       {/* Buttons */}
       <box style={{ justifyContent: 'center', flexDirection: 'row', gap: 3 }}>
         <text
-          bg={selectedOption === 'confirm' ? theme.colors.status.warning : theme.colors.background.button}
-          fg={selectedOption === 'confirm' ? theme.colors.text.inverted : theme.colors.text.disabled}
+          bg={
+            selectedOption === 'confirm'
+              ? theme.colors.status.warning
+              : theme.colors.background.button
+          }
+          fg={
+            selectedOption === 'confirm' ? theme.colors.text.inverted : theme.colors.text.disabled
+          }
         >
           {selectedOption === 'confirm' ? '[✓ Yes, Switch]' : '  Yes, Switch  '}
         </text>
         <text
-          bg={selectedOption === 'cancel' ? theme.colors.status.info : theme.colors.background.button}
+          bg={
+            selectedOption === 'cancel' ? theme.colors.status.info : theme.colors.background.button
+          }
           fg={selectedOption === 'cancel' ? theme.colors.text.primary : theme.colors.text.disabled}
         >
           {selectedOption === 'cancel' ? '[✓ No, Cancel]' : '  No, Cancel  '}
@@ -131,5 +137,5 @@ export function RepoSwitchModal({
         <text fg={theme.colors.text.disabled}>←→ select │ Enter confirm │ Y/N quick select</text>
       </box>
     </Modal>
-  )
+  );
 }
