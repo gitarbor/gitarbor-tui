@@ -23,23 +23,7 @@
           </div>
           
           <div class="hero-demo">
-            <div class="terminal-window">
-              <div class="terminal-header">
-                <span class="terminal-dot red"></span>
-                <span class="terminal-dot yellow"></span>
-                <span class="terminal-dot green"></span>
-              </div>
-              <div class="terminal-body">
-                <pre><code>$ gitarbor
-
-<span class="text-git-staged">✓</span> <span class="text-muted">Connected to repository</span>
-<span class="text-primary">→</span> <span class="text-white">main</span> [↑2 ↓0]
-
-<span class="text-git-modified">M</span>  src/components/App.tsx
-<span class="text-git-staged">A</span>  src/utils/helpers.ts
-<span class="text-git-untracked">?</span>  README.md</code></pre>
-              </div>
-            </div>
+            <img src="/screenshots/preview.png" alt="GitArbor Interface Preview" class="hero-screenshot" />
           </div>
         </div>
       </div>
@@ -85,6 +69,78 @@
             <div class="feature-icon">🚀</div>
             <h3>Modern Stack</h3>
             <p>Built with TypeScript, React 19, and the latest web technologies adapted for the terminal.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screenshots Section -->
+    <section class="screenshots py-2xl">
+      <div class="container">
+        <h2 class="text-center mb-lg">See It In Action</h2>
+        <p class="text-center text-muted mb-2xl">
+          Explore GitArbor's powerful features through real screenshots
+        </p>
+        
+        <div class="screenshots-grid">
+          <div class="screenshot-item">
+            <img src="/screenshots/preview.png" alt="GitArbor Main View" class="screenshot-img" loading="lazy" />
+            <h4>Main Dashboard</h4>
+            <p class="text-muted">View repository status, branches, and recent commits at a glance</p>
+          </div>
+          
+          <div class="screenshot-item">
+            <img src="/screenshots/commit.png" alt="Commit Changes" class="screenshot-img" loading="lazy" />
+            <h4>Commit Changes</h4>
+            <p class="text-muted">Stage files and create commits with an intuitive interface</p>
+          </div>
+          
+          <div class="screenshot-item">
+            <img src="/screenshots/commit-history.png" alt="Commit History" class="screenshot-img" loading="lazy" />
+            <h4>Commit History</h4>
+            <p class="text-muted">Browse commit history with detailed information and diffs</p>
+          </div>
+          
+          <div class="screenshot-item">
+            <img src="/screenshots/create-branches.png" alt="Branch Management" class="screenshot-img" loading="lazy" />
+            <h4>Branch Management</h4>
+            <p class="text-muted">Create, switch, and manage branches effortlessly</p>
+          </div>
+          
+          <div class="screenshot-item">
+            <img src="/screenshots/stash-view.png" alt="Stash Management" class="screenshot-img" loading="lazy" />
+            <h4>Stash Management</h4>
+            <p class="text-muted">Save and restore work in progress with ease</p>
+          </div>
+          
+          <div class="screenshot-item">
+            <img src="/screenshots/cherry-pick.png" alt="Cherry Pick" class="screenshot-img" loading="lazy" />
+            <h4>Cherry Pick Commits</h4>
+            <p class="text-muted">Apply specific commits from other branches</p>
+          </div>
+          
+          <div class="screenshot-item">
+            <img src="/screenshots/repos-view.png" alt="Repository Management" class="screenshot-img" loading="lazy" />
+            <h4>Multiple Repositories</h4>
+            <p class="text-muted">Manage and switch between multiple Git repositories</p>
+          </div>
+          
+          <div class="screenshot-item">
+            <img src="/screenshots/remotes-view.png" alt="Remote Management" class="screenshot-img" loading="lazy" />
+            <h4>Remote Management</h4>
+            <p class="text-muted">View and manage remote repositories and fetch/push changes</p>
+          </div>
+          
+          <div class="screenshot-item">
+            <img src="/screenshots/themes.png" alt="Theme Selection" class="screenshot-img" loading="lazy" />
+            <h4>Beautiful Themes</h4>
+            <p class="text-muted">Choose from 10+ carefully crafted color themes</p>
+          </div>
+          
+          <div class="screenshot-item">
+            <img src="/screenshots/settings.png" alt="Settings" class="screenshot-img" loading="lazy" />
+            <h4>Customizable Settings</h4>
+            <p class="text-muted">Configure GitArbor to match your workflow</p>
           </div>
         </div>
       </div>
@@ -212,82 +268,26 @@ useSeoMeta({
 }
 
 .hero-demo {
-  max-width: 700px;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
-.terminal-window {
-  background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border);
+.hero-screenshot {
+  width: 100%;
+  height: auto;
   border-radius: var(--radius-lg);
-  overflow: hidden;
-  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.terminal-header {
-  background: var(--color-bg-highlight);
-  padding: var(--spacing-sm);
-  display: flex;
-  gap: 0.5rem;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.terminal-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-}
-
-.terminal-dot.red {
-  background: #ff5f56;
-}
-
-.terminal-dot.yellow {
-  background: #ffbd2e;
-}
-
-.terminal-dot.green {
-  background: #27c93f;
-}
-
-.terminal-body {
-  padding: var(--spacing-lg);
-  font-family: var(--font-mono);
-  font-size: 0.95rem;
-  line-height: 1.8;
-}
-
-.terminal-body pre {
-  margin: 0;
-  padding: 0;
-  background: none;
-  border: none;
-}
-
-.terminal-body code {
-  background: none;
-  padding: 0;
-  color: var(--color-text-primary);
-}
-
-.text-white {
-  color: var(--color-text-primary);
-}
-
-.text-git-staged {
-  color: var(--color-git-staged);
-}
-
-.text-git-modified {
-  color: var(--color-git-modified);
-}
-
-.text-git-untracked {
-  color: var(--color-git-untracked);
+.hero-screenshot:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.6);
 }
 
 .features {
-  background: var(--color-bg-primary);
+  background: var(--color-bg-secondary);
 }
 
 .features-grid {
@@ -310,8 +310,48 @@ useSeoMeta({
   margin-bottom: var(--spacing-sm);
 }
 
-.tech-stack {
+.screenshots {
   background: var(--color-bg-secondary);
+}
+
+.screenshots-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: var(--spacing-xl);
+}
+
+.screenshot-item {
+  text-align: center;
+}
+
+.screenshot-img {
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  margin-bottom: var(--spacing-md);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: var(--shadow-md);
+}
+
+.screenshot-img:hover {
+  transform: scale(1.02);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--color-primary);
+}
+
+.screenshot-item h4 {
+  color: var(--color-primary);
+  margin-bottom: var(--spacing-xs);
+  font-size: 1.25rem;
+}
+
+.screenshot-item p {
+  font-size: 0.95rem;
+}
+
+.tech-stack {
+  background: var(--color-bg-primary);
 }
 
 .tech-grid {
@@ -337,7 +377,7 @@ useSeoMeta({
 }
 
 .cta {
-  background: var(--color-bg-primary);
+  background: var(--color-bg-secondary);
 }
 
 .cta-card {
@@ -373,6 +413,10 @@ useSeoMeta({
   }
   
   .features-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .screenshots-grid {
     grid-template-columns: 1fr;
   }
   

@@ -3,7 +3,7 @@
     <div class="container">
       <nav class="nav">
         <NuxtLink to="/" class="logo">
-          <span class="logo-icon">🌳</span>
+          <img src="/logo.svg" alt="GitArbor Logo" class="logo-icon" />
           <span class="logo-text">GitArbor</span>
         </NuxtLink>
         
@@ -53,7 +53,9 @@
 }
 
 .logo-icon {
-  font-size: 2rem;
+  width: 2rem;
+  height: 2rem;
+  display: block;
 }
 
 .logo-text {
