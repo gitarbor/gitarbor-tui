@@ -3,7 +3,7 @@ export default defineNuxtConfig({
   
   devtools: { enabled: true },
 
-  modules: ['@nuxtjs/seo'],
+  modules: ['@nuxtjs/seo', '@nuxt/icon'],
 
   site: {
     url: 'https://gitarbor.dev',

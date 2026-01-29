@@ -156,25 +156,36 @@
         
         <div class="tech-grid">
           <div class="tech-item">
-            <div class="tech-logo">🟠</div>
+            <div class="tech-logo">
+              <Icon name="devicon:bun" class="tech-logo-icon" />
+            </div>
             <h4>Bun</h4>
             <p class="text-muted">Fast JavaScript runtime</p>
           </div>
           
           <div class="tech-item">
-            <div class="tech-logo">📺</div>
+            <div class="tech-logo">
+              <svg class="tech-logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="2" y="3" width="20" height="18" fill="rgb(237, 233, 233)"></rect>
+                <rect x="6" y="8" width="3" height="8" fill="rgb(24, 22, 22)"></rect>
+              </svg>
+            </div>
             <h4>OpenTUI</h4>
             <p class="text-muted">React for terminals</p>
           </div>
           
           <div class="tech-item">
-            <div class="tech-logo">⚛️</div>
+            <div class="tech-logo">
+              <Icon name="devicon:react" class="tech-logo-icon" />
+            </div>
             <h4>React 19</h4>
             <p class="text-muted">Latest React features</p>
           </div>
           
           <div class="tech-item">
-            <div class="tech-logo">📘</div>
+            <div class="tech-logo">
+              <Icon name="devicon:typescript" class="tech-logo-icon" />
+            </div>
             <h4>TypeScript</h4>
             <p class="text-muted">Type-safe code</p>
           </div>
@@ -369,6 +380,21 @@ useSeoMeta({
 .tech-logo {
   font-size: 4rem;
   margin-bottom: var(--spacing-sm);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 80px;
+}
+
+.tech-logo-icon {
+  width: 64px;
+  height: 64px;
+  color: var(--color-primary);
+  transition: transform 0.3s ease;
+}
+
+.tech-item:hover .tech-logo-icon {
+  transform: scale(1.1);
 }
 
 .tech-item h4 {
