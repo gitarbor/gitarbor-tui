@@ -26,6 +26,7 @@ import { ConflictResolutionModal } from './components/ConflictResolutionModal';
 import { ResetModal } from './components/ResetModal';
 import { TagModal } from './components/TagModal';
 import { RemoteModal } from './components/RemoteModal';
+import { PublishBranchModal } from './components/PublishBranchModal';
 import { RemotesView } from './components/RemotesView';
 import { TagDetailsView } from './components/TagDetailsView';
 import { ActivityLog } from './components/ActivityLog';
@@ -123,6 +124,11 @@ export function App({ cwd }: { cwd: string }) {
   const [showRemoteModal, setShowRemoteModal] = useState(false);
   const [remoteModalMode, setRemoteModalMode] = useState<'add' | 'edit'>('add');
   const [remoteToEdit, setRemoteToEdit] = useState<GitRemote | undefined>(undefined);
+  const [showPublishBranchModal, setShowPublishBranchModal] = useState(false);
+  const [publishBranchInfo, setPublishBranchInfo] = useState<{
+    branch: string;
+    remote: string;
+  }>({ branch: '', remote: 'origin' });
   const [selectedCommitForAction, setSelectedCommitForAction] = useState<GitCommit | null>(null);
   const [commandLog, setCommandLog] = useState<ActivityLogEntry[]>([]);
   const [showCommandLog, setShowCommandLog] = useState(true);
@@ -523,6 +529,18 @@ export function App({ cwd }: { cwd: string }) {
 
   const handlePush = useCallback(async () => {
     try {
+      // Check if current branch has an upstream
+      const hasUpstream = await git.hasUpstream();
+      
+      if (!hasUpstream) {
+        // Show publish branch modal
+        const currentBranch = await git.getCurrentBranch();
+        const defaultRemote = remotes.length > 0 ? remotes[0]!.name : 'origin';
+        setPublishBranchInfo({ branch: currentBranch, remote: defaultRemote });
+        setShowPublishBranchModal(true);
+        return;
+      }
+
       notify('Pushing changes...');
 
       await git.push();
@@ -532,7 +550,21 @@ export function App({ cwd }: { cwd: string }) {
     } catch (error) {
       notify(`Push failed: ${error}`);
     }
-  }, [git, loadData]);
+  }, [git, loadData, remotes]);
+
+  const handlePublishBranch = useCallback(async () => {
+    try {
+      setShowPublishBranchModal(false);
+      notify(`Publishing branch ${publishBranchInfo.branch}...`);
+
+      await git.pushWithSetUpstream(publishBranchInfo.remote, publishBranchInfo.branch);
+
+      await loadData(true);
+      notify(`Published branch ${publishBranchInfo.branch} to ${publishBranchInfo.remote}`);
+    } catch (error) {
+      notify(`Failed to publish branch: ${error}`);
+    }
+  }, [git, loadData, publishBranchInfo]);
 
   const handlePull = useCallback(async () => {
     try {
@@ -2068,6 +2100,7 @@ export function App({ cwd }: { cwd: string }) {
       showResetModal ||
       showTagModal ||
       showRemoteModal ||
+      showPublishBranchModal ||
       showRepoSwitchModal ||
       showKeyboardShortcutsModal
     ) {
@@ -2920,6 +2953,15 @@ export function App({ cwd }: { cwd: string }) {
           existingRemote={remoteToEdit}
           onSubmit={remoteModalMode === 'add' ? handleAddRemote : handleEditRemote}
           onCancel={() => setShowRemoteModal(false)}
+        />
+      )}
+
+      {showPublishBranchModal && (
+        <PublishBranchModal
+          branch={publishBranchInfo.branch}
+          remote={publishBranchInfo.remote}
+          onConfirm={handlePublishBranch}
+          onCancel={() => setShowPublishBranchModal(false)}
         />
       )}
 
