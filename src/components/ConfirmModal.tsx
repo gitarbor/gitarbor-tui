@@ -65,41 +65,52 @@ export function ConfirmModal({
   const titleColor = danger ? theme.colors.status.error : theme.colors.status.warning;
 
   return (
-    <Modal width={60} height={10} title={title} borderColor={borderColor}>
-      <box style={{ justifyContent: 'center' }}>
-        <text fg={theme.colors.text.muted}>{message}</text>
-      </box>
-      <box style={{ marginTop: 1, justifyContent: 'center', flexDirection: 'row', gap: 3 }}>
-        <text
-          bg={selectedOption === 'confirm' ? borderColor : theme.colors.background.button}
-          fg={
-            selectedOption === 'confirm' ? theme.colors.text.inverted : theme.colors.text.disabled
-          }
+    <Modal width={60} height={11} title={title} borderColor={borderColor}>
+      <box flexDirection="column" width="100%" height="100%">
+        {/* Message */}
+        <box flexDirection="row" width="100%" justifyContent="center">
+          <text fg={theme.colors.text.muted}>{message}</text>
+        </box>
+
+        {/* Buttons */}
+        <box
+          flexDirection="row"
+          width="100%"
+          justifyContent="center"
+          marginTop={1}
+          gap={3}
         >
-          {selectedOption === 'confirm' ? `[✓ ${confirmText}]` : `  ${confirmText}  `}
-        </text>
-        <text
-          bg={
-            selectedOption === 'cancel' ? theme.colors.status.info : theme.colors.background.button
-          }
-          fg={selectedOption === 'cancel' ? theme.colors.text.primary : theme.colors.text.disabled}
+          <text
+            bg={selectedOption === 'confirm' ? borderColor : theme.colors.background.button}
+            fg={
+              selectedOption === 'confirm' ? theme.colors.text.inverted : theme.colors.text.disabled
+            }
+          >
+            {selectedOption === 'confirm' ? `[✓ ${confirmText}]` : `  ${confirmText}  `}
+          </text>
+          <text
+            bg={
+              selectedOption === 'cancel' ? theme.colors.status.info : theme.colors.background.button
+            }
+            fg={selectedOption === 'cancel' ? theme.colors.text.primary : theme.colors.text.disabled}
+          >
+            {selectedOption === 'cancel' ? `[✓ ${cancelText}]` : `  ${cancelText}  `}
+          </text>
+        </box>
+
+        {/* Help text with border */}
+        <box
+          flexDirection="column"
+          width="100%"
+          marginTop={1}
+          borderStyle={theme.borders.style}
+          borderColor={theme.colors.background.buttonHover}
+          paddingLeft={1}
         >
-          {selectedOption === 'cancel' ? `[✓ ${cancelText}]` : `  ${cancelText}  `}
-        </text>
-      </box>
-      <box
-        style={{
-          marginTop: 1,
-          justifyContent: 'center',
-          border: true,
-          borderColor: theme.colors.background.buttonHover,
-          paddingLeft: theme.spacing.xs,
-          paddingRight: theme.spacing.xs,
-          flexDirection: 'row',
-          gap: 1,
-        }}
-      >
-        <text fg={theme.colors.text.disabled}>←→ select │ Enter confirm │ Y/N quick select</text>
+          <text fg={theme.colors.text.disabled}>
+            ←→ select │ Enter confirm │ Y/N quick
+          </text>
+        </box>
       </box>
     </Modal>
   );
