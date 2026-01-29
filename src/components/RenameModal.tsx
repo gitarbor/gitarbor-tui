@@ -26,27 +26,24 @@ export function RenameModal({ currentPath, onRename, onCancel }: RenameModalProp
   });
 
   return (
-    <Modal width={80} height={12} title="Rename/Move File">
-      {/* Current path */}
-      <text fg={theme.colors.text.muted}>Current path:</text>
-      <text fg={theme.colors.text.secondary}>{currentPath}</text>
+    <Modal width={80} height={16} title="Rename/Move File">
+      <box marginBottom={theme.spacing.xs}>
+        <text fg={theme.colors.text.muted}>Current path:</text>
+        <text fg={theme.colors.text.secondary}>{currentPath}</text>
+      </box>
 
-      <text> </text>
+      <box marginBottom={theme.spacing.xs}>
+        <Input
+          label="New path"
+          width={76}
+          placeholder="Enter new path"
+          value={newPath}
+          onInput={(value) => setNewPath(value)}
+          onSubmit={handleSubmit}
+          focused={true}
+        />
+      </box>
 
-      {/* New path */}
-      <Input
-        label="New path"
-        width={76}
-        placeholder="Enter new path"
-        value={newPath}
-        onInput={(value) => setNewPath(value)}
-        onSubmit={handleSubmit}
-        focused={true}
-      />
-
-      <text> </text>
-
-      {/* Help text */}
       <box
         borderStyle={theme.borders.style}
         borderColor={theme.colors.border}
