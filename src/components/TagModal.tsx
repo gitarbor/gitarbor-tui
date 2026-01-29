@@ -36,7 +36,7 @@ export function TagModal({ commitHash, commitMessage, onCreateTag, onCancel }: T
   useKeyboard(handleKeyPress);
 
   return (
-    <Modal width={80} height={18} title="Create Tag">
+    <Modal width={80} height={17} title="Create Tag">
       {commitHash && commitMessage && (
         <box flexDirection="row" marginBottom={theme.spacing.xs}>
           <text fg={theme.colors.text.muted}>Commit: </text>
@@ -51,7 +51,7 @@ export function TagModal({ commitHash, commitMessage, onCreateTag, onCancel }: T
         </box>
       )}
 
-      <box marginTop={theme.spacing.sm}>
+      <box>
         <Input
           label="Tag name"
           width={76}
@@ -63,7 +63,7 @@ export function TagModal({ commitHash, commitMessage, onCreateTag, onCancel }: T
         />
       </box>
 
-      <box marginTop={theme.spacing.sm}>
+      <box>
         <Input
           label="Tag message (optional)"
           width={76}
