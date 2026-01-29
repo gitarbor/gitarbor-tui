@@ -17,10 +17,9 @@ const shortcutSections: ShortcutSection[] = [
   {
     title: 'General',
     shortcuts: [
-      { keys: 'Ctrl+C / q', description: 'Quit application' },
-      { keys: 'Shift+?', description: 'Show keyboard shortcuts' },
-      { keys: 'Ctrl+P', description: 'Open command palette' },
-      { keys: 'Ctrl+R', description: 'Refresh data' },
+      { keys: 'ESC', description: 'Quit application' },
+      { keys: '?', description: 'Show keyboard shortcuts' },
+      { keys: '/', description: 'Open settings' },
       { keys: '`', description: 'Toggle activity log' },
     ],
   },
