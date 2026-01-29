@@ -3,7 +3,7 @@ import type { View } from '../types/git';
 
 interface FooterProps {
   view: View;
-  focusedPanel?: 'status' | 'branches' | 'log' | 'stashes' | 'remotes' | 'tags' | 'diff';
+  focusedPanel?: 'status' | 'branches' | 'log' | 'stashes' | 'remotes' | 'tags' | 'diff' | 'filter' | 'repos';
   hasStaged?: boolean;
   hasUnstaged?: boolean;
   hasUntracked?: boolean;
@@ -25,7 +25,15 @@ export function Footer({
     const globalCommands = '[/] Palette | [?] Help | [P] Push | [p] Pull | [f] Fetch';
 
     // View-specific and context-specific commands
-    if (view === 'main' && focusedPanel === 'status') {
+    if (view === 'repos' && focusedPanel === 'filter') {
+      const line1 = globalCommands;
+      const line2 = '[TAB] Switch to Repos | [ESC] Exit';
+      return { line1, line2 };
+    } else if (view === 'repos' && focusedPanel === 'repos') {
+      const line1 = `${globalCommands} | [ENTER] Switch Repo`;
+      const line2 = '[D] Delete from History | [TAB/Shift+TAB] Switch to Filter | [ESC/q] Exit';
+      return { line1, line2 };
+    } else if (view === 'main' && focusedPanel === 'status') {
       const line1 = `${globalCommands} | [c] Commit | [s] Stash`;
       const line2 =
         '[SPACE] Stage/Unstage | [a] Stage All | [A] Unstage All | [d] Discard | [D] Delete | [r] Rename | [TAB/Shift+TAB] Panels | [ESC/q] Exit';

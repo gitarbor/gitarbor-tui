@@ -2779,7 +2779,7 @@ export function App({ cwd }: { cwd: string }) {
 
       <Footer
         view={view}
-        focusedPanel={focusedPanel}
+        focusedPanel={view === 'repos' ? repoFocusedPanel : focusedPanel}
         hasStaged={status.staged.length > 0}
         hasUnstaged={status.unstaged.length > 0}
         hasUntracked={status.untracked.length > 0}

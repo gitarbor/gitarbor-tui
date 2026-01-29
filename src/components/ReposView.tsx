@@ -90,14 +90,6 @@ export function ReposView({ repos, selectedIndex, focusedPanel, filterQuery }: R
             })
           )}
 
-          {/* Help text */}
-          {filteredRepos.length > 0 && (
-            <box paddingTop={theme.spacing.sm}>
-              <text fg={theme.colors.text.muted}>
-                Press Enter to switch • D to delete • Tab to switch panels
-              </text>
-            </box>
-          )}
         </box>
       </Fieldset>
     </box>
