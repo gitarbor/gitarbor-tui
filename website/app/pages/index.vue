@@ -11,7 +11,7 @@
           <p class="hero-subtitle">
             A next-generation Git client that runs in your terminal.
             <br />
-            Fast, beautiful, and built with modern technologies.
+            Fast, beautiful, and built with modern web technologies.
           </p>
           <div class="hero-cta">
             <NuxtLink to="/docs/installation" class="btn btn-primary btn-large">
