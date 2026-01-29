@@ -65,7 +65,7 @@ export function ConfirmModal({
   const titleColor = danger ? theme.colors.status.error : theme.colors.status.warning;
 
   return (
-    <Modal width={60} height={11} title={title} borderColor={borderColor}>
+    <Modal width={60} height={13} title={title} borderColor={borderColor}>
       <box flexDirection="column" width="100%" height="100%">
         {/* Message */}
         <box flexDirection="row" width="100%" justifyContent="center">
@@ -102,10 +102,11 @@ export function ConfirmModal({
         <box
           flexDirection="column"
           width="100%"
-          marginTop={1}
+          marginTop={2}
           borderStyle={theme.borders.style}
           borderColor={theme.colors.background.buttonHover}
           paddingLeft={1}
+          height={3}
         >
           <text fg={theme.colors.text.disabled}>
             ←→ select │ Enter confirm │ Y/N quick
