@@ -255,6 +255,7 @@ useSeoMeta({
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   gap: var(--spacing-xl);
+  margin-bottom: var(--spacing-3xl);
 }
 
 .theme-card {
