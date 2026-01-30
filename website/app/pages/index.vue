@@ -6,7 +6,7 @@
         <div class="hero-content">
           <h1 class="hero-title">
             The Git Client<br />
-            Built for Developers
+            Built for Your Terminal
           </h1>
           <p class="hero-subtitle">
             A next-generation Git client that runs in your terminal.
