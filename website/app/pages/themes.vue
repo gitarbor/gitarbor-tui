@@ -9,34 +9,52 @@
           Each theme is designed for optimal readability and aesthetics in the terminal.
         </p>
       </div>
-      
+
       <div class="themes-grid">
         <div v-for="theme in themes" :key="theme.id" class="theme-card card">
           <div class="theme-preview">
-            <img :src="theme.screenshot" :alt="`${theme.name} theme screenshot`" class="theme-screenshot" />
+            <img
+              :src="theme.screenshot"
+              :alt="`${theme.name} theme screenshot`"
+              class="theme-screenshot"
+            />
           </div>
-          
+
           <div class="theme-info">
             <h3>{{ theme.name }}</h3>
             <p class="text-muted">{{ theme.description }}</p>
-            
+
             <div class="theme-colors">
-              <div class="color-swatch" :style="{ background: theme.colors.primary }" :title="`Primary: ${theme.colors.primary}`"></div>
-              <div class="color-swatch" :style="{ background: theme.colors.staged }" :title="`Staged: ${theme.colors.staged}`"></div>
-              <div class="color-swatch" :style="{ background: theme.colors.modified }" :title="`Modified: ${theme.colors.modified}`"></div>
-              <div class="color-swatch" :style="{ background: theme.colors.text }" :title="`Text: ${theme.colors.text}`"></div>
+              <div
+                class="color-swatch"
+                :style="{ background: theme.colors.primary }"
+                :title="`Primary: ${theme.colors.primary}`"
+              ></div>
+              <div
+                class="color-swatch"
+                :style="{ background: theme.colors.staged }"
+                :title="`Staged: ${theme.colors.staged}`"
+              ></div>
+              <div
+                class="color-swatch"
+                :style="{ background: theme.colors.modified }"
+                :title="`Modified: ${theme.colors.modified}`"
+              ></div>
+              <div
+                class="color-swatch"
+                :style="{ background: theme.colors.text }"
+                :title="`Text: ${theme.colors.text}`"
+              ></div>
             </div>
           </div>
         </div>
       </div>
-      
+
       <div class="themes-info mt-3xl">
         <div class="info-card card text-center">
           <h2 class="mb-md">How to Change Themes</h2>
-          <p class="text-muted mb-lg">
-            Change your theme in GitArbor with these simple steps:
-          </p>
-          
+          <p class="text-muted mb-lg">Change your theme in GitArbor with these simple steps:</p>
+
           <div class="steps">
             <div class="step">
               <div class="step-number">1</div>
@@ -75,7 +93,7 @@ const themes = [
       staged: '#00FF00',
       modified: '#FFFF00',
       untracked: '#CCCCCC',
-    }
+    },
   },
   {
     id: 'light',
@@ -91,7 +109,7 @@ const themes = [
       staged: '#00AA00',
       modified: '#CC8800',
       untracked: '#666666',
-    }
+    },
   },
   {
     id: 'monokai',
@@ -107,7 +125,7 @@ const themes = [
       staged: '#A6E22E',
       modified: '#E6DB74',
       untracked: '#75715E',
-    }
+    },
   },
   {
     id: 'nord',
@@ -123,7 +141,7 @@ const themes = [
       staged: '#A3BE8C',
       modified: '#EBCB8B',
       untracked: '#81A1C1',
-    }
+    },
   },
   {
     id: 'solarized-dark',
@@ -139,7 +157,7 @@ const themes = [
       staged: '#859900',
       modified: '#B58900',
       untracked: '#93A1A1',
-    }
+    },
   },
   {
     id: 'solarized-light',
@@ -155,7 +173,7 @@ const themes = [
       staged: '#859900',
       modified: '#B58900',
       untracked: '#586E75',
-    }
+    },
   },
   {
     id: 'gruvbox-dark',
@@ -171,7 +189,7 @@ const themes = [
       staged: '#B8BB26',
       modified: '#FABD2F',
       untracked: '#928374',
-    }
+    },
   },
   {
     id: 'gruvbox-light',
@@ -187,7 +205,7 @@ const themes = [
       staged: '#79740E',
       modified: '#B57614',
       untracked: '#928374',
-    }
+    },
   },
   {
     id: 'dracula',
@@ -203,7 +221,7 @@ const themes = [
       staged: '#50FA7B',
       modified: '#F1FA8C',
       untracked: '#8BE9FD',
-    }
+    },
   },
   {
     id: 'tokyo-night',
@@ -219,26 +237,29 @@ const themes = [
       staged: '#9ECE6A',
       modified: '#E0AF68',
       untracked: '#7DCFFF',
-    }
+    },
   },
-]
+];
 
 useHead({
   title: 'Themes - GitArbor TUI',
   meta: [
     {
       name: 'description',
-      content: 'Browse 10+ beautiful themes for GitArbor TUI including Dracula, Nord, Gruvbox, Monokai, and more. Personalize your terminal Git experience.',
+      content:
+        'Browse 10+ beautiful themes for GitArbor TUI including Dracula, Nord, Gruvbox, Monokai, and more. Personalize your terminal Git experience.',
     },
   ],
-})
+});
 
 useSeoMeta({
   title: 'Themes - GitArbor TUI',
   ogTitle: 'Themes - GitArbor TUI',
-  description: 'Browse 10+ beautiful themes for GitArbor TUI including Dracula, Nord, Gruvbox, Monokai, and more. Personalize your terminal Git experience.',
-  ogDescription: 'Browse 10+ beautiful themes for GitArbor TUI including Dracula, Nord, Gruvbox, Monokai, and more.',
-})
+  description:
+    'Browse 10+ beautiful themes for GitArbor TUI including Dracula, Nord, Gruvbox, Monokai, and more. Personalize your terminal Git experience.',
+  ogDescription:
+    'Browse 10+ beautiful themes for GitArbor TUI including Dracula, Nord, Gruvbox, Monokai, and more.',
+});
 </script>
 
 <style scoped>
@@ -275,7 +296,6 @@ useSeoMeta({
   display: block;
   border-bottom: 1px solid var(--color-border);
 }
-
 
 .theme-info {
   padding: var(--spacing-lg);
@@ -376,11 +396,11 @@ kbd {
   .themes-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .steps {
     flex-direction: column;
   }
-  
+
   .step-arrow {
     transform: rotate(90deg);
   }

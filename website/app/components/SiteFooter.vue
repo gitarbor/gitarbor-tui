@@ -7,24 +7,46 @@
           <p class="text-muted">A next-generation Git client for your terminal.</p>
           <p class="text-muted">Built with Bun, OpenTUI, and React.</p>
         </div>
-        
+
         <div class="footer-section">
           <h4>Quick Links</h4>
           <ul class="footer-links">
             <li><NuxtLink to="/themes">Themes</NuxtLink></li>
           </ul>
         </div>
-        
+
         <div class="footer-section">
           <h4>Community</h4>
           <ul class="footer-links">
-            <li><a href="https://github.com/cadamsdev/gitarbor-tui" target="_blank" rel="noopener">GitHub</a></li>
-            <li><a href="https://github.com/cadamsdev/gitarbor-tui/issues" target="_blank" rel="noopener">Issues</a></li>
-            <li><a href="https://github.com/cadamsdev/gitarbor-tui/discussions" target="_blank" rel="noopener">Discussions</a></li>
-            <li><a href="https://github.com/sponsors/cadamsdev" target="_blank" rel="noopener">Sponsor</a></li>
+            <li>
+              <a href="https://github.com/cadamsdev/gitarbor-tui" target="_blank" rel="noopener"
+                >GitHub</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://github.com/cadamsdev/gitarbor-tui/issues"
+                target="_blank"
+                rel="noopener"
+                >Issues</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://github.com/cadamsdev/gitarbor-tui/discussions"
+                target="_blank"
+                rel="noopener"
+                >Discussions</a
+              >
+            </li>
+            <li>
+              <a href="https://github.com/sponsors/cadamsdev" target="_blank" rel="noopener"
+                >Sponsor</a
+              >
+            </li>
           </ul>
         </div>
-        
+
         <div class="footer-section">
           <h4>Resources</h4>
           <ul class="footer-links">
@@ -34,7 +56,7 @@
           </ul>
         </div>
       </div>
-      
+
       <div class="footer-bottom">
         <p class="text-muted">
           &copy; {{ new Date().getFullYear() }} GitArbor. Open source under MIT License.

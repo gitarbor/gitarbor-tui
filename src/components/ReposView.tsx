@@ -89,7 +89,6 @@ export function ReposView({ repos, selectedIndex, focusedPanel, filterQuery }: R
               );
             })
           )}
-
         </box>
       </Fieldset>
     </box>

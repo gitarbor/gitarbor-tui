@@ -56,12 +56,7 @@ export function PublishBranchModal({
   useKeyboard(handleKeyboard);
 
   return (
-    <Modal
-      width={70}
-      height={15}
-      title="Publish Branch"
-      borderColor={theme.colors.status.warning}
-    >
+    <Modal width={70} height={15} title="Publish Branch" borderColor={theme.colors.status.warning}>
       <box flexDirection="column" width="100%" height="100%">
         {/* Message */}
         <box flexDirection="column" width="100%" gap={1}>
@@ -89,13 +84,7 @@ export function PublishBranchModal({
         </box>
 
         {/* Buttons */}
-        <box
-          flexDirection="row"
-          width="100%"
-          justifyContent="center"
-          marginTop={1}
-          gap={3}
-        >
+        <box flexDirection="row" width="100%" justifyContent="center" marginTop={1} gap={3}>
           <text
             bg={
               selectedOption === 'confirm'
@@ -110,9 +99,13 @@ export function PublishBranchModal({
           </text>
           <text
             bg={
-              selectedOption === 'cancel' ? theme.colors.status.info : theme.colors.background.button
+              selectedOption === 'cancel'
+                ? theme.colors.status.info
+                : theme.colors.background.button
             }
-            fg={selectedOption === 'cancel' ? theme.colors.text.primary : theme.colors.text.disabled}
+            fg={
+              selectedOption === 'cancel' ? theme.colors.text.primary : theme.colors.text.disabled
+            }
           >
             {selectedOption === 'cancel' ? '[✓ Cancel]' : '  Cancel  '}
           </text>
@@ -128,9 +121,7 @@ export function PublishBranchModal({
           paddingLeft={1}
           height={3}
         >
-          <text fg={theme.colors.text.disabled}>
-            ←→ select │ Enter confirm │ Y/N quick
-          </text>
+          <text fg={theme.colors.text.disabled}>←→ select │ Enter confirm │ Y/N quick</text>
         </box>
       </box>
     </Modal>

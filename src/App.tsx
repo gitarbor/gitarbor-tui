@@ -531,7 +531,7 @@ export function App({ cwd }: { cwd: string }) {
     try {
       // Check if current branch has an upstream
       const hasUpstream = await git.hasUpstream();
-      
+
       if (!hasUpstream) {
         // Show publish branch modal
         const currentBranch = await git.getCurrentBranch();

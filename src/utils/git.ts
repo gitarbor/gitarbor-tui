@@ -519,10 +519,14 @@ export class GitClient {
         const { spawn } = await import('child_process');
 
         return new Promise((resolve, reject) => {
-          const gitProcess = spawn('git', ['push', '--set-upstream', remote, branch, '--progress'], {
-            cwd: this.cwd,
-            env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
-          });
+          const gitProcess = spawn(
+            'git',
+            ['push', '--set-upstream', remote, branch, '--progress'],
+            {
+              cwd: this.cwd,
+              env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
+            },
+          );
 
           let errorOutput = '';
 

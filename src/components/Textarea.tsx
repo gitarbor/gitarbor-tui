@@ -70,7 +70,7 @@ export function Textarea(props: TextareaProps) {
   // Set up a polling mechanism to detect changes and call onInput/onChange
   useEffect(() => {
     if (!textareaRef.current || (!onInput && !onChange)) return;
-    
+
     let lastValue = value;
     const intervalId = setInterval(() => {
       if (!textareaRef.current) return;

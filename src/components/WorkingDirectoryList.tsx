@@ -45,14 +45,11 @@ const FileItem = memo(({ file, isSelected, prefix, color }: FileItemProps) => {
 
   return (
     <box key={file.path} flexDirection="row" paddingLeft={theme.spacing.xs} height={1}>
-      <text
-        fg={isSelected ? theme.colors.primary : theme.colors.border}
-        width={2}
-      >
-        {isSelected ? '>' : ' '} 
+      <text fg={isSelected ? theme.colors.primary : theme.colors.border} width={2}>
+        {isSelected ? '>' : ' '}
       </text>
       <text fg={color} width={3}>
-        {prefix}  
+        {prefix}
       </text>
       <text
         fg={isSelected ? theme.colors.text.primary : theme.colors.text.secondary}
@@ -60,11 +57,7 @@ const FileItem = memo(({ file, isSelected, prefix, color }: FileItemProps) => {
       >
         {fileName}
       </text>
-      {dirPath && (
-        <text fg={theme.colors.text.muted}>
-          {' '}{dirPath}
-        </text>
-      )}
+      {dirPath && <text fg={theme.colors.text.muted}> {dirPath}</text>}
     </box>
   );
 });

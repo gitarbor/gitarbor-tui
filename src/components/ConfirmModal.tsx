@@ -73,13 +73,7 @@ export function ConfirmModal({
         </box>
 
         {/* Buttons */}
-        <box
-          flexDirection="row"
-          width="100%"
-          justifyContent="center"
-          marginTop={1}
-          gap={3}
-        >
+        <box flexDirection="row" width="100%" justifyContent="center" marginTop={1} gap={3}>
           <text
             bg={selectedOption === 'confirm' ? borderColor : theme.colors.background.button}
             fg={
@@ -90,9 +84,13 @@ export function ConfirmModal({
           </text>
           <text
             bg={
-              selectedOption === 'cancel' ? theme.colors.status.info : theme.colors.background.button
+              selectedOption === 'cancel'
+                ? theme.colors.status.info
+                : theme.colors.background.button
             }
-            fg={selectedOption === 'cancel' ? theme.colors.text.primary : theme.colors.text.disabled}
+            fg={
+              selectedOption === 'cancel' ? theme.colors.text.primary : theme.colors.text.disabled
+            }
           >
             {selectedOption === 'cancel' ? `[✓ ${cancelText}]` : `  ${cancelText}  `}
           </text>
@@ -108,9 +106,7 @@ export function ConfirmModal({
           paddingLeft={1}
           height={3}
         >
-          <text fg={theme.colors.text.disabled}>
-            ←→ select │ Enter confirm │ Y/N quick
-          </text>
+          <text fg={theme.colors.text.disabled}>←→ select │ Enter confirm │ Y/N quick</text>
         </box>
       </box>
     </Modal>

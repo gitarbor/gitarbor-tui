@@ -3,7 +3,16 @@ import type { View } from '../types/git';
 
 interface FooterProps {
   view: View;
-  focusedPanel?: 'status' | 'branches' | 'log' | 'stashes' | 'remotes' | 'tags' | 'diff' | 'filter' | 'repos';
+  focusedPanel?:
+    | 'status'
+    | 'branches'
+    | 'log'
+    | 'stashes'
+    | 'remotes'
+    | 'tags'
+    | 'diff'
+    | 'filter'
+    | 'repos';
   hasStaged?: boolean;
   hasUnstaged?: boolean;
   hasUntracked?: boolean;

@@ -1,8 +1,8 @@
 {
   "name": "gitarbor-website",
   "version": "1.0.0",
-  "type": "module",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "nuxt dev",
     "build": "nuxt build",

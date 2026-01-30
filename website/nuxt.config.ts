@@ -1,6 +1,6 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-01-28',
-  
+
   devtools: { enabled: true },
 
   modules: ['@nuxtjs/seo', '@nuxt/icon'],
@@ -8,7 +8,8 @@ export default defineNuxtConfig({
   site: {
     url: 'https://gitarbor.com',
     name: 'GitArbor TUI',
-    description: 'A next-generation Git client that runs in your terminal. Built with Bun, OpenTUI, and React.',
+    description:
+      'A next-generation Git client that runs in your terminal. Built with Bun, OpenTUI, and React.',
     defaultLocale: 'en',
   },
 
@@ -21,12 +22,10 @@ export default defineNuxtConfig({
       charset: 'utf-8',
       viewport: 'width=device-width, initial-scale=1',
       htmlAttrs: {
-        lang: 'en'
+        lang: 'en',
       },
-      link: [
-        { rel: 'icon', type: 'image/svg+xml', href: '/logo.svg' }
-      ]
-    }
+      link: [{ rel: 'icon', type: 'image/svg+xml', href: '/logo.svg' }],
+    },
   },
 
   css: ['@/assets/css/main.css'],
@@ -40,6 +39,6 @@ export default defineNuxtConfig({
     prerender: {
       routes: ['/', '/themes'],
       crawlLinks: true,
-    }
-  }
-})
+    },
+  },
+});

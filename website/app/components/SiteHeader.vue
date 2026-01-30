@@ -6,10 +6,15 @@
           <img src="/logo.svg" alt="GitArbor Logo" class="logo-icon" />
           <span class="logo-text">GitArbor</span>
         </NuxtLink>
-        
+
         <div class="nav-links">
           <NuxtLink to="/themes" class="nav-link">Themes</NuxtLink>
-          <a href="https://github.com/cadamsdev/gitarbor-tui" target="_blank" rel="noopener" class="nav-link">
+          <a
+            href="https://github.com/cadamsdev/gitarbor-tui"
+            target="_blank"
+            rel="noopener"
+            class="nav-link"
+          >
             <span class="github-icon">⭐</span> GitHub
           </a>
         </div>
@@ -91,7 +96,7 @@
   .nav-links {
     gap: var(--spacing-md);
   }
-  
+
   .nav-link {
     font-size: 0.9rem;
   }

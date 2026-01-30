@@ -12,5 +12,5 @@
 useSeoMeta({
   ogImage: '/og-image.png',
   twitterCard: 'summary_large_image',
-})
+});
 </script>

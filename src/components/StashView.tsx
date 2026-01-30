@@ -16,13 +16,13 @@ export function StashView({ stashes, selectedIndex, focused }: StashViewProps) {
   // Auto-scroll to selected stash only if it goes out of view
   useEffect(() => {
     if (!scrollRef.current) return;
-    
+
     const scrollBox = scrollRef.current;
     const itemHeight = 1;
     const currentScroll = scrollBox.scrollTop;
     const viewportHeight = scrollBox.viewport.height;
     const selectedPosition = selectedIndex * itemHeight;
-    
+
     // Check if selected item is above the viewport
     if (selectedPosition < currentScroll) {
       scrollBox.scrollTo({ x: 0, y: selectedPosition });
@@ -44,12 +44,7 @@ export function StashView({ stashes, selectedIndex, focused }: StashViewProps) {
       {stashes.length === 0 ? (
         <text fg={theme.colors.text.muted}>No stashes saved</text>
       ) : (
-        <scrollbox
-          ref={scrollRef}
-          width="100%"
-          height="100%"
-          viewportCulling={true}
-        >
+        <scrollbox ref={scrollRef} width="100%" height="100%" viewportCulling={true}>
           {stashes.map((stash, idx) => {
             const isSelected = idx === selectedIndex;
 

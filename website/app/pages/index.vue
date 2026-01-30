@@ -14,16 +14,23 @@
             Fast, beautiful, and built with modern web technologies.
           </p>
           <div class="hero-cta">
-            <a href="#install" class="btn btn-primary btn-large">
-              Get Started
-            </a>
-            <a href="https://github.com/cadamsdev/gitarbor-tui" target="_blank" rel="noopener" class="btn btn-outline btn-large">
+            <a href="#install" class="btn btn-primary btn-large"> Get Started </a>
+            <a
+              href="https://github.com/cadamsdev/gitarbor-tui"
+              target="_blank"
+              rel="noopener"
+              class="btn btn-outline btn-large"
+            >
               View on GitHub
             </a>
           </div>
-          
+
           <div class="hero-demo">
-            <img src="/screenshots/preview.png" alt="GitArbor Interface Preview" class="hero-screenshot" />
+            <img
+              src="/screenshots/preview.png"
+              alt="GitArbor Interface Preview"
+              class="hero-screenshot"
+            />
           </div>
         </div>
       </div>
@@ -33,33 +40,31 @@
     <section id="install" class="installation py-2xl">
       <div class="container">
         <h2 class="text-center mb-lg">Quick Install</h2>
-        <p class="text-center text-muted mb-2xl">
-          Get started with GitArbor in seconds
-        </p>
-        
+        <p class="text-center text-muted mb-2xl">Get started with GitArbor in seconds</p>
+
         <div class="install-tabs-container">
           <div class="install-tabs">
-            <button 
+            <button
               :class="['tab-button', { active: activeTab === 'unix' }]"
               @click="activeTab = 'unix'"
             >
               Linux & Mac
             </button>
-            <button 
+            <button
               :class="['tab-button', { active: activeTab === 'windows' }]"
               @click="activeTab = 'windows'"
             >
               Windows
             </button>
           </div>
-          
+
           <div class="tab-content card">
             <!-- Linux & Mac Tab -->
             <div v-show="activeTab === 'unix'" class="tab-panel">
               <div class="code-block mb-md">
                 <code>{{ commands.unix }}</code>
-                <button 
-                  class="copy-button" 
+                <button
+                  class="copy-button"
                   @click="copyToClipboard(commands.unix)"
                   :title="copiedCommand === commands.unix ? 'Copied!' : 'Copy to clipboard'"
                 >
@@ -70,8 +75,8 @@
               <p class="text-muted mb-sm">Then run:</p>
               <div class="code-block">
                 <code>{{ commands.run }}</code>
-                <button 
-                  class="copy-button" 
+                <button
+                  class="copy-button"
                   @click="copyToClipboard(commands.run)"
                   :title="copiedCommand === commands.run ? 'Copied!' : 'Copy to clipboard'"
                 >
@@ -80,13 +85,13 @@
                 </button>
               </div>
             </div>
-            
+
             <!-- Windows Tab -->
             <div v-show="activeTab === 'windows'" class="tab-panel">
               <div class="code-block mb-md">
                 <code>{{ commands.windows }}</code>
-                <button 
-                  class="copy-button" 
+                <button
+                  class="copy-button"
                   @click="copyToClipboard(commands.windows)"
                   :title="copiedCommand === commands.windows ? 'Copied!' : 'Copy to clipboard'"
                 >
@@ -97,8 +102,8 @@
               <p class="text-muted mb-sm">Then run:</p>
               <div class="code-block">
                 <code>{{ commands.run }}</code>
-                <button 
-                  class="copy-button" 
+                <button
+                  class="copy-button"
                   @click="copyToClipboard(commands.run)"
                   :title="copiedCommand === commands.run ? 'Copied!' : 'Copy to clipboard'"
                 >
@@ -119,64 +124,116 @@
         <p class="text-center text-muted mb-2xl">
           Explore GitArbor's powerful features through real screenshots
         </p>
-        
+
         <div class="screenshots-grid">
           <div class="screenshot-item">
-            <img src="/screenshots/preview.png" alt="GitArbor Main View" class="screenshot-img" loading="lazy" />
+            <img
+              src="/screenshots/preview.png"
+              alt="GitArbor Main View"
+              class="screenshot-img"
+              loading="lazy"
+            />
             <h4>Main Dashboard</h4>
-            <p class="text-muted">View repository status, branches, and recent commits at a glance</p>
+            <p class="text-muted">
+              View repository status, branches, and recent commits at a glance
+            </p>
           </div>
-          
+
           <div class="screenshot-item">
-            <img src="/screenshots/commit.png" alt="Commit Changes" class="screenshot-img" loading="lazy" />
+            <img
+              src="/screenshots/commit.png"
+              alt="Commit Changes"
+              class="screenshot-img"
+              loading="lazy"
+            />
             <h4>Commit Changes</h4>
             <p class="text-muted">Stage files and create commits with an intuitive interface</p>
           </div>
-          
+
           <div class="screenshot-item">
-            <img src="/screenshots/commit-history.png" alt="Commit History" class="screenshot-img" loading="lazy" />
+            <img
+              src="/screenshots/commit-history.png"
+              alt="Commit History"
+              class="screenshot-img"
+              loading="lazy"
+            />
             <h4>Commit History</h4>
             <p class="text-muted">Browse commit history with detailed information and diffs</p>
           </div>
-          
+
           <div class="screenshot-item">
-            <img src="/screenshots/create-branches.png" alt="Branch Management" class="screenshot-img" loading="lazy" />
+            <img
+              src="/screenshots/create-branches.png"
+              alt="Branch Management"
+              class="screenshot-img"
+              loading="lazy"
+            />
             <h4>Branch Management</h4>
             <p class="text-muted">Create, switch, and manage branches effortlessly</p>
           </div>
-          
+
           <div class="screenshot-item">
-            <img src="/screenshots/stash-view.png" alt="Stash Management" class="screenshot-img" loading="lazy" />
+            <img
+              src="/screenshots/stash-view.png"
+              alt="Stash Management"
+              class="screenshot-img"
+              loading="lazy"
+            />
             <h4>Stash Management</h4>
             <p class="text-muted">Save and restore work in progress with ease</p>
           </div>
-          
+
           <div class="screenshot-item">
-            <img src="/screenshots/cherry-pick.png" alt="Cherry Pick" class="screenshot-img" loading="lazy" />
+            <img
+              src="/screenshots/cherry-pick.png"
+              alt="Cherry Pick"
+              class="screenshot-img"
+              loading="lazy"
+            />
             <h4>Cherry Pick Commits</h4>
             <p class="text-muted">Apply specific commits from other branches</p>
           </div>
-          
+
           <div class="screenshot-item">
-            <img src="/screenshots/repos-view.png" alt="Repository Management" class="screenshot-img" loading="lazy" />
+            <img
+              src="/screenshots/repos-view.png"
+              alt="Repository Management"
+              class="screenshot-img"
+              loading="lazy"
+            />
             <h4>Multiple Repositories</h4>
             <p class="text-muted">Manage and switch between multiple Git repositories</p>
           </div>
-          
+
           <div class="screenshot-item">
-            <img src="/screenshots/remotes-view.png" alt="Remote Management" class="screenshot-img" loading="lazy" />
+            <img
+              src="/screenshots/remotes-view.png"
+              alt="Remote Management"
+              class="screenshot-img"
+              loading="lazy"
+            />
             <h4>Remote Management</h4>
             <p class="text-muted">View and manage remote repositories and fetch/push changes</p>
           </div>
-          
+
           <div class="screenshot-item">
-            <img src="/screenshots/themes.png" alt="Theme Selection" class="screenshot-img" loading="lazy" />
+            <img
+              src="/screenshots/themes.png"
+              alt="Theme Selection"
+              class="screenshot-img"
+              loading="lazy"
+            />
             <h4>Beautiful Themes</h4>
             <p class="text-muted">Choose from 10+ carefully crafted color themes</p>
           </div>
-          
+
           <div class="screenshot-item">
-            <img src="/screenshots/settings.png" alt="Settings" class="screenshot-img" loading="lazy" />
+            <img
+              src="/screenshots/settings.png"
+              alt="Settings"
+              class="screenshot-img"
+              loading="lazy"
+            />
             <h4>Customizable Settings</h4>
             <p class="text-muted">Configure GitArbor to match your workflow</p>
           </div>
@@ -188,42 +245,58 @@
     <section class="features py-2xl">
       <div class="container">
         <h2 class="text-center mb-2xl">Why GitArbor?</h2>
-        
+
         <div class="features-grid">
           <div class="feature-card card">
             <div class="feature-icon">⚡</div>
             <h3>Lightning Fast</h3>
-            <p>Built with Bun runtime for instant startup and blazing-fast performance. No lag, no waiting.</p>
+            <p>
+              Built with Bun runtime for instant startup and blazing-fast performance. No lag, no
+              waiting.
+            </p>
           </div>
-          
+
           <div class="feature-card card">
             <div class="feature-icon">🎨</div>
             <h3>Beautiful Interface</h3>
-            <p>Powered by OpenTUI and React for a smooth, intuitive terminal UI with multiple themes.</p>
+            <p>
+              Powered by OpenTUI and React for a smooth, intuitive terminal UI with multiple themes.
+            </p>
           </div>
-          
+
           <div class="feature-card card">
             <div class="feature-icon">⌨️</div>
             <h3>Keyboard-First</h3>
-            <p>Navigate your repositories with vim-like keybindings. Mouse optional, keyboard optimized.</p>
+            <p>
+              Navigate your repositories with vim-like keybindings. Mouse optional, keyboard
+              optimized.
+            </p>
           </div>
-          
+
           <div class="feature-card card">
             <div class="feature-icon">⚙️</div>
             <h3>Customizable</h3>
-            <p>Integrated settings modal for quick access to configuration. Customize themes, preferences, and behavior instantly.</p>
+            <p>
+              Integrated settings modal for quick access to configuration. Customize themes,
+              preferences, and behavior instantly.
+            </p>
           </div>
-          
+
           <div class="feature-card card">
             <div class="feature-icon">🎭</div>
             <h3>Multiple Themes</h3>
-            <p>Choose from 10+ carefully crafted themes including Dracula, Nord, Gruvbox, and more.</p>
+            <p>
+              Choose from 10+ carefully crafted themes including Dracula, Nord, Gruvbox, and more.
+            </p>
           </div>
-          
+
           <div class="feature-card card">
             <div class="feature-icon">🚀</div>
             <h3>Modern Stack</h3>
-            <p>Built with TypeScript, React 19, and the latest web technologies adapted for the terminal.</p>
+            <p>
+              Built with TypeScript, React 19, and the latest web technologies adapted for the
+              terminal.
+            </p>
           </div>
         </div>
       </div>
@@ -236,7 +309,7 @@
         <p class="text-center text-muted mb-2xl">
           GitArbor leverages cutting-edge tools to deliver the best terminal experience
         </p>
-        
+
         <div class="tech-grid">
           <div class="tech-item">
             <div class="tech-logo">
@@ -245,10 +318,15 @@
             <h4>Bun</h4>
             <p class="text-muted">Fast JavaScript runtime</p>
           </div>
-          
+
           <div class="tech-item">
             <div class="tech-logo">
-              <svg class="tech-logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg
+                class="tech-logo-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
                 <rect x="2" y="3" width="20" height="18" fill="rgb(237, 233, 233)"></rect>
                 <rect x="6" y="8" width="3" height="8" fill="rgb(24, 22, 22)"></rect>
               </svg>
@@ -256,7 +334,7 @@
             <h4>OpenTUI</h4>
             <p class="text-muted">React for terminals</p>
           </div>
-          
+
           <div class="tech-item">
             <div class="tech-logo">
               <Icon name="devicon:react" class="tech-logo-icon" />
@@ -264,7 +342,7 @@
             <h4>React 19</h4>
             <p class="text-muted">Latest React features</p>
           </div>
-          
+
           <div class="tech-item">
             <div class="tech-logo">
               <Icon name="devicon:typescript" class="tech-logo-icon" />
@@ -285,12 +363,8 @@
             Install GitArbor and experience a better way to work with Git in your terminal.
           </p>
           <div class="cta-buttons">
-            <a href="#install" class="btn btn-primary btn-large">
-              Install Now
-            </a>
-            <NuxtLink to="/themes" class="btn btn-outline btn-large">
-              Browse Themes
-            </NuxtLink>
+            <a href="#install" class="btn btn-primary btn-large"> Install Now </a>
+            <NuxtLink to="/themes" class="btn btn-outline btn-large"> Browse Themes </NuxtLink>
           </div>
         </div>
       </div>
@@ -299,26 +373,26 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref } from 'vue';
 
-const activeTab = ref<'unix' | 'windows'>('unix')
-const copiedCommand = ref<string | null>(null)
+const activeTab = ref<'unix' | 'windows'>('unix');
+const copiedCommand = ref<string | null>(null);
 
 const commands = {
   unix: 'curl -fsSL https://gitarbor.com/install.sh | bash',
   windows: 'powershell -c "irm https://gitarbor.com/install.ps1 | iex"',
-  run: 'gitarbor'
-}
+  run: 'gitarbor',
+};
 
 async function copyToClipboard(text: string) {
   try {
-    await navigator.clipboard.writeText(text)
-    copiedCommand.value = text
+    await navigator.clipboard.writeText(text);
+    copiedCommand.value = text;
     setTimeout(() => {
-      copiedCommand.value = null
-    }, 2000)
+      copiedCommand.value = null;
+    }, 2000);
   } catch (err) {
-    console.error('Failed to copy:', err)
+    console.error('Failed to copy:', err);
   }
 }
 
@@ -327,24 +401,29 @@ useHead({
   meta: [
     {
       name: 'description',
-      content: 'A next-generation Git client that runs in your terminal. Built with Bun, OpenTUI, and React for a fast, beautiful, keyboard-first experience.',
+      content:
+        'A next-generation Git client that runs in your terminal. Built with Bun, OpenTUI, and React for a fast, beautiful, keyboard-first experience.',
     },
     {
       name: 'keywords',
-      content: 'git, tui, terminal, git client, bun, opentui, react, typescript, keyboard-first, command line',
+      content:
+        'git, tui, terminal, git client, bun, opentui, react, typescript, keyboard-first, command line',
     },
   ],
-})
+});
 
 useSeoMeta({
   title: 'GitArbor TUI - Next-Generation Git Client for Your Terminal',
   ogTitle: 'GitArbor TUI - Next-Generation Git Client for Your Terminal',
-  description: 'A next-generation Git client that runs in your terminal. Built with Bun, OpenTUI, and React for a fast, beautiful, keyboard-first experience.',
-  ogDescription: 'A next-generation Git client that runs in your terminal. Built with Bun, OpenTUI, and React for a fast, beautiful, keyboard-first experience.',
+  description:
+    'A next-generation Git client that runs in your terminal. Built with Bun, OpenTUI, and React for a fast, beautiful, keyboard-first experience.',
+  ogDescription:
+    'A next-generation Git client that runs in your terminal. Built with Bun, OpenTUI, and React for a fast, beautiful, keyboard-first experience.',
   ogType: 'website',
   twitterTitle: 'GitArbor TUI - Next-Generation Git Client for Your Terminal',
-  twitterDescription: 'A next-generation Git client that runs in your terminal. Built with Bun, OpenTUI, and React.',
-})
+  twitterDescription:
+    'A next-generation Git client that runs in your terminal. Built with Bun, OpenTUI, and React.',
+});
 </script>
 
 <style scoped>
@@ -395,7 +474,9 @@ useSeoMeta({
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 .hero-screenshot:hover {
@@ -551,7 +632,9 @@ useSeoMeta({
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
   margin-bottom: var(--spacing-md);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
   box-shadow: var(--shadow-md);
 }
 
@@ -633,33 +716,33 @@ useSeoMeta({
   .hero-title {
     font-size: 2.5rem;
   }
-  
+
   .hero-subtitle {
     font-size: 1.25rem;
   }
-  
+
   .hero-cta {
     flex-direction: column;
     align-items: center;
   }
-  
+
   .btn-large {
     width: 100%;
     max-width: 300px;
   }
-  
+
   .features-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .screenshots-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .tech-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .cta-buttons {
     flex-direction: column;
     align-items: center;
