@@ -112,51 +112,6 @@
       </div>
     </section>
 
-    <!-- Features Section -->
-    <section class="features py-2xl">
-      <div class="container">
-        <h2 class="text-center mb-2xl">Why GitArbor?</h2>
-        
-        <div class="features-grid">
-          <div class="feature-card card">
-            <div class="feature-icon">⚡</div>
-            <h3>Lightning Fast</h3>
-            <p>Built with Bun runtime for instant startup and blazing-fast performance. No lag, no waiting.</p>
-          </div>
-          
-          <div class="feature-card card">
-            <div class="feature-icon">🎨</div>
-            <h3>Beautiful Interface</h3>
-            <p>Powered by OpenTUI and React for a smooth, intuitive terminal UI with multiple themes.</p>
-          </div>
-          
-          <div class="feature-card card">
-            <div class="feature-icon">⌨️</div>
-            <h3>Keyboard-First</h3>
-            <p>Navigate your repositories with vim-like keybindings. Mouse optional, keyboard optimized.</p>
-          </div>
-          
-          <div class="feature-card card">
-            <div class="feature-icon">⚙️</div>
-            <h3>Customizable</h3>
-            <p>Integrated settings modal for quick access to configuration. Customize themes, preferences, and behavior instantly.</p>
-          </div>
-          
-          <div class="feature-card card">
-            <div class="feature-icon">🎭</div>
-            <h3>Multiple Themes</h3>
-            <p>Choose from 10+ carefully crafted themes including Dracula, Nord, Gruvbox, and more.</p>
-          </div>
-          
-          <div class="feature-card card">
-            <div class="feature-icon">🚀</div>
-            <h3>Modern Stack</h3>
-            <p>Built with TypeScript, React 19, and the latest web technologies adapted for the terminal.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
     <!-- Screenshots Section -->
     <section class="screenshots py-2xl">
       <div class="container">
@@ -224,6 +179,51 @@
             <img src="/screenshots/settings.png" alt="Settings" class="screenshot-img" loading="lazy" />
             <h4>Customizable Settings</h4>
             <p class="text-muted">Configure GitArbor to match your workflow</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features py-2xl">
+      <div class="container">
+        <h2 class="text-center mb-2xl">Why GitArbor?</h2>
+        
+        <div class="features-grid">
+          <div class="feature-card card">
+            <div class="feature-icon">⚡</div>
+            <h3>Lightning Fast</h3>
+            <p>Built with Bun runtime for instant startup and blazing-fast performance. No lag, no waiting.</p>
+          </div>
+          
+          <div class="feature-card card">
+            <div class="feature-icon">🎨</div>
+            <h3>Beautiful Interface</h3>
+            <p>Powered by OpenTUI and React for a smooth, intuitive terminal UI with multiple themes.</p>
+          </div>
+          
+          <div class="feature-card card">
+            <div class="feature-icon">⌨️</div>
+            <h3>Keyboard-First</h3>
+            <p>Navigate your repositories with vim-like keybindings. Mouse optional, keyboard optimized.</p>
+          </div>
+          
+          <div class="feature-card card">
+            <div class="feature-icon">⚙️</div>
+            <h3>Customizable</h3>
+            <p>Integrated settings modal for quick access to configuration. Customize themes, preferences, and behavior instantly.</p>
+          </div>
+          
+          <div class="feature-card card">
+            <div class="feature-icon">🎭</div>
+            <h3>Multiple Themes</h3>
+            <p>Choose from 10+ carefully crafted themes including Dracula, Nord, Gruvbox, and more.</p>
+          </div>
+          
+          <div class="feature-card card">
+            <div class="feature-icon">🚀</div>
+            <h3>Modern Stack</h3>
+            <p>Built with TypeScript, React 19, and the latest web technologies adapted for the terminal.</p>
           </div>
         </div>
       </div>
