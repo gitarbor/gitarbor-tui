@@ -1,0 +1,34 @@
+# Nuxt
+.nuxt
+.output
+.nitro
+.cache
+
+# Dependencies
+node_modules
+
+# Logs
+*.log*
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Build outputs
+dist
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Bun
+bun.lockb

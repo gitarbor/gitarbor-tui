@@ -1,0 +1,24 @@
+{
+  "name": "gitarbor-website",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "typecheck": "nuxt typecheck"
+  },
+  "dependencies": {
+    "@nuxt/icon": "^2.2.1",
+    "nuxt": "^4.3.0",
+    "vue": "^3.5.13"
+  },
+  "devDependencies": {
+    "@nuxt/devtools": "^3.1.1",
+    "@nuxtjs/seo": "^3.4.0",
+    "typescript": "^5.7.3",
+    "vue-tsc": "^3.2.4"
+  }
+}

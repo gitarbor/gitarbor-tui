@@ -488,6 +488,81 @@ export class GitClient {
     }
   }
 
+  async hasUpstream(branch?: string): Promise<boolean> {
+    try {
+      const branchArg = branch ? branch : await this.getCurrentBranch();
+      const { stdout } = await execAsync(`git config branch.${branchArg}.remote`, {
+        cwd: this.cwd,
+      });
+      return stdout.trim().length > 0;
+    } catch {
+      return false;
+    }
+  }
+
+  async getCurrentBranch(): Promise<string> {
+    try {
+      const { stdout } = await execAsync('git branch --show-current', { cwd: this.cwd });
+      return stdout.trim();
+    } catch (error) {
+      throw new Error(`Failed to get current branch: ${error}`);
+    }
+  }
+
+  async pushWithSetUpstream(
+    remote: string,
+    branch: string,
+    onProgress?: (line: string) => void,
+  ): Promise<void> {
+    await this.logCommand(`git push --set-upstream ${remote} ${branch}`, async () => {
+      try {
+        const { spawn } = await import('child_process');
+
+        return new Promise((resolve, reject) => {
+          const gitProcess = spawn('git', ['push', '--set-upstream', remote, branch, '--progress'], {
+            cwd: this.cwd,
+            env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
+          });
+
+          let errorOutput = '';
+
+          gitProcess.stderr.on('data', (data: Buffer) => {
+            const lines = data.toString().split('\n');
+            lines.forEach((line: string) => {
+              if (line.trim()) {
+                onProgress?.(line.trim());
+                errorOutput += line + '\n';
+              }
+            });
+          });
+
+          gitProcess.stdout.on('data', (data: Buffer) => {
+            const lines = data.toString().split('\n');
+            lines.forEach((line: string) => {
+              if (line.trim()) {
+                onProgress?.(line.trim());
+              }
+            });
+          });
+
+          gitProcess.on('close', (code: number | null) => {
+            if (code === 0) {
+              resolve();
+            } else {
+              reject(new Error(errorOutput || `Push failed with code ${code}`));
+            }
+          });
+
+          gitProcess.on('error', (error: Error) => {
+            reject(new Error(`Failed to push: ${error.message}`));
+          });
+        });
+      } catch (error) {
+        throw new Error(`Failed to push with set-upstream: ${error}`);
+      }
+    });
+  }
+
   async push(onProgress?: (line: string) => void): Promise<void> {
     await this.logCommand('git push --progress', async () => {
       try {

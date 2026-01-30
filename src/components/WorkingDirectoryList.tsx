@@ -39,15 +39,32 @@ interface FileItemProps {
 }
 
 const FileItem = memo(({ file, isSelected, prefix, color }: FileItemProps) => {
+  const lastSlashIndex = file.path.lastIndexOf('/');
+  const fileName = lastSlashIndex >= 0 ? file.path.slice(lastSlashIndex + 1) : file.path;
+  const dirPath = lastSlashIndex >= 0 ? file.path.slice(0, lastSlashIndex) : '';
+
   return (
     <box key={file.path} flexDirection="row" paddingLeft={theme.spacing.xs} height={1}>
-      <text fg={isSelected ? theme.colors.primary : theme.colors.border}>
-        {isSelected ? '>' : ' '}
+      <text
+        fg={isSelected ? theme.colors.primary : theme.colors.border}
+        width={2}
+      >
+        {isSelected ? '>' : ' '} 
       </text>
-      <text fg={color}> {prefix} </text>
-      <text fg={isSelected ? theme.colors.text.primary : theme.colors.text.secondary}>
-        {file.path}
+      <text fg={color} width={3}>
+        {prefix}  
       </text>
+      <text
+        fg={isSelected ? theme.colors.text.primary : theme.colors.text.secondary}
+        flexShrink={0}
+      >
+        {fileName}
+      </text>
+      {dirPath && (
+        <text fg={theme.colors.text.muted}>
+          {' '}{dirPath}
+        </text>
+      )}
     </box>
   );
 });

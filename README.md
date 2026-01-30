@@ -4,7 +4,7 @@
 
 ![Bun](https://img.shields.io/badge/Built%20with-Bun-orange) ![React](https://img.shields.io/badge/UI-OpenTUI%20%2B%20React-blue) ![License](https://img.shields.io/github/license/cadamsdev/gitarbor-tui) ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
 
-A next-generation Git client that runs in your terminal. Built with Bun, OpenTUI, and React.
+GitArbor TUI is a next-generation Git client built for developers who live in the terminal. It combines the power of modern web technologies (Bun, React, TypeScript) with the efficiency of terminal user interfaces to provide a fast, beautiful, and intuitive Git experience. 
 
 ![GitArbor Preview](media/preview.png)
 
