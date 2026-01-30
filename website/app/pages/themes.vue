@@ -12,29 +12,8 @@
       
       <div class="themes-grid">
         <div v-for="theme in themes" :key="theme.id" class="theme-card card">
-          <div class="theme-preview" :style="{ background: theme.colors.bg }">
-            <div class="theme-preview-header" :style="{ borderColor: theme.colors.border }">
-              <span :style="{ color: theme.colors.primary }">{{ theme.name }}</span>
-            </div>
-            <div class="theme-preview-body">
-              <div class="preview-line">
-                <span :style="{ color: theme.colors.primary }">→</span>
-                <span :style="{ color: theme.colors.text }">main</span>
-                <span :style="{ color: theme.colors.muted }">[↑2 ↓0]</span>
-              </div>
-              <div class="preview-line">
-                <span :style="{ color: theme.colors.modified }">M</span>
-                <span :style="{ color: theme.colors.text }">src/App.tsx</span>
-              </div>
-              <div class="preview-line">
-                <span :style="{ color: theme.colors.staged }">A</span>
-                <span :style="{ color: theme.colors.text }">src/utils.ts</span>
-              </div>
-              <div class="preview-line">
-                <span :style="{ color: theme.colors.untracked }">?</span>
-                <span :style="{ color: theme.colors.muted }">README.md</span>
-              </div>
-            </div>
+          <div class="theme-preview">
+            <img :src="theme.screenshot" :alt="`${theme.name} theme screenshot`" class="theme-screenshot" />
           </div>
           
           <div class="theme-info">
@@ -81,6 +60,7 @@ const themes = [
     id: 'default-dark',
     name: 'Default Dark',
     description: 'Classic dark theme with orange accents',
+    screenshot: '/screenshots/themes/default.png',
     colors: {
       bg: '#000000',
       border: '#555555',
@@ -96,6 +76,7 @@ const themes = [
     id: 'light',
     name: 'Light',
     description: 'Clean light theme for bright environments',
+    screenshot: '/screenshots/themes/light.png',
     colors: {
       bg: '#FFFFFF',
       border: '#CCCCCC',
@@ -111,6 +92,7 @@ const themes = [
     id: 'monokai',
     name: 'Monokai',
     description: 'Dark theme inspired by the Monokai color scheme',
+    screenshot: '/screenshots/themes/monokai.png',
     colors: {
       bg: '#272822',
       border: '#49483E',
@@ -126,6 +108,7 @@ const themes = [
     id: 'nord',
     name: 'Nord',
     description: 'Arctic, north-bluish color palette',
+    screenshot: '/screenshots/themes/nord.png',
     colors: {
       bg: '#2E3440',
       border: '#4C566A',
@@ -141,6 +124,7 @@ const themes = [
     id: 'solarized-dark',
     name: 'Solarized Dark',
     description: 'Precision color scheme for the terminal',
+    screenshot: '/screenshots/themes/solarized-dark.png',
     colors: {
       bg: '#002B36',
       border: '#586E75',
@@ -156,6 +140,7 @@ const themes = [
     id: 'solarized-light',
     name: 'Solarized Light',
     description: 'Light variant of Solarized color scheme',
+    screenshot: '/screenshots/themes/solarized-light.png',
     colors: {
       bg: '#FDF6E3',
       border: '#93A1A1',
@@ -171,6 +156,7 @@ const themes = [
     id: 'gruvbox-dark',
     name: 'Gruvbox Dark',
     description: 'Retro groove color scheme with warm palette',
+    screenshot: '/screenshots/themes/gruvbox-dark.png',
     colors: {
       bg: '#282828',
       border: '#504945',
@@ -186,6 +172,7 @@ const themes = [
     id: 'gruvbox-light',
     name: 'Gruvbox Light',
     description: 'Light variant of Gruvbox color scheme',
+    screenshot: '/screenshots/themes/gruvbox-light.png',
     colors: {
       bg: '#FBF1C7',
       border: '#D5C4A1',
@@ -201,6 +188,7 @@ const themes = [
     id: 'dracula',
     name: 'Dracula',
     description: 'Dark theme with vibrant purple and pink accents',
+    screenshot: '/screenshots/themes/dracula.png',
     colors: {
       bg: '#282A36',
       border: '#44475A',
@@ -216,6 +204,7 @@ const themes = [
     id: 'tokyo-night',
     name: 'Tokyo Night',
     description: "Clean dark theme inspired by Tokyo's neon lights",
+    screenshot: '/screenshots/themes/tokyo-night.png',
     colors: {
       bg: '#1A1B26',
       border: '#3B4261',
@@ -269,29 +258,18 @@ useSeoMeta({
 }
 
 .theme-preview {
-  padding: var(--spacing-md);
-  font-family: var(--font-mono);
-  font-size: 0.875rem;
-  min-height: 180px;
+  background: #000;
+  position: relative;
+  overflow: hidden;
 }
 
-.theme-preview-header {
-  padding-bottom: var(--spacing-sm);
-  margin-bottom: var(--spacing-sm);
-  border-bottom: 1px solid;
-  font-weight: 600;
+.theme-screenshot {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-bottom: 1px solid var(--color-border);
 }
 
-.preview-line {
-  margin-bottom: 0.5rem;
-  display: flex;
-  gap: 0.5rem;
-}
-
-.preview-line span:first-child {
-  width: 1.5rem;
-  font-weight: bold;
-}
 
 .theme-info {
   padding: var(--spacing-lg);
