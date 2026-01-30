@@ -14,7 +14,7 @@
             Fast, beautiful, and built with modern web technologies.
           </p>
           <div class="hero-cta">
-            <a href="https://github.com/cadamsdev/gitarbor-tui" target="_blank" rel="noopener" class="btn btn-primary btn-large">
+            <a href="#install" class="btn btn-primary btn-large">
               Get Started
             </a>
             <a href="https://github.com/cadamsdev/gitarbor-tui" target="_blank" rel="noopener" class="btn btn-outline btn-large">
@@ -30,7 +30,7 @@
     </section>
 
     <!-- Installation Section -->
-    <section class="installation py-2xl">
+    <section id="install" class="installation py-2xl">
       <div class="container">
         <h2 class="text-center mb-lg">Quick Install</h2>
         <p class="text-center text-muted mb-2xl">
@@ -285,7 +285,7 @@
             Install GitArbor and experience a better way to work with Git in your terminal.
           </p>
           <div class="cta-buttons">
-            <a href="https://github.com/cadamsdev/gitarbor-tui" target="_blank" rel="noopener" class="btn btn-primary btn-large">
+            <a href="#install" class="btn btn-primary btn-large">
               Install Now
             </a>
             <NuxtLink to="/themes" class="btn btn-outline btn-large">
