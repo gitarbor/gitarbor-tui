@@ -28,11 +28,6 @@
   background: var(--color-bg-secondary);
   border-bottom: 1px solid var(--color-border);
   padding: var(--spacing-md) 0;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  backdrop-filter: blur(10px);
-  background-color: rgba(26, 26, 26, 0.8);
 }
 
 .nav {
