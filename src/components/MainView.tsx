@@ -231,7 +231,6 @@ export function MainView({
                       ref={branchesScrollRef}
                       width="100%"
                       height="100%"
-                      flexDirection="column"
                       viewportCulling={true}
                     >
                       {localBranches.map((branch, idx) => {
