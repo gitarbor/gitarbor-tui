@@ -2084,6 +2084,12 @@ export function App({ cwd }: { cwd: string }) {
   ];
 
   useKeyboard((key) => {
+    // CTRL+C: Exit immediately without confirmation
+    if (key.sequence === '\x03' || (key.name === 'c' && key.ctrl)) {
+      handleExit();
+      return;
+    }
+
     if (
       showExitModal ||
       showSettingsModal ||
