@@ -16,7 +16,7 @@
           <div class="hero-cta">
             <a href="#install" class="btn btn-primary btn-large"> Get Started </a>
             <a
-              href="https://github.com/cadamsdev/gitarbor-tui"
+              href="https://github.com/gitarbor/gitarbor-tui"
               target="_blank"
               rel="noopener"
               class="btn btn-outline btn-large"

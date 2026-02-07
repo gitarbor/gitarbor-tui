@@ -10,7 +10,7 @@
         <div class="nav-links">
           <NuxtLink to="/themes" class="nav-link">Themes</NuxtLink>
           <a
-            href="https://github.com/cadamsdev/gitarbor-tui"
+            href="https://github.com/gitarbor/gitarbor-tui"
             target="_blank"
             rel="noopener"
             class="nav-link"
