@@ -1,4 +1,4 @@
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import { promisify } from 'util';
 import { readFile } from 'fs/promises';
 import { existsSync } from 'fs';
@@ -20,7 +20,7 @@ import type {
   NotificationType,
 } from '../types/git';
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 export class GitClient {
   private commandLog: CommandLogEntry[] = [];
@@ -32,6 +32,18 @@ export class GitClient {
   private readonly statusCacheTTL = 1000; // 1 second cache for status
 
   constructor(private cwd: string) {}
+
+  /**
+   * Securely executes git commands using execFile() to prevent shell injection.
+   * Uses array arguments passed directly to git without shell interpretation.
+   */
+  private async execGit(args: string[]): Promise<{ stdout: string; stderr: string }> {
+    return execFileAsync('git', args, {
+      cwd: this.cwd,
+      env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
+      maxBuffer: 10 * 1024 * 1024, // 10MB buffer for large diffs
+    });
+  }
 
   private async logCommand(command: string, execute: () => Promise<void>): Promise<void> {
     const startTime = Date.now();
@@ -121,17 +133,19 @@ export class GitClient {
         return this.statusCache.data;
       }
 
-      const { stdout: branchOut } = await execAsync('git branch --show-current', { cwd: this.cwd });
+      const { stdout: branchOut } = await this.execGit(['branch', '--show-current']);
       const branch = branchOut.trim();
 
       // Get ahead/behind info
       let ahead = 0;
       let behind = 0;
       try {
-        const { stdout: revOut } = await execAsync(
-          `git rev-list --left-right --count HEAD...@{upstream}`,
-          { cwd: this.cwd },
-        );
+        const { stdout: revOut } = await this.execGit([
+          'rev-list',
+          '--left-right',
+          '--count',
+          'HEAD...@{upstream}',
+        ]);
         const [aheadStr, behindStr] = revOut.trim().split('\t');
         ahead = parseInt(aheadStr || '0', 10);
         behind = parseInt(behindStr || '0', 10);
@@ -139,9 +153,7 @@ export class GitClient {
         // No upstream branch
       }
 
-      const { stdout: statusOut } = await execAsync('git status --porcelain -uall', {
-        cwd: this.cwd,
-      });
+      const { stdout: statusOut } = await this.execGit(['status', '--porcelain', '-uall']);
 
       const staged: GitFile[] = [];
       const unstaged: GitFile[] = [];
@@ -179,10 +191,12 @@ export class GitClient {
   async getLog(count: number = 50): Promise<GitCommit[]> {
     try {
       const format = '%H%x00%h%x00%an%x00%ar%x00%s';
-      const { stdout } = await execAsync(
-        `git log -n ${count} --pretty=format:"${format}" --abbrev=7`,
-        { cwd: this.cwd },
-      );
+      const { stdout } = await this.execGit([
+        'log',
+        `-n${count}`,
+        `--pretty=format:${format}`,
+        '--abbrev=7',
+      ]);
 
       return stdout
         .split('\n')
@@ -210,10 +224,11 @@ export class GitClient {
   async getBranches(): Promise<GitBranch[]> {
     try {
       // Get local branches only (removed -a flag for performance)
-      const { stdout } = await execAsync(
-        'git branch -vv --format="%(refname:short)|%(upstream:short)|%(authordate:relative)|%(HEAD)"',
-        { cwd: this.cwd },
-      );
+      const { stdout } = await this.execGit([
+        'branch',
+        '-vv',
+        '--format=%(refname:short)|%(upstream:short)|%(authordate:relative)|%(HEAD)',
+      ]);
 
       const branches = stdout
         .split('\n')
@@ -241,9 +256,7 @@ export class GitClient {
       // Get all branch descriptions in parallel
       const descriptionPromises = branches.map(async (branch) => {
         try {
-          const { stdout: desc } = await execAsync(`git config branch.${branch.name}.description`, {
-            cwd: this.cwd,
-          });
+          const { stdout: desc } = await this.execGit(['config', `branch.${branch.name}.description`]);
           const trimmed = desc.trim();
           if (trimmed.length > 0) {
             branch.description = trimmed;
@@ -263,10 +276,13 @@ export class GitClient {
   }
 
   async createBranch(name: string, startPoint?: string): Promise<void> {
-    const startArg = startPoint ? ` "${startPoint}"` : '';
-    await this.logCommand(`git branch "${name}"${startArg}`, async () => {
+    const args = ['branch', name];
+    if (startPoint) {
+      args.push(startPoint);
+    }
+    await this.logCommand(`git ${args.join(' ')}`, async () => {
       try {
-        await execAsync(`git branch "${name}"${startArg}`, { cwd: this.cwd });
+        await this.execGit(args);
       } catch (error) {
         throw new Error(`Failed to create branch: ${error}`);
       }
@@ -275,9 +291,10 @@ export class GitClient {
 
   async deleteBranch(name: string, force: boolean = false): Promise<void> {
     const flag = force ? '-D' : '-d';
-    await this.logCommand(`git branch ${flag} "${name}"`, async () => {
+    const args = ['branch', flag, name];
+    await this.logCommand(`git ${args.join(' ')}`, async () => {
       try {
-        await execAsync(`git branch ${flag} "${name}"`, { cwd: this.cwd });
+        await this.execGit(args);
       } catch (error) {
         throw new Error(`Failed to delete branch: ${error}`);
       }
@@ -286,16 +303,17 @@ export class GitClient {
 
   async deleteRemoteBranch(remote: string, branch: string): Promise<void> {
     try {
-      await execAsync(`git push "${remote}" --delete "${branch}"`, { cwd: this.cwd });
+      await this.execGit(['push', remote, '--delete', branch]);
     } catch (error) {
       throw new Error(`Failed to delete remote branch: ${error}`);
     }
   }
 
   async renameBranch(oldName: string, newName: string): Promise<void> {
-    await this.logCommand(`git branch -m "${oldName}" "${newName}"`, async () => {
+    const args = ['branch', '-m', oldName, newName];
+    await this.logCommand(`git ${args.join(' ')}`, async () => {
       try {
-        await execAsync(`git branch -m "${oldName}" "${newName}"`, { cwd: this.cwd });
+        await this.execGit(args);
       } catch (error) {
         throw new Error(`Failed to rename branch: ${error}`);
       }
@@ -304,7 +322,7 @@ export class GitClient {
 
   async setUpstream(branch: string, upstream: string): Promise<void> {
     try {
-      await execAsync(`git branch --set-upstream-to="${upstream}" "${branch}"`, { cwd: this.cwd });
+      await this.execGit(['branch', `--set-upstream-to=${upstream}`, branch]);
     } catch (error) {
       throw new Error(`Failed to set upstream: ${error}`);
     }
@@ -312,7 +330,7 @@ export class GitClient {
 
   async unsetUpstream(branch: string): Promise<void> {
     try {
-      await execAsync(`git branch --unset-upstream "${branch}"`, { cwd: this.cwd });
+      await this.execGit(['branch', '--unset-upstream', branch]);
     } catch (error) {
       throw new Error(`Failed to unset upstream: ${error}`);
     }
@@ -320,10 +338,7 @@ export class GitClient {
 
   async setBranchDescription(branch: string, description: string): Promise<void> {
     try {
-      await execAsync(
-        `git config branch.${branch}.description "${description.replace(/"/g, '\\"')}"`,
-        { cwd: this.cwd },
-      );
+      await this.execGit(['config', `branch.${branch}.description`, description]);
     } catch (error) {
       throw new Error(`Failed to set branch description: ${error}`);
     }
@@ -334,7 +349,7 @@ export class GitClient {
       // Check if branch is merged into current branch
       let merged = false;
       try {
-        const { stdout } = await execAsync(`git branch --merged`, { cwd: this.cwd });
+        const { stdout } = await this.execGit(['branch', '--merged']);
         merged = stdout.split('\n').some((line) => line.trim() === branch);
       } catch {
         // Error checking merge status
@@ -343,9 +358,7 @@ export class GitClient {
       // Check if branch has unpushed commits
       let hasUnpushed = false;
       try {
-        const { stdout } = await execAsync(`git log @{upstream}..HEAD --oneline`, {
-          cwd: this.cwd,
-        });
+        const { stdout } = await this.execGit(['log', '@{upstream}..HEAD', '--oneline']);
         hasUnpushed = stdout.trim().length > 0;
       } catch {
         // No upstream or error checking
@@ -360,7 +373,7 @@ export class GitClient {
   async stageFile(path: string): Promise<void> {
     await this.logCommand(`git add "${path}"`, async () => {
       try {
-        await execAsync(`git add "${path}"`, { cwd: this.cwd });
+        await this.execGit(['add', path]);
         this.invalidateDiffCache();
         this.invalidateStatusCache();
       } catch (error) {
@@ -372,7 +385,7 @@ export class GitClient {
   async stageAll(): Promise<void> {
     await this.logCommand('git add -A', async () => {
       try {
-        await execAsync('git add -A', { cwd: this.cwd });
+        await this.execGit(['add', '-A']);
         this.invalidateDiffCache();
         this.invalidateStatusCache();
       } catch (error) {
@@ -384,7 +397,7 @@ export class GitClient {
   async unstageFile(path: string): Promise<void> {
     await this.logCommand(`git reset HEAD "${path}"`, async () => {
       try {
-        await execAsync(`git reset HEAD "${path}"`, { cwd: this.cwd });
+        await this.execGit(['reset', 'HEAD', path]);
         this.invalidateDiffCache();
         this.invalidateStatusCache();
       } catch (error) {
@@ -396,7 +409,7 @@ export class GitClient {
   async commit(message: string): Promise<void> {
     await this.logCommand(`git commit -m "${message.replace(/"/g, '\\"')}"`, async () => {
       try {
-        await execAsync(`git commit -m "${message.replace(/"/g, '\\"')}"`, { cwd: this.cwd });
+        await this.execGit(['commit', '-m', message]);
         this.invalidateDiffCache();
         this.invalidateStatusCache();
       } catch (error) {
@@ -409,7 +422,7 @@ export class GitClient {
     const branchName = branch.replace(/^remotes\/[^/]+\//, '');
     await this.logCommand(`git checkout "${branchName}"`, async () => {
       try {
-        await execAsync(`git checkout "${branchName}"`, { cwd: this.cwd });
+        await this.execGit(['checkout', branchName]);
       } catch (error) {
         throw new Error(`Failed to checkout branch: ${error}`);
       }
@@ -426,8 +439,11 @@ export class GitClient {
         return cached.content;
       }
 
-      const pathArg = path ? `-- "${path}"` : '';
-      const { stdout } = await execAsync(`git diff ${pathArg}`, { cwd: this.cwd });
+      const args = ['diff'];
+      if (path) {
+        args.push('--', path);
+      }
+      const { stdout } = await this.execGit(args);
 
       // Cache the result
       this.diffCache.set(cacheKey, { content: stdout, timestamp: Date.now() });
@@ -448,8 +464,11 @@ export class GitClient {
         return cached.content;
       }
 
-      const pathArg = path ? `-- "${path}"` : '';
-      const { stdout } = await execAsync(`git diff --staged ${pathArg}`, { cwd: this.cwd });
+      const args = ['diff', '--staged'];
+      if (path) {
+        args.push('--', path);
+      }
+      const { stdout } = await this.execGit(args);
 
       // Cache the result
       this.diffCache.set(cacheKey, { content: stdout, timestamp: Date.now() });
@@ -472,9 +491,7 @@ export class GitClient {
 
       // Use git diff to show untracked file as if it were added
       // This shows the file content with proper diff formatting
-      const { stdout } = await execAsync(`git diff --no-index /dev/null "${path}"`, {
-        cwd: this.cwd,
-      });
+      const { stdout } = await this.execGit(['diff', '--no-index', '/dev/null', path]);
 
       // Cache the result
       this.diffCache.set(cacheKey, { content: stdout, timestamp: Date.now() });
@@ -496,9 +513,7 @@ export class GitClient {
   async hasUpstream(branch?: string): Promise<boolean> {
     try {
       const branchArg = branch ? branch : await this.getCurrentBranch();
-      const { stdout } = await execAsync(`git config branch.${branchArg}.remote`, {
-        cwd: this.cwd,
-      });
+      const { stdout } = await this.execGit(['config', `branch.${branchArg}.remote`]);
       return stdout.trim().length > 0;
     } catch {
       return false;
@@ -507,7 +522,7 @@ export class GitClient {
 
   async getCurrentBranch(): Promise<string> {
     try {
-      const { stdout } = await execAsync('git branch --show-current', { cwd: this.cwd });
+      const { stdout } = await this.execGit(['branch', '--show-current']);
       return stdout.trim();
     } catch (error) {
       throw new Error(`Failed to get current branch: ${error}`);
@@ -724,7 +739,7 @@ export class GitClient {
 
   async getStashes(): Promise<GitStash[]> {
     try {
-      const { stdout } = await execAsync('git stash list', { cwd: this.cwd });
+      const { stdout } = await this.execGit(['stash', 'list']);
 
       if (!stdout.trim()) {
         return [];
@@ -764,18 +779,14 @@ export class GitClient {
   }
 
   async createStash(message?: string): Promise<void> {
-    const cmd = message
-      ? `git stash push -u -m "${message.replace(/"/g, '\\"')}"`
-      : 'git stash push -u';
+    const args = ['stash', 'push', '-u'];
+    if (message) {
+      args.push('-m', message);
+    }
+    const cmd = message ? `git stash push -u -m "${message}"` : 'git stash push -u';
     await this.logCommand(cmd, async () => {
       try {
-        if (message) {
-          await execAsync(`git stash push -u -m "${message.replace(/"/g, '\\"')}"`, {
-            cwd: this.cwd,
-          });
-        } else {
-          await execAsync('git stash push -u', { cwd: this.cwd });
-        }
+        await this.execGit(args);
       } catch (error) {
         throw new Error(`Failed to create stash: ${error}`);
       }
@@ -785,7 +796,7 @@ export class GitClient {
   async applyStash(index: number): Promise<void> {
     await this.logCommand(`git stash apply stash@{${index}}`, async () => {
       try {
-        await execAsync(`git stash apply stash@{${index}}`, { cwd: this.cwd });
+        await this.execGit(['stash', 'apply', `stash@{${index}}`]);
       } catch (error) {
         throw new Error(`Failed to apply stash: ${error}`);
       }
@@ -795,7 +806,7 @@ export class GitClient {
   async popStash(index: number): Promise<void> {
     await this.logCommand(`git stash pop stash@{${index}}`, async () => {
       try {
-        await execAsync(`git stash pop stash@{${index}}`, { cwd: this.cwd });
+        await this.execGit(['stash', 'pop', `stash@{${index}}`]);
       } catch (error) {
         throw new Error(`Failed to pop stash: ${error}`);
       }
@@ -805,7 +816,7 @@ export class GitClient {
   async dropStash(index: number): Promise<void> {
     await this.logCommand(`git stash drop stash@{${index}}`, async () => {
       try {
-        await execAsync(`git stash drop stash@{${index}}`, { cwd: this.cwd });
+        await this.execGit(['stash', 'drop', `stash@{${index}}`]);
       } catch (error) {
         throw new Error(`Failed to drop stash: ${error}`);
       }
@@ -814,7 +825,7 @@ export class GitClient {
 
   async getStashDiff(index: number): Promise<string> {
     try {
-      const { stdout } = await execAsync(`git stash show -p stash@{${index}}`, { cwd: this.cwd });
+      const { stdout } = await this.execGit(['stash', 'show', '-p', `stash@{${index}}`]);
       return stdout;
     } catch (error) {
       throw new Error(`Failed to get stash diff: ${error}`);
@@ -824,7 +835,7 @@ export class GitClient {
   async unstageAll(): Promise<void> {
     await this.logCommand('git reset HEAD', async () => {
       try {
-        await execAsync('git reset HEAD', { cwd: this.cwd });
+        await this.execGit(['reset', 'HEAD']);
         this.invalidateDiffCache();
         this.invalidateStatusCache();
       } catch (error) {
@@ -835,7 +846,7 @@ export class GitClient {
 
   async discardChanges(path: string): Promise<void> {
     try {
-      await execAsync(`git checkout -- "${path}"`, { cwd: this.cwd });
+      await this.execGit(['checkout', '--', path]);
     } catch (error) {
       throw new Error(`Failed to discard changes: ${error}`);
     }
@@ -843,7 +854,7 @@ export class GitClient {
 
   async deleteUntrackedFile(path: string): Promise<void> {
     try {
-      await execAsync(`git clean -f "${path}"`, { cwd: this.cwd });
+      await this.execGit(['clean', '-f', path]);
     } catch (error) {
       throw new Error(`Failed to delete untracked file: ${error}`);
     }
@@ -851,7 +862,7 @@ export class GitClient {
 
   async renameFile(oldPath: string, newPath: string): Promise<void> {
     try {
-      await execAsync(`git mv "${oldPath}" "${newPath}"`, { cwd: this.cwd });
+      await this.execGit(['mv', oldPath, newPath]);
     } catch (error) {
       throw new Error(`Failed to rename file: ${error}`);
     }
@@ -871,7 +882,7 @@ export class GitClient {
       }
 
       // Get current branch
-      const { stdout: branchOut } = await execAsync('git branch --show-current', { cwd: this.cwd });
+      const { stdout: branchOut } = await this.execGit(['branch', '--show-current']);
       const currentBranch = branchOut.trim();
 
       // Get merging branch from MERGE_MSG
@@ -890,7 +901,7 @@ export class GitClient {
       }
 
       // Get conflicted files
-      const { stdout: statusOut } = await execAsync('git status --porcelain', { cwd: this.cwd });
+      const { stdout: statusOut } = await this.execGit(['status', '--porcelain']);
       const conflicts: GitConflict[] = [];
 
       for (const line of statusOut.split('\n')) {
@@ -923,27 +934,21 @@ export class GitClient {
             let base: string | undefined;
 
             try {
-              const { stdout: oursOut } = await execAsync(`git show :2:"${path}"`, {
-                cwd: this.cwd,
-              });
+              const { stdout: oursOut } = await this.execGit(['show', `:2:${path}`]);
               ours = oursOut;
             } catch {
               // File doesn't exist in ours
             }
 
             try {
-              const { stdout: theirsOut } = await execAsync(`git show :3:"${path}"`, {
-                cwd: this.cwd,
-              });
+              const { stdout: theirsOut } = await this.execGit(['show', `:3:${path}`]);
               theirs = theirsOut;
             } catch {
               // File doesn't exist in theirs
             }
 
             try {
-              const { stdout: baseOut } = await execAsync(`git show :1:"${path}"`, {
-                cwd: this.cwd,
-              });
+              const { stdout: baseOut } = await this.execGit(['show', `:1:${path}`]);
               base = baseOut;
             } catch {
               // File doesn't exist in base
@@ -1026,11 +1031,11 @@ export class GitClient {
       args.push('--ff-only');
     }
 
-    args.push(`"${branch}"`);
+    args.push(branch);
 
     await this.logCommand(`git ${args.join(' ')}`, async () => {
       try {
-        await execAsync(`git ${args.join(' ')}`, { cwd: this.cwd });
+        await this.execGit(args);
       } catch (error) {
         // Check if it's a merge conflict
         const errorMsg = String(error);
@@ -1046,7 +1051,7 @@ export class GitClient {
   async abortMerge(): Promise<void> {
     await this.logCommand('git merge --abort', async () => {
       try {
-        await execAsync('git merge --abort', { cwd: this.cwd });
+        await this.execGit(['merge', '--abort']);
       } catch (error) {
         throw new Error(`Failed to abort merge: ${error}`);
       }
@@ -1056,14 +1061,14 @@ export class GitClient {
   async resolveConflict(path: string, resolution: 'ours' | 'theirs' | 'manual'): Promise<void> {
     try {
       if (resolution === 'ours') {
-        await execAsync(`git checkout --ours "${path}"`, { cwd: this.cwd });
-        await execAsync(`git add "${path}"`, { cwd: this.cwd });
+        await this.execGit(['checkout', '--ours', path]);
+        await this.execGit(['add', path]);
       } else if (resolution === 'theirs') {
-        await execAsync(`git checkout --theirs "${path}"`, { cwd: this.cwd });
-        await execAsync(`git add "${path}"`, { cwd: this.cwd });
+        await this.execGit(['checkout', '--theirs', path]);
+        await this.execGit(['add', path]);
       } else {
         // Manual resolution - just stage the file
-        await execAsync(`git add "${path}"`, { cwd: this.cwd });
+        await this.execGit(['add', path]);
       }
     } catch (error) {
       throw new Error(`Failed to resolve conflict: ${error}`);
@@ -1099,7 +1104,7 @@ export class GitClient {
         }
 
         // Commit the merge
-        await execAsync(`git commit -m "${message.replace(/"/g, '\\"')}"`, { cwd: this.cwd });
+        await this.execGit(['commit', '-m', message]);
       } catch (error) {
         throw new Error(`Failed to continue merge: ${error}`);
       }
@@ -1109,7 +1114,7 @@ export class GitClient {
   async cherryPick(commitHash: string): Promise<void> {
     await this.logCommand(`git cherry-pick "${commitHash}"`, async () => {
       try {
-        await execAsync(`git cherry-pick "${commitHash}"`, { cwd: this.cwd });
+        await this.execGit(['cherry-pick', commitHash]);
       } catch (error) {
         throw new Error(`Failed to cherry-pick commit: ${error}`);
       }
@@ -1119,7 +1124,7 @@ export class GitClient {
   async revertCommit(commitHash: string): Promise<void> {
     await this.logCommand(`git revert --no-edit "${commitHash}"`, async () => {
       try {
-        await execAsync(`git revert --no-edit "${commitHash}"`, { cwd: this.cwd });
+        await this.execGit(['revert', '--no-edit', commitHash]);
       } catch (error) {
         throw new Error(`Failed to revert commit: ${error}`);
       }
@@ -1129,9 +1134,7 @@ export class GitClient {
   async amendCommit(message: string): Promise<void> {
     await this.logCommand(`git commit --amend -m "${message.replace(/"/g, '\\"')}"`, async () => {
       try {
-        await execAsync(`git commit --amend -m "${message.replace(/"/g, '\\"')}"`, {
-          cwd: this.cwd,
-        });
+        await this.execGit(['commit', '--amend', '-m', message]);
       } catch (error) {
         throw new Error(`Failed to amend commit: ${error}`);
       }
@@ -1141,7 +1144,7 @@ export class GitClient {
   async resetToCommit(commitHash: string, mode: 'soft' | 'mixed' | 'hard'): Promise<void> {
     await this.logCommand(`git reset --${mode} "${commitHash}"`, async () => {
       try {
-        await execAsync(`git reset --${mode} "${commitHash}"`, { cwd: this.cwd });
+        await this.execGit(['reset', `--${mode}`, commitHash]);
       } catch (error) {
         throw new Error(`Failed to reset to commit: ${error}`);
       }
@@ -1150,7 +1153,7 @@ export class GitClient {
 
   async getCommitDiff(commitHash: string): Promise<string> {
     try {
-      const { stdout } = await execAsync(`git show "${commitHash}"`, { cwd: this.cwd });
+      const { stdout } = await this.execGit(['show', commitHash]);
       return stdout;
     } catch (error) {
       throw new Error(`Failed to get commit diff: ${error}`);
@@ -1158,19 +1161,15 @@ export class GitClient {
   }
 
   async createTag(tagName: string, commitHash: string, message?: string): Promise<void> {
+    const args = message
+      ? ['tag', '-a', tagName, commitHash, '-m', message]
+      : ['tag', tagName, commitHash];
     const cmd = message
-      ? `git tag -a "${tagName}" "${commitHash}" -m "${message.replace(/"/g, '\\"')}"`
+      ? `git tag -a "${tagName}" "${commitHash}" -m "${message}"`
       : `git tag "${tagName}" "${commitHash}"`;
     await this.logCommand(cmd, async () => {
       try {
-        if (message) {
-          await execAsync(
-            `git tag -a "${tagName}" "${commitHash}" -m "${message.replace(/"/g, '\\"')}"`,
-            { cwd: this.cwd },
-          );
-        } else {
-          await execAsync(`git tag "${tagName}" "${commitHash}"`, { cwd: this.cwd });
-        }
+        await this.execGit(args);
       } catch (error) {
         throw new Error(`Failed to create tag: ${error}`);
       }
@@ -1180,10 +1179,12 @@ export class GitClient {
   async getTags(limit?: number): Promise<GitTag[]> {
     try {
       // Get all tags with their commit hash and date, sorted by creation date (newest first)
-      const { stdout } = await execAsync(
-        'git tag -l --format="%(refname:short)|%(objectname)|%(creatordate:short)|%(subject)|%(objecttype)|%(creatordate:unix)" --sort=-creatordate',
-        { cwd: this.cwd },
-      );
+      const { stdout } = await this.execGit([
+        'tag',
+        '-l',
+        '--format=%(refname:short)|%(objectname)|%(creatordate:short)|%(subject)|%(objecttype)|%(creatordate:unix)',
+        '--sort=-creatordate',
+      ]);
 
       if (!stdout.trim()) {
         return [];
@@ -1213,7 +1214,7 @@ export class GitClient {
   async deleteTag(tagName: string): Promise<void> {
     await this.logCommand(`git tag -d "${tagName}"`, async () => {
       try {
-        await execAsync(`git tag -d "${tagName}"`, { cwd: this.cwd });
+        await this.execGit(['tag', '-d', tagName]);
       } catch (error) {
         throw new Error(`Failed to delete tag: ${error}`);
       }
@@ -1223,7 +1224,7 @@ export class GitClient {
   async deleteRemoteTag(remote: string, tagName: string): Promise<void> {
     await this.logCommand(`git push "${remote}" --delete "refs/tags/${tagName}"`, async () => {
       try {
-        await execAsync(`git push "${remote}" --delete "refs/tags/${tagName}"`, { cwd: this.cwd });
+        await this.execGit(['push', remote, '--delete', `refs/tags/${tagName}`]);
       } catch (error) {
         throw new Error(`Failed to delete remote tag: ${error}`);
       }
@@ -1233,7 +1234,7 @@ export class GitClient {
   async pushTag(tagName: string, remote: string = 'origin'): Promise<void> {
     await this.logCommand(`git push "${remote}" "${tagName}"`, async () => {
       try {
-        await execAsync(`git push "${remote}" "${tagName}"`, { cwd: this.cwd });
+        await this.execGit(['push', remote, tagName]);
       } catch (error) {
         throw new Error(`Failed to push tag: ${error}`);
       }
@@ -1243,7 +1244,7 @@ export class GitClient {
   async pushAllTags(remote: string = 'origin'): Promise<void> {
     await this.logCommand(`git push "${remote}" --tags`, async () => {
       try {
-        await execAsync(`git push "${remote}" --tags`, { cwd: this.cwd });
+        await this.execGit(['push', remote, '--tags']);
       } catch (error) {
         throw new Error(`Failed to push all tags: ${error}`);
       }
@@ -1253,7 +1254,7 @@ export class GitClient {
   async checkoutTag(tagName: string): Promise<void> {
     await this.logCommand(`git checkout "${tagName}"`, async () => {
       try {
-        await execAsync(`git checkout "${tagName}"`, { cwd: this.cwd });
+        await this.execGit(['checkout', tagName]);
       } catch (error) {
         throw new Error(`Failed to checkout tag: ${error}`);
       }
@@ -1317,7 +1318,7 @@ export class GitClient {
 
   async getVersion(): Promise<string> {
     try {
-      const { stdout } = await execAsync('git --version', { cwd: this.cwd });
+      const { stdout } = await this.execGit(['--version']);
       return stdout.trim();
     } catch (error) {
       throw new Error(`Failed to get git version: ${error}`);
@@ -1326,7 +1327,7 @@ export class GitClient {
 
   async getRemotes(): Promise<GitRemote[]> {
     try {
-      const { stdout } = await execAsync('git remote -v', { cwd: this.cwd });
+      const { stdout } = await this.execGit(['remote', '-v']);
 
       if (!stdout.trim()) {
         return [];
@@ -1367,7 +1368,7 @@ export class GitClient {
 
   async addRemote(name: string, url: string): Promise<void> {
     try {
-      await execAsync(`git remote add "${name}" "${url}"`, { cwd: this.cwd });
+      await this.execGit(['remote', 'add', name, url]);
     } catch (error) {
       throw new Error(`Failed to add remote: ${error}`);
     }
@@ -1375,7 +1376,7 @@ export class GitClient {
 
   async removeRemote(name: string): Promise<void> {
     try {
-      await execAsync(`git remote remove "${name}"`, { cwd: this.cwd });
+      await this.execGit(['remote', 'remove', name]);
     } catch (error) {
       throw new Error(`Failed to remove remote: ${error}`);
     }
@@ -1383,7 +1384,7 @@ export class GitClient {
 
   async renameRemote(oldName: string, newName: string): Promise<void> {
     try {
-      await execAsync(`git remote rename "${oldName}" "${newName}"`, { cwd: this.cwd });
+      await this.execGit(['remote', 'rename', oldName, newName]);
     } catch (error) {
       throw new Error(`Failed to rename remote: ${error}`);
     }
@@ -1391,9 +1392,9 @@ export class GitClient {
 
   async setRemoteUrl(name: string, url: string, pushUrl?: string): Promise<void> {
     try {
-      await execAsync(`git remote set-url "${name}" "${url}"`, { cwd: this.cwd });
+      await this.execGit(['remote', 'set-url', name, url]);
       if (pushUrl) {
-        await execAsync(`git remote set-url --push "${name}" "${pushUrl}"`, { cwd: this.cwd });
+        await this.execGit(['remote', 'set-url', '--push', name, pushUrl]);
       }
     } catch (error) {
       throw new Error(`Failed to set remote URL: ${error}`);
