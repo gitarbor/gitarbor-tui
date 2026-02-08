@@ -845,27 +845,33 @@ export class GitClient {
   }
 
   async discardChanges(path: string): Promise<void> {
-    try {
-      await this.execGit(['checkout', '--', path]);
-    } catch (error) {
-      throw new Error(`Failed to discard changes: ${error}`);
-    }
+    await this.logCommand(`git checkout -- "${path}"`, async () => {
+      try {
+        await this.execGit(['checkout', '--', path]);
+      } catch (error) {
+        throw new Error(`Failed to discard changes: ${error}`);
+      }
+    });
   }
 
   async deleteUntrackedFile(path: string): Promise<void> {
-    try {
-      await this.execGit(['clean', '-f', path]);
-    } catch (error) {
-      throw new Error(`Failed to delete untracked file: ${error}`);
-    }
+    await this.logCommand(`git clean -f "${path}"`, async () => {
+      try {
+        await this.execGit(['clean', '-f', path]);
+      } catch (error) {
+        throw new Error(`Failed to delete untracked file: ${error}`);
+      }
+    });
   }
 
   async renameFile(oldPath: string, newPath: string): Promise<void> {
-    try {
-      await this.execGit(['mv', oldPath, newPath]);
-    } catch (error) {
-      throw new Error(`Failed to rename file: ${error}`);
-    }
+    await this.logCommand(`git mv "${oldPath}" "${newPath}"`, async () => {
+      try {
+        await this.execGit(['mv', oldPath, newPath]);
+      } catch (error) {
+        throw new Error(`Failed to rename file: ${error}`);
+      }
+    });
   }
 
   async getMergeState(): Promise<GitMergeState> {
@@ -1059,20 +1065,23 @@ export class GitClient {
   }
 
   async resolveConflict(path: string, resolution: 'ours' | 'theirs' | 'manual'): Promise<void> {
-    try {
-      if (resolution === 'ours') {
-        await this.execGit(['checkout', '--ours', path]);
-        await this.execGit(['add', path]);
-      } else if (resolution === 'theirs') {
-        await this.execGit(['checkout', '--theirs', path]);
-        await this.execGit(['add', path]);
-      } else {
-        // Manual resolution - just stage the file
-        await this.execGit(['add', path]);
+    const resolutionType = resolution === 'manual' ? 'manual' : resolution;
+    await this.logCommand(`git resolve conflict (${resolutionType}) "${path}"`, async () => {
+      try {
+        if (resolution === 'ours') {
+          await this.execGit(['checkout', '--ours', path]);
+          await this.execGit(['add', path]);
+        } else if (resolution === 'theirs') {
+          await this.execGit(['checkout', '--theirs', path]);
+          await this.execGit(['add', path]);
+        } else {
+          // Manual resolution - just stage the file
+          await this.execGit(['add', path]);
+        }
+      } catch (error) {
+        throw new Error(`Failed to resolve conflict: ${error}`);
       }
-    } catch (error) {
-      throw new Error(`Failed to resolve conflict: ${error}`);
-    }
+    });
   }
 
   async getConflictedFileContent(path: string): Promise<string> {
