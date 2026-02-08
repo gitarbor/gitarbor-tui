@@ -89,7 +89,7 @@ export function RemoteModal({ mode, existingRemote, onSubmit, onCancel }: Remote
         borderColor={theme.colors.border}
         padding={theme.spacing.none}
       >
-        <text fg={theme.colors.text.muted}>Tab: next  Enter: submit  Esc: cancel</text>
+        <text fg={theme.colors.text.muted}>Tab: next Enter: submit Esc: cancel</text>
       </box>
     </Modal>
   );
