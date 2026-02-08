@@ -5,7 +5,7 @@
 $ErrorActionPreference = 'Stop'
 
 # Configuration
-$Repo = "cadamsdev/gitarbor-tui"
+$Repo = "gitarbor/gitarbor-tui"
 $InstallDir = if ($env:GITARBOR_INSTALL) { $env:GITARBOR_INSTALL } else { "$HOME\.gitarbor" }
 $BinDir = "$InstallDir\bin"
 $Executable = "$BinDir\gitarbor.exe"

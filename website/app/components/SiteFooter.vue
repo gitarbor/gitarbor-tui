@@ -19,13 +19,13 @@
           <h4>Community</h4>
           <ul class="footer-links">
             <li>
-              <a href="https://github.com/cadamsdev/gitarbor-tui" target="_blank" rel="noopener"
+              <a href="https://github.com/gitarbor/gitarbor-tui" target="_blank" rel="noopener"
                 >GitHub</a
               >
             </li>
             <li>
               <a
-                href="https://github.com/cadamsdev/gitarbor-tui/issues"
+                href="https://github.com/gitarbor/gitarbor-tui/issues"
                 target="_blank"
                 rel="noopener"
                 >Issues</a
@@ -33,7 +33,7 @@
             </li>
             <li>
               <a
-                href="https://github.com/cadamsdev/gitarbor-tui/discussions"
+                href="https://github.com/gitarbor/gitarbor-tui/discussions"
                 target="_blank"
                 rel="noopener"
                 >Discussions</a

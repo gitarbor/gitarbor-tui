@@ -5,7 +5,7 @@
 > **⚠️ Under Active Development**  
 > Git Arbor TUI is currently in active development and not yet stable. While we're working hard to deliver a reliable experience, you may encounter bugs or incomplete features. Feedback and contributions are welcome!
 
-![Bun](https://img.shields.io/badge/Built%20with-Bun-orange) ![React](https://img.shields.io/badge/UI-OpenTUI%20%2B%20React-blue) ![License](https://img.shields.io/github/license/cadamsdev/gitarbor-tui) ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
+![Bun](https://img.shields.io/badge/Built%20with-Bun-orange) ![React](https://img.shields.io/badge/UI-OpenTUI%20%2B%20React-blue) ![License](https://img.shields.io/github/license/gitarbor/gitarbor-tui) ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
 
 GitArbor TUI is a next-generation Git client built for developers who live in the terminal. It combines the power of modern web technologies (Bun, React, TypeScript) with the efficiency of terminal user interfaces to provide a fast, beautiful, and intuitive Git experience. 
 
