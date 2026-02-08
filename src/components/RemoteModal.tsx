@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useKeyboard } from '@opentui/react';
 import { theme } from '../theme';
 import { Modal } from './Modal';
+import { Input } from './Input';
 import type { GitRemote } from '../types/git';
 
 interface RemoteModalProps {
@@ -20,7 +21,6 @@ export function RemoteModal({ mode, existingRemote, onSubmit, onCancel }: Remote
       : '',
   );
   const [focusedField, setFocusedField] = useState<'name' | 'fetchUrl' | 'pushUrl'>('name');
-  const [editMode, setEditMode] = useState(false);
 
   const handleSubmit = useCallback(() => {
     if (name.trim() && fetchUrl.trim()) {
@@ -29,45 +29,16 @@ export function RemoteModal({ mode, existingRemote, onSubmit, onCancel }: Remote
   }, [name, fetchUrl, pushUrl, onSubmit]);
 
   useKeyboard((key) => {
-    if (!editMode) {
-      if (key.name === 'escape') {
-        onCancel();
-      } else if (key.name === 'return') {
-        handleSubmit();
-      } else if (key.name === 'tab') {
-        // Cycle through fields
-        if (focusedField === 'name') {
-          setFocusedField('fetchUrl');
-        } else if (focusedField === 'fetchUrl') {
-          setFocusedField('pushUrl');
-        } else {
-          setFocusedField('name');
-        }
-      } else if (key.sequence === 'e' || key.name === 'space') {
-        setEditMode(true);
-      }
-    } else {
-      // Edit mode - capture input
-      if (key.name === 'escape') {
-        setEditMode(false);
-      } else if (key.name === 'return') {
-        setEditMode(false);
-      } else if (key.name === 'backspace') {
-        if (focusedField === 'name') {
-          setName((prev) => prev.slice(0, -1));
-        } else if (focusedField === 'fetchUrl') {
-          setFetchUrl((prev) => prev.slice(0, -1));
-        } else if (focusedField === 'pushUrl') {
-          setPushUrl((prev) => prev.slice(0, -1));
-        }
-      } else if (key.sequence && key.sequence.length === 1) {
-        if (focusedField === 'name') {
-          setName((prev) => prev + key.sequence);
-        } else if (focusedField === 'fetchUrl') {
-          setFetchUrl((prev) => prev + key.sequence);
-        } else if (focusedField === 'pushUrl') {
-          setPushUrl((prev) => prev + key.sequence);
-        }
+    if (key.name === 'escape') {
+      onCancel();
+    } else if (key.name === 'tab') {
+      // Cycle through fields
+      if (focusedField === 'name') {
+        setFocusedField('fetchUrl');
+      } else if (focusedField === 'fetchUrl') {
+        setFocusedField('pushUrl');
+      } else {
+        setFocusedField('name');
       }
     }
   });
@@ -75,68 +46,40 @@ export function RemoteModal({ mode, existingRemote, onSubmit, onCancel }: Remote
   const title = mode === 'add' ? 'Add Remote' : 'Edit Remote';
 
   return (
-    <Modal width={80} height={16} title={title}>
+    <Modal width={80} height={18} title={title}>
       <box width="100%" flexGrow={1} flexDirection="column">
-        <box width="100%" height={2} flexDirection="column" paddingBottom={theme.spacing.xs}>
-          <box width="100%">
-            <text fg={focusedField === 'name' ? theme.colors.primary : theme.colors.text.secondary}>
-              {focusedField === 'name' ? '▶ ' : '  '}Name:
-            </text>
-          </box>
-          <box width="100%" paddingLeft={theme.spacing.md}>
-            <text
-              fg={
-                focusedField === 'name' && editMode
-                  ? theme.colors.status.success
-                  : theme.colors.text.primary
-              }
-            >
-              {name || (editMode && focusedField === 'name' ? '█' : '(empty)')}
-            </text>
-          </box>
-        </box>
+        <Input
+          label="Name"
+          value={name}
+          onChange={setName}
+          onSubmit={handleSubmit}
+          focused={focusedField === 'name'}
+          placeholder="e.g., origin"
+          fieldsetHeight={3}
+          flexGrow={0}
+        />
 
-        <box width="100%" height={2} flexDirection="column" paddingBottom={theme.spacing.xs}>
-          <box width="100%">
-            <text
-              fg={focusedField === 'fetchUrl' ? theme.colors.primary : theme.colors.text.secondary}
-            >
-              {focusedField === 'fetchUrl' ? '▶ ' : '  '}Fetch URL:
-            </text>
-          </box>
-          <box width="100%" paddingLeft={theme.spacing.md}>
-            <text
-              fg={
-                focusedField === 'fetchUrl' && editMode
-                  ? theme.colors.status.success
-                  : theme.colors.text.primary
-              }
-            >
-              {fetchUrl || (editMode && focusedField === 'fetchUrl' ? '█' : '(empty)')}
-            </text>
-          </box>
-        </box>
+        <Input
+          label="Fetch URL"
+          value={fetchUrl}
+          onChange={setFetchUrl}
+          onSubmit={handleSubmit}
+          focused={focusedField === 'fetchUrl'}
+          placeholder="e.g., https://github.com/user/repo.git"
+          fieldsetHeight={3}
+          flexGrow={0}
+        />
 
-        <box width="100%" height={2} flexDirection="column" paddingBottom={theme.spacing.xs}>
-          <box width="100%">
-            <text
-              fg={focusedField === 'pushUrl' ? theme.colors.primary : theme.colors.text.secondary}
-            >
-              {focusedField === 'pushUrl' ? '▶ ' : '  '}Push URL (optional):
-            </text>
-          </box>
-          <box width="100%" paddingLeft={theme.spacing.md}>
-            <text
-              fg={
-                focusedField === 'pushUrl' && editMode
-                  ? theme.colors.status.success
-                  : theme.colors.text.primary
-              }
-            >
-              {pushUrl || (editMode && focusedField === 'pushUrl' ? '█' : '(same as fetch)')}
-            </text>
-          </box>
-        </box>
+        <Input
+          label="Push URL (optional)"
+          value={pushUrl}
+          onChange={setPushUrl}
+          onSubmit={handleSubmit}
+          focused={focusedField === 'pushUrl'}
+          placeholder="Leave empty to use fetch URL"
+          fieldsetHeight={3}
+          flexGrow={0}
+        />
       </box>
 
       <text> </text>
@@ -146,11 +89,7 @@ export function RemoteModal({ mode, existingRemote, onSubmit, onCancel }: Remote
         borderColor={theme.colors.border}
         padding={theme.spacing.none}
       >
-        <text fg={theme.colors.text.muted}>
-          {editMode
-            ? 'Enter: save field  Esc: cancel edit'
-            : 'Tab: next  e/Space: edit  Enter: submit  Esc: cancel'}
-        </text>
+        <text fg={theme.colors.text.muted}>Tab: next  Enter: submit  Esc: cancel</text>
       </box>
     </Modal>
   );
