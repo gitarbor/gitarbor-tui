@@ -256,7 +256,10 @@ export class GitClient {
       // Get all branch descriptions in parallel
       const descriptionPromises = branches.map(async (branch) => {
         try {
-          const { stdout: desc } = await this.execGit(['config', `branch.${branch.name}.description`]);
+          const { stdout: desc } = await this.execGit([
+            'config',
+            `branch.${branch.name}.description`,
+          ]);
           const trimmed = desc.trim();
           if (trimmed.length > 0) {
             branch.description = trimmed;
